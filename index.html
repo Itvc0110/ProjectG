@@ -273,7 +273,7 @@
   #end-score:empty + .end-divider { display:none; }
 
   /* ================= BUY MENU ================= */
-  #buy-menu { position:fixed; z-index:15; top:50%; left:50%; transform:translate(-50%,-50%); width:470px; max-width:94vw;
+  #buy-menu { position:fixed; z-index:15; top:50%; left:50%; transform:translate(-50%,-50%); width:540px; max-width:94vw; max-height:92vh; overflow-y:auto;
     background:linear-gradient(170deg, rgba(10,20,42,.97), rgba(4,8,18,.97)); border:1px solid rgba(65,217,255,.55); border-radius:18px;
     padding:20px 20px 12px; pointer-events:auto; box-shadow:0 30px 80px rgba(0,0,0,.7), 0 0 40px rgba(65,217,255,.15);
     backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); animation:buyIn .18s ease both; }
@@ -298,6 +298,20 @@
   .buy-item button:disabled { background:#232f47; border-color:rgba(255,255,255,.08); color:#8296b3; cursor:not-allowed; }
   .buy-item.cant { opacity:.62; }
   .buy-item.cant .bi-ic { filter:grayscale(.7); }
+  /* v3.1: nhóm lớp súng + panel hero-swap + scope SR-50 */
+  .bm-group { font-family:var(--fh); font-size:11px; font-weight:700; letter-spacing:2.5px; color:var(--faint); margin:13px 0 6px; }
+  #swap-info { font-size:12px; color:var(--dim); line-height:1.45; margin-bottom:7px; }
+  #swap-info b { color:#e8f3ff; }
+  #swap-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; }
+  .swap-op { cursor:pointer; background:rgba(255,255,255,.06); color:#dfe9ff; border:1px solid rgba(140,220,255,.25); border-radius:8px;
+    padding:7px 2px; font-family:var(--fh); font-size:11.5px; font-weight:700; letter-spacing:.5px; transition:filter .12s; }
+  .swap-op:hover:not(:disabled) { filter:brightness(1.35); }
+  .swap-op:disabled { opacity:.38; cursor:not-allowed; }
+  .swap-op.current { color:#ffd34d; }
+  .swap-op.armed { background:#8a2b2b; border-color:#ff5d5d !important; color:#fff; opacity:1; }
+  #swap-warn { font-size:12px; color:#ff9c9c; line-height:1.45; margin-top:7px; }
+  #scope-overlay { position:fixed; inset:0; z-index:8; pointer-events:none;
+    background:radial-gradient(circle at center, transparent 29%, rgba(0,0,0,.94) 30.5%); }
 
   /* ================= PAUSE / VIGNETTES ================= */
   #pause-hint { position:fixed; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; pointer-events:none;
@@ -393,14 +407,34 @@
   </div>
 </div>
 
+<div id="scope-overlay" class="hidden"></div>
+
 <!-- ================= BUY MENU ================= -->
 <div id="buy-menu" class="hidden">
   <h2>BUY MENU</h2>
-  <div class="bm-money">Tiền: <span id="bm-money-val">$0</span> — bấm <span class="bkey">B</span> để đóng, click để mua</div>
-  <div class="buy-item"><div class="bi-ic">🔫</div><div class="bi-main"><div class="bi-name">VK-7 Rifle<span class="bi-key">VŨ KHÍ CHÍNH</span></div><div class="bi-desc">Súng trường tự động, sát thương cao</div></div><button id="buy-rifle">$1500</button></div>
+  <div class="bm-money">Tiền: <span id="bm-money-val">$0</span> — bấm <span class="bkey">B</span> để đóng, click để mua · <span class="bkey">1</span> súng chính / <span class="bkey">2</span> súng phụ</div>
+  <div class="bm-group">PISTOL — SLOT 2</div>
+  <div class="buy-item"><div class="bi-ic">🔫</div><div class="bi-main"><div class="bi-name">DP-50 "Búa"<span class="bi-key">PISTOL MẠNH</span></div><div class="bi-desc">53 dmg, xuyên giáp tốt — "rifle bỏ túi" cho eco/force · băng 7 · thưởng hạ $300</div></div><button id="buy-deagle">$700</button></div>
+  <div class="bm-group">SMG — SLOT 1</div>
+  <div class="buy-item"><div class="bi-ic">🌪️</div><div class="bi-main"><div class="bi-name">SM-11 "Bão"<span class="bi-key">SMG · ANTI-ECO</span></div><div class="bi-desc">900 RPM, chạy nhanh như pistol, mạnh tầm gần · băng 32 · thưởng hạ $600</div></div><button id="buy-smg">$1250</button></div>
+  <div class="bm-group">SHOTGUN — SLOT 1</div>
+  <div class="buy-item"><div class="bi-ic">💥</div><div class="bi-main"><div class="bi-name">SG-12 "Cổng"<span class="bi-key">SHOTGUN PUMP</span></div><div class="bi-desc">8 pellet × 14 dmg — giữ cửa/site chật, hết hiệu quả sau ~15m · băng 7 · thưởng hạ $900</div></div><button id="buy-shotgun">$1100</button></div>
+  <div class="bm-group">RIFLE — SLOT 1</div>
+  <div class="buy-item"><div class="bi-ic">🎯</div><div class="bi-main"><div class="bi-name">VK-7 Rifle<span class="bi-key">RIFLE CHỦ LỰC</span></div><div class="bi-desc">Súng trường tự động, pattern giật học thuộc được · băng 30 · thưởng hạ $300</div></div><button id="buy-rifle">$1500</button></div>
+  <div class="bm-group">SNIPER — SLOT 1</div>
+  <div class="buy-item"><div class="bi-ic">🔭</div><div class="bi-main"><div class="bi-name">SR-50 "Mắt Mèo"<span class="bi-key">SNIPER NHẸ · GIỮ PHẢI SCOPE</span></div><div class="bi-desc">80 dmg thân / 320 đầu — khóa góc dài, no-scope tản 4,5° · băng 6 · thưởng hạ $300</div></div><button id="buy-scout">$2200</button></div>
+  <div class="bm-group">SÚNG NẶNG — SLOT 1</div>
+  <div class="buy-item"><div class="bi-ic">⚙️</div><div class="bi-main"><div class="bi-name">MG-75 "Trâu"<span class="bi-key">LMG · SUPPRESSION</span></div><div class="bi-desc">Băng 100, xuyên vật mỏng tốt nhất — đổi lại chạy chậm và nạp 5,2s · thưởng hạ $300</div></div><button id="buy-lmg">$3400</button></div>
+  <div class="bm-group">TRANG BỊ</div>
   <div class="buy-item"><div class="bi-ic">🛡️</div><div class="bi-main"><div class="bi-name">Giáp Kevlar<span class="bi-key">PHÒNG THỦ</span></div><div class="bi-desc">Giáp 100 — giảm 50% sát thương nhận vào</div></div><button id="buy-armor">$650</button></div>
   <div class="buy-item"><div class="bi-ic">🔋</div><div class="bi-main"><div class="bi-name">Pin Năng Lượng<span class="bi-key">KỸ NĂNG</span></div><div class="bi-desc">+50 năng lượng kỹ năng ngay lập tức</div></div><button id="buy-energy">$300</button></div>
   <div class="buy-item"><div class="bi-ic">✚</div><div class="bi-main"><div class="bi-name">Hồi Máu +50<span class="bi-key">SINH TỒN</span></div><div class="bi-desc">Hồi 50 HP ngay lập tức</div></div><button id="buy-med">$250</button></div>
+  <div class="bm-group">ĐỔI OPERATOR — PHƯƠNG ÁN B (CHỈ BUY PHASE, TẠI SPAWN)</div>
+  <div id="swap-panel">
+    <div id="swap-info"></div>
+    <div id="swap-grid"></div>
+    <div id="swap-warn" class="hidden"></div>
+  </div>
 </div>
 
 <div id="pause-hint" class="hidden"><div>⏸ Mất khóa chuột — click vào màn hình để chơi tiếp</div></div>
@@ -428,7 +462,7 @@
   </div>
   <div class="controls-note">
     <b>WASD</b> di chuyển · <b>Chuột</b> ngắm · <b>Click trái</b> bắn · <b>Shift</b> chạy · <b>Space</b> nhảy · <b>Ctrl/C</b> ngồi xổm · <b>R</b> nạp đạn ·
-    <b>1/2</b> đổi súng · <b>B</b> mua đồ · <b>Giữ F trong site</b> đặt bomb · <b>Q / E / X</b> kỹ năng<br>
+    <b>1/2</b> đổi súng · <b>Giữ chuột phải</b> scope (SR-50) · <b>B</b> mua đồ / đổi Operator · <b>Giữ F trong site</b> đặt bomb · <b>Q / E / X</b> kỹ năng<br>
     Ultimate (X): tài liệu gốc tính bằng 6–7 điểm ult — bản prototype ánh xạ thành <b>100 năng lượng</b>
   </div>
 </div>
@@ -528,9 +562,17 @@ const OPERATORS = {
 };
 
 // ---------------- WEAPONS ----------------
+/* v3.1 (mechanics/03): roster 7 lựa chọn. Field bổ sung theo tài liệu: price, killReward,
+   penetrationPower (0 = không xuyên · 1 = xuyên vật mỏng −50% · 2 = xuyên tốt nhất; engine hiện
+   vẫn cho đạn dừng ở bề mặt đầu tiên — penPower là dữ liệu cân bằng sẵn cho wallbang v2).
+   Recoil (mechanics/01): súng auto mới dùng pattern VK-7 rút gọn theo patternScale
+   (SMG nhẹ hơn ×0,55 · LMG nặng hơn ×1,10 + cone/hồi chậm hơn); súng đơn phát dùng kick + recovery.
+   moveSpeed theo tỉ lệ CS (mechanics/02): pistol/SMG 5,28 · DP-50 5,06 · shotgun 4,84 · rifle 4,73 · sniper 4,40 · LMG 3,30.
+   LƯU Ý: tài liệu 03 §4.0 đề xuất chuẩn hoá giá VK-7 lên $2.700 và P9 thành 25/400/15 — CHƯA áp ở
+   v3.1 vì economy hiện tại đã cân quanh mốc $2.000 khởi điểm / VK-7 $1.500; ghi nhận là quyết định chờ chốt. */
 const WEAPONS = {
-  // v3 (mechanics/01): VK-7 dùng pattern + recoilIndex; P9 dùng kick + recovery 0,20s. moveSpeed theo mechanics/02.
-  rifle:  { name: 'VK-7 RIFLE', dmg: 34, headMult: 4, rpm: 600, mag: 30, reload: 2.1, auto: true, moveSpeed: 4.73,
+  rifle:  { name: 'VK-7 RIFLE', slot: 'primary', cls: 'RIFLE', dmg: 34, headMult: 4, rpm: 600, mag: 30, reload: 2.1, auto: true, moveSpeed: 4.73,
+    price: 1500, killReward: 300, penetrationPower: 1, recoilType: 'pattern', patternScale: 1.0,
     recoilPattern: [
       [1.04, 0.00], [1.08, 0.01], [1.08, 0.02], [1.04, 0.03], [1.00, 0.04],
       [0.96, 0.05], [0.92, 0.07], [0.88, 0.10], [0.84, 0.16], [0.72, 0.20],
@@ -541,10 +583,35 @@ const WEAPONS = {
     ],
     recoilScale: 1.0, recoilDelay: 0.07, recoilTau: 0.13, recoilTauCrouch: 0.11,
     stanceBaseDeg: 0.08, stanceBaseCrouchDeg: 0.06, conePerIndexDeg: 0.075, coneCapDeg: 1.9 },
-  pistol: { name: 'P9 PISTOL',  dmg: 26, headMult: 4, rpm: 320, mag: 12, reload: 1.5, auto: false, moveSpeed: 5.28,
+  pistol: { name: 'P9 PISTOL', slot: 'sidearm', cls: 'PISTOL', dmg: 26, headMult: 4, rpm: 320, mag: 12, reload: 1.5, auto: false, moveSpeed: 5.28,
+    price: 0, killReward: 300, penetrationPower: 1, recoilType: 'kick',
     kickPitchDeg: 0.55, kickYawDeg: 0.05, recoveryTime: 0.20, rapidPenaltyDeg: 0.25, rapidPenaltyCapDeg: 1.20,
-    stanceBaseDeg: 0.30, stanceBaseCrouchDeg: 0.24 }
+    stanceBaseDeg: 0.30, stanceBaseCrouchDeg: 0.24 },
+  smg:    { name: 'SM-11 "BÃO"', slot: 'primary', cls: 'SMG', dmg: 24, headMult: 4, rpm: 900, mag: 32, reload: 2.0, auto: true, moveSpeed: 5.28,
+    price: 1250, killReward: 600, penetrationPower: 1, recoilType: 'pattern', patternScale: 0.55,
+    recoilDelay: 0.06, recoilTau: 0.11, recoilTauCrouch: 0.10,
+    stanceBaseDeg: 0.14, stanceBaseCrouchDeg: 0.10, conePerIndexDeg: 0.085, coneCapDeg: 2.4 },
+  shotgun:{ name: 'SG-12 "CỔNG"', slot: 'primary', cls: 'SHOTGUN', dmg: 14, headMult: 4, rpm: 68, mag: 7, reload: 3.4, auto: false, moveSpeed: 4.84,
+    price: 1100, killReward: 900, penetrationPower: 0, recoilType: 'kick', pellets: 8,
+    kickPitchDeg: 2.60, kickYawDeg: 0.30, recoveryTime: 0.55, rapidPenaltyDeg: 0, rapidPenaltyCapDeg: 0,
+    stanceBaseDeg: 2.60, stanceBaseCrouchDeg: 2.60 },
+  scout:  { name: 'SR-50 "MẮT MÈO"', slot: 'primary', cls: 'SNIPER', dmg: 80, headMult: 4, rpm: 55, mag: 6, reload: 3.0, auto: false, moveSpeed: 4.40,
+    price: 2200, killReward: 300, penetrationPower: 2, recoilType: 'kick', canScope: true,
+    kickPitchDeg: 2.80, kickYawDeg: 0.15, recoveryTime: 0.90, rapidPenaltyDeg: 0, rapidPenaltyCapDeg: 0,
+    stanceBaseDeg: 0.06, stanceBaseCrouchDeg: 0.04 },
+  deagle: { name: 'DP-50 "BÚA"', slot: 'sidearm', cls: 'PISTOL', dmg: 53, headMult: 4, rpm: 267, mag: 7, reload: 2.0, auto: false, moveSpeed: 5.06,
+    price: 700, killReward: 300, penetrationPower: 1, recoilType: 'kick',
+    kickPitchDeg: 0.92, kickYawDeg: 0.08, recoveryTime: 0.25, rapidPenaltyDeg: 0.30, rapidPenaltyCapDeg: 1.10,
+    stanceBaseDeg: 0.26, stanceBaseCrouchDeg: 0.19 },
+  lmg:    { name: 'MG-75 "TRÂU"', slot: 'primary', cls: 'LMG', dmg: 32, headMult: 4, rpm: 750, mag: 100, reload: 5.2, auto: true, moveSpeed: 3.30,
+    price: 3400, killReward: 300, penetrationPower: 2, recoilType: 'pattern', patternScale: 1.10,
+    recoilDelay: 0.08, recoilTau: 0.16, recoilTauCrouch: 0.14,
+    stanceBaseDeg: 0.16, stanceBaseCrouchDeg: 0.11, conePerIndexDeg: 0.10, coneCapDeg: 3.0 }
 };
+// Pattern dùng chung cho súng auto mới (tham chiếu mảng VK-7, nhân patternScale khi bắn)
+WEAPONS.smg.recoilPattern = WEAPONS.rifle.recoilPattern;
+WEAPONS.lmg.recoilPattern = WEAPONS.rifle.recoilPattern;
+const RESERVE0 = { rifle: 90, pistol: 9999, smg: 96, shotgun: 28, scout: 24, deagle: 35, lmg: 200 };
 // Vật lý di chuyển Source-lite (mechanics/02 + 05): gia tốc mặt đất / ma sát thả phím / gia tốc counter-strafe / gia tốc trên không
 const MOVE_PHYS = { accel: 40, friction: 17, counterAccel: 46, airAccel: 3, accurateRatio: 0.34 };
 const DEG2RAD = Math.PI / 180;
@@ -568,8 +635,9 @@ const G = {
 const player = {
   pos: T_SPAWN.clone(), velY: 0, yaw: Math.PI / 2, pitch: 0, // yaw PI/2 => facing +X
   hp: 100, armor: 0, money: 2000, energy: 30,
-  weapon: 'pistol', ownedRifle: false,
-  ammo: { rifle: 30, pistol: 12 }, reserve: { rifle: 90, pistol: 9999 },
+  weapon: 'pistol', primary: null, sidearm: 'pistol', scoped: false,
+  ammo: { rifle: 30, pistol: 12, smg: 32, shotgun: 7, scout: 6, deagle: 7, lmg: 100 }, reserve: Object.assign({}, RESERVE0),
+  swapsUsed: 0, swappedThisRound: false,
   reloadingUntil: 0, lastShot: 0, dead: false,
   opKey: 'FLARE', qCd: 0, eCd: 0,
   invisibleUntil: 0, domeUntil: 0,
@@ -581,6 +649,24 @@ const player = {
 };
 function op() { return OPERATORS[player.opKey]; }
 function nowS() { return G.time; }
+// ---------------- VŨ KHÍ: slot / scope (v3.1) ----------------
+function resetAmmoAll() { for (const k in WEAPONS) player.ammo[k] = WEAPONS[k].mag; player.reserve = Object.assign({}, RESERVE0); }
+function setScoped(on) {
+  const want = !!on && player.weapon === 'scout' && !player.dead && ['live', 'planted'].includes(G.phase);
+  if (player.scoped === want) return;
+  player.scoped = want;
+  camera.fov = want ? Math.max(24, Math.round(SETTINGS.fov * 0.42)) : SETTINGS.fov;
+  camera.updateProjectionMatrix();
+  const so = document.getElementById('scope-overlay'); if (so) so.classList.toggle('hidden', !want);
+  if (viewGun) viewGun.visible = !want;
+}
+function switchWeapon(key) {
+  if (!WEAPONS[key]) return;
+  setScoped(false);
+  if (player.weapon !== key) { player.weapon = key; player.recoilIndex = 0; player.sprayJitter = null; player.p9Penalty = 0; }
+  player.reloadingUntil = 0;
+  updateAmmoHUD();
+}
 
 // ---------------- SETTINGS (v3, mechanics/04) ----------------
 const SETTINGS = { sens: 1.0, fov: 74 };
@@ -1594,6 +1680,7 @@ function startMatch() {
   G.pScore = 0; G.eScore = 0; G.round = 1;
   player.money = 2000; player.ownedRifle = false; player.weapon = 'pistol';
   player.energy = 30;
+  player.swapsUsed = 0; player.swappedThisRound = false; swapArmKey = null; // ngân sách đổi operator tính theo trận
   startRound();
 }
 function startRound() {
@@ -1604,6 +1691,7 @@ function startRound() {
   player.reserve = { rifle: 90, pistol: 9999 };
   player.qCd = 0; player.eCd = 0; player.invisibleUntil = 0; player.domeUntil = 0; player.reloadingUntil = 0;
   player.qCharges = 2; player.qRegenAt = 0; player.lastQUse = -99; player.heatTime = 0; player.heatStacks = 0;
+  player.swappedThisRound = false; swapArmKey = null; // hero-swap: mỗi round được đổi tối đa 1 lần
   player.bioShield = 0; player.bioShieldUntil = 0; player.stormUntil = 0; player.driftUltUntil = 0; player.reviveChannel = null;
   player.vel.set(0, 0, 0); player.recoilIndex = 0; player.sprayJitter = null; player.lastRecoilShot = -99;
   player.p9Penalty = 0; player.p9Kick = 0; player.tagUntil = 0; player.landedAt = -99; player.crouching = false;
@@ -1700,11 +1788,94 @@ function refreshBuy() {
   $('buy-med').disabled = player.money < 250 || player.hp >= 100;
   $('money').textContent = '$' + player.money;
   document.querySelectorAll('#buy-menu .buy-item').forEach(it => { const b = it.querySelector('button'); it.classList.toggle('cant', !!b.disabled); });
+  refreshSwap();
 }
 $('buy-rifle').onclick = () => { if (player.money >= 1500 && !player.ownedRifle) { player.money -= 1500; player.ownedRifle = true; player.weapon = 'rifle'; AudioSys.beep(880, 0.1); refreshBuy(); updateAmmoHUD(); } };
 $('buy-armor').onclick = () => { if (player.money >= 650) { player.money -= 650; player.armor = 100; AudioSys.beep(880, 0.1); refreshBuy(); } };
 $('buy-energy').onclick = () => { if (player.money >= 300) { player.money -= 300; player.energy = Math.min(100, player.energy + 50); AudioSys.beep(880, 0.1); refreshBuy(); } };
 $('buy-med').onclick = () => { if (player.money >= 250) { player.money -= 250; player.hp = Math.min(100, player.hp + 50); AudioSys.beep(880, 0.1); refreshBuy(); } };
+
+// ---------------- HERO SWAP — PHƯƠNG ÁN B (mechanics/06) ----------------
+// Chỉ trong buy phase, người chơi còn sống và đứng trong vùng spawn đội mình (bán kính 6m quanh T_SPAWN).
+// Tối đa 1 lần/round, 3 lần/trận; lần đầu miễn phí, các lần sau $400 (không đủ tiền → nút khóa).
+// Khi đổi: giữ nguyên súng/giáp/tiền/HP; năng lượng ult mới = min(25, floor(năng lượng cũ × 0.25));
+// Q/E của operator mới vào nửa thời gian hồi chiêu gốc. Chọn 2 nhịp: bấm 1 lần để arm, bấm lại để xác nhận.
+const SWAP_MAX = 3, SWAP_COST = 400, SPAWN_RADIUS = 6;
+let swapArmKey = null; // operator đang arm, chờ bấm lần 2 để xác nhận
+function swapCost() { return player.swapsUsed === 0 ? 0 : SWAP_COST; }
+function inSpawnZone() { return Math.hypot(player.pos.x - T_SPAWN.x, player.pos.z - T_SPAWN.z) <= SPAWN_RADIUS; }
+function swapBlockReason() {
+  if (G.phase !== 'buy') return 'Chỉ đổi được trong giai đoạn mua đồ (buy phase)';
+  if (player.dead) return 'Bạn đã gục — không thể đổi operator';
+  if (!inSpawnZone()) return 'Phải đứng trong vùng spawn của đội mới đổi được operator';
+  if (player.swappedThisRound) return 'Đã đổi 1 lần trong round này — chờ round sau';
+  if (player.swapsUsed >= SWAP_MAX) return 'Đã dùng hết ' + SWAP_MAX + ' lượt đổi trong trận';
+  if (player.money < swapCost()) return 'Không đủ tiền đổi operator (cần $' + swapCost() + ')';
+  return null;
+}
+function refreshSwap() {
+  const cost = swapCost();
+  const reason = swapBlockReason();
+  if (reason) swapArmKey = null;
+  $('swap-info').innerHTML = 'Lượt đổi đã dùng: <b>' + player.swapsUsed + '/' + SWAP_MAX + '</b> · lần đổi tiếp theo: <b>' +
+    (cost === 0 ? 'MIỄN PHÍ' : '$' + cost) + '</b>' +
+    (player.swappedThisRound ? ' · <b>đã đổi trong round này</b>' : '') +
+    '<br>Đổi tại vùng spawn, chỉ trong buy phase — giữ nguyên súng/giáp/tiền/HP, chỉ giữ 25% năng lượng ult (tối đa 25), Q/E mới vào nửa hồi chiêu.';
+  const grid = $('swap-grid'); grid.innerHTML = '';
+  for (const key of Object.keys(OPERATORS)) {
+    const o = OPERATORS[key];
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'swap-op' + (key === player.opKey ? ' current' : '') + (key === swapArmKey ? ' armed' : '');
+    b.style.borderColor = '#' + o.color.toString(16).padStart(6, '0');
+    b.textContent = o.name + (key === player.opKey ? ' ✓' : '');
+    b.title = o.role;
+    b.disabled = key === player.opKey || !!reason;
+    b.onclick = () => onSwapClick(key);
+    grid.appendChild(b);
+  }
+  const warn = $('swap-warn');
+  if (swapArmKey) {
+    const o = OPERATORS[swapArmKey];
+    const newEnergy = Math.min(25, Math.floor(player.energy * 0.25));
+    warn.innerHTML = '⚠ Đổi sang <b>' + o.name + '</b>: năng lượng ult ' + Math.floor(player.energy) + ' → <b>' + newEnergy + '</b>, Q/E mới vào nửa hồi chiêu' +
+      (cost > 0 ? ', tốn <b>$' + cost + '</b>' : ' (lần đầu miễn phí)') + '. Bấm lại nút <b>' + o.name + '</b> để XÁC NHẬN.';
+    warn.classList.remove('hidden');
+  } else if (reason) {
+    warn.textContent = '⚠ ' + reason + '.';
+    warn.classList.remove('hidden');
+  } else {
+    warn.classList.add('hidden');
+  }
+}
+function onSwapClick(key) {
+  if (key === player.opKey) return;
+  if (swapBlockReason()) { swapArmKey = null; refreshSwap(); return; }
+  if (swapArmKey !== key) { swapArmKey = key; AudioSys.beep(520, 0.07); refreshSwap(); return; }
+  doSwap(key);
+}
+function doSwap(key) {
+  if (swapBlockReason()) { swapArmKey = null; refreshSwap(); return; }
+  const cost = swapCost();
+  const oldName = op().name, oldEnergy = player.energy;
+  player.money -= cost;
+  player.opKey = key;
+  const o = op();
+  player.energy = Math.min(25, Math.floor(oldEnergy * 0.25));
+  const t = nowS();
+  player.qCd = t + o.q.cd / 2;
+  player.eCd = t + o.e.cd / 2;
+  // DRIFT dùng hệ charge riêng cho Q: vào với 1 charge, charge thứ hai hồi sau nửa CD gốc
+  if (key === 'DRIFT') { player.qCharges = 1; player.qRegenAt = t + o.q.cd / 2; player.qCd = player.qRegenAt; player.lastQUse = -99; }
+  else { player.qCharges = 2; player.qRegenAt = 0; }
+  // dọn trạng thái tạm gắn với operator cũ, tránh rò rỉ sang operator mới
+  player.heatStacks = 0; player.heatTime = 0; player.stillTime = 0;
+  player.driftUltUntil = 0; player.invisibleUntil = 0; player.stormUntil = 0; player.domeUntil = 0; player.reviveChannel = null;
+  player.swapsUsed++; player.swappedThisRound = true; swapArmKey = null;
+  AudioSys.beep(880, 0.12);
+  announce('', 'Đã đổi operator: ' + oldName + ' → ' + o.name + ' · năng lượng ult ' + Math.floor(oldEnergy) + ' → ' + player.energy + (cost ? ' · −$' + cost : ' · miễn phí'));
+  updateAllHUD(); // gồm refreshBuy → refreshSwap và buildAbilityHUD (thẻ kỹ năng của operator mới)
+}
 
 // ---------------- HUD ----------------
 function fmtTime(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
