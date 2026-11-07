@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEON DIVIDE — Tactical FPS Prototype</title>
+<title>NEON DIVIDE v2 — Tactical FPS Prototype (8 Operators)</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { width:100%; height:100%; overflow:hidden; background:#05070c; font-family:'Segoe UI',Arial,sans-serif; color:#e8f1ff; }
@@ -167,7 +167,8 @@
   <div id="op-grid"></div>
   <div class="controls-note">
     <b>WASD</b> di chuyển · <b>Chuột</b> ngắm · <b>Click trái</b> bắn · <b>Shift</b> chạy · <b>Space</b> nhảy · <b>R</b> nạp đạn ·
-    <b>1/2</b> đổi súng · <b>B</b> mua đồ · <b>Giữ F trong site</b> đặt bomb · <b>Q / E / X</b> kỹ năng
+    <b>1/2</b> đổi súng · <b>B</b> mua đồ · <b>Giữ F trong site</b> đặt bomb · <b>Q / E / X</b> kỹ năng<br>
+    Ultimate (X): tài liệu gốc tính bằng 6–7 điểm ult — bản prototype ánh xạ thành <b>100 năng lượng</b>
   </div>
 </div>
 
@@ -216,27 +217,52 @@ const AudioSys = {
 };
 
 // ---------------- OPERATORS ----------------
+/* Roster 8 operator theo RESEARCH_AND_DESIGN.md Phần 4.2 — thay toàn bộ roster
+   4 operator tự chế của v1 (AEGIS trong roster này là bản của tài liệu, kit khác hẳn bản cũ).
+   ÁNH XẠ ULT: tài liệu gốc tính ultimate bằng ĐIỂM (6–7 điểm từ kill / plant / orb).
+   Prototype giữ nguyên cơ chế thang NĂNG LƯỢNG 100 của engine v1 → mọi ult (X)
+   tốn 100 năng lượng; năng lượng hồi theo thời gian + thưởng khi hạ địch / đặt bomb. */
 const OPERATORS = {
-  PHANTOM: { name: 'PHANTOM', role: 'Đột kích / Tàng hình', color: 0x9d6bff,
-    q: { name: 'Blink', cd: 10, cost: 15, desc: 'Dịch chuyển tức thời 6m về phía trước' },
-    e: { name: 'Màn Khói', cd: 16, cost: 20, desc: 'Bom khói che tầm nhìn địch 8s' },
-    x: { name: 'Vô Hình', cd: 0, cost: 100, desc: 'Tàng hình với bot địch trong 6s' },
-    passive: 'Bóng Ma: chạy nhanh hơn 12%' },
-  VOLT: { name: 'VOLT', role: 'Kiểm soát / Điện năng', color: 0xffd23e,
-    q: { name: 'Phi Tiêu Sét', cd: 9, cost: 15, desc: 'Bot trúng bị chậm 55% trong 4s' },
-    e: { name: 'Tường Điện', cd: 18, cost: 25, desc: 'Tường điện 10s, địch gần bị giật điện' },
-    x: { name: 'Bão Sét', cd: 0, cost: 100, desc: 'Sét diện rộng 13m: 55 dmg + choáng 2s' },
-    passive: 'Quá Tải: hồi năng lượng nhanh gấp đôi' },
-  AEGIS: { name: 'AEGIS', role: 'Đỡ đòn / Hỗ trợ', color: 0x41d9ff,
-    q: { name: 'Khiên Năng Lượng', cd: 14, cost: 20, desc: 'Đặt khiên chắn đạn 8s' },
-    e: { name: 'Xung Hồi Phục', cd: 15, cost: 20, desc: 'Hồi ngay 40 HP cho bản thân' },
-    x: { name: 'Vòm Bất Tử', cd: 0, cost: 100, desc: 'Không nhận sát thương trong 5s' },
-    passive: 'Thân Thép: giảm 12% mọi sát thương' },
-  ORACLE: { name: 'ORACLE', role: 'Trinh sát / Thông tin', color: 0x51ff9e,
-    q: { name: 'Xung Quét', cd: 13, cost: 15, desc: 'Hiện vị trí mọi bot địch 6s' },
-    e: { name: 'Mồi Nhử', cd: 16, cost: 20, desc: 'Decoy thu hút hỏa lực địch 6s' },
-    x: { name: 'Đọng Thời Gian', cd: 0, cost: 100, desc: 'Bot địch chậm còn 35% tốc độ trong 5s' },
-    passive: 'Giác Quan: nạp đạn nhanh hơn 35%' }
+  FLARE: { name: 'FLARE', role: 'KAITO "FLARE" REN — Duelist / Entry · nhiệt động năng', color: 0xff6b2e,
+    q: { name: 'Lướt Tàn Lửa', cd: 35, cost: 15, desc: 'Lướt thẳng 6m, để lại vệt lửa 3s (địch giẫm vào: 10 dmg/s)' },
+    e: { name: 'Bom Chói Nhiệt', cd: 40, cost: 20, desc: 'Chói địch trong nón 12m trước mặt có LOS: choáng ~1,4s' },
+    x: { name: 'Bão Nhiệt Hạch Lỏng', cd: 0, cost: 100, desc: 'Cầu nhiệt 8m quanh bạn trong 6s: địch −15 HP/s + bị chậm, bạn −20% tốc độ' },
+    passive: 'Động Năng Dư: di chuyển liên tục tích Nhiệt — mỗi stack +3% tốc độ (tối đa +9%), đứng yên 2s mất hết' },
+  PRISM: { name: 'PRISM', role: 'MIRA "PRISM" SOL — Controller · khúc xạ ánh sáng', color: 0x7de8ff,
+    q: { name: 'Tường Gương Khúc Xạ', cd: 30, cost: 20, desc: 'Tường năng lượng 6m, HP 250, 12s: chặn đạn & tầm nhìn, người vẫn đi xuyên được' },
+    e: { name: 'Lăng Kính Đánh Lạc', cd: 45, cost: 20, desc: 'Hologram giả chạy thẳng về phía trước hút hỏa lực địch (vỡ sau 1 hit)' },
+    x: { name: 'Nhà Gương', cd: 0, cost: 100, desc: 'Dựng 4 tường gương (HP 250) thành hộp quanh điểm chỉ định, tồn tại 10s' },
+    passive: 'Giác Quan Quang Học: đứng yên 1,5s → đạn địch khó trúng bạn hơn 50% (bản rút gọn của kháng chói)' },
+  BASTION: { name: 'BASTION', role: 'DARIO "BASTION" FENN — Sentinel / Anchor · kiến trúc sư chiến trường', color: 0xffc44d,
+    q: { name: 'Chốt Chặn Cứng', cd: 25, cost: 15, desc: 'Khối chắn HP 400, tồn tại tới khi bị phá (tối đa 2 khối cùng lúc)' },
+    e: { name: 'Bẫy Trọng Trường Nhẹ', cd: 35, cost: 20, desc: 'Bẫy sàn bán kính 4m, kích hoạt 1 lần: địch dẫm vào bị chậm nặng 2,5s' },
+    x: { name: 'Pháo Đài Cuối', cd: 0, cost: 100, desc: 'Trụ năng lượng 5m, 15s, HP 800: chặn đạn cả 2 chiều, người trong vùng nạp đạn +20%' },
+    passive: 'Gia Cố: công trình của bạn trong 5m hồi 5 HP/s; đứng sát công trình giảm 15% sát thương nhận' },
+  WHISPER: { name: 'WHISPER', role: 'SABLE "WHISPER" NOOR — Recon / Infiltrator · sóng âm', color: 0xc792ff,
+    q: { name: 'Xung Quét Âm', cd: 40, cost: 15, desc: 'Quét nón 120° tầm 22m: ping địch trúng quét lên minimap (không xuyên tường)' },
+    e: { name: 'Vùng Câm Lặng', cd: 50, cost: 25, desc: 'Cầu 6m trong 8s: đứng trong vùng, địch chỉ phát hiện bạn ở cự ly dưới 8m' },
+    x: { name: 'Dàn Hợp Xướng Dội Âm', cd: 0, cost: 100, desc: 'Trong 8s, mọi địch trong 25m quanh bạn bị ping lên minimap mỗi 1s' },
+    passive: 'Thính Giác Tuyệt Đối: địch đang di chuyển trong 15m hiện mờ trên minimap' },
+  TETHER: { name: 'TETHER', role: 'ORIN "TETHER" KADE — Initiator / Support · dây neo trọng lực', color: 0x4dffb8,
+    q: { name: 'Dây Neo Kéo', cd: 30, cost: 15, desc: 'Dây 18m: kéo địch lại gần + chậm / kéo đồng đội về phía bạn / grapple vào tường 5m. Trượt chỉ tốn nửa CD' },
+    e: { name: 'Mỏ Neo Trọng Lực', cd: 40, cost: 20, desc: 'Vùng cầu 5m trong 5s hút mọi bot về tâm vùng' },
+    x: { name: 'Xiềng Xích Liên Kết', cd: 0, cost: 100, desc: 'Xích 1 địch với địch gần nhất của chúng trong 6s: 30% damage chia sang kẻ còn lại (tối đa 40 HP)' },
+    passive: 'Neo Giữ: bản thân miễn nhiễm lực hút của Mỏ Neo Trọng Lực' },
+  NULL: { name: 'NULL', role: 'VESPER "NULL" OKONKWO — Controller / Anti-Ability · nhiễu điện từ', color: 0xff4d6d,
+    q: { name: 'Xung EMP Cục Bộ', cd: 45, cost: 25, desc: 'EMP 7m: phá các vùng hiệu ứng, công trình năng lượng −300 HP, địch trong vùng −5 HP' },
+    e: { name: 'Vùng Chết Sóng', cd: 40, cost: 25, desc: 'Trụ 4m trong 10s: đứng trong vùng không dùng được Q/E, bot trong vùng mất bám mục tiêu' },
+    x: { name: 'Sập Nguồn Toàn Cục', cd: 0, cost: 100, desc: 'Phá MỌI công trình & vùng trên map + khóa Q/E toàn cục 4s (kể cả đội mình)' },
+    passive: 'Chống Nhiễu: nhiễu điện từ khiến đạn địch ở cự ly dưới 10m kém chính xác' },
+  AEGIS: { name: 'AEGIS', role: 'LYRA "AEGIS" CHEN — Support · nhịp sinh học', color: 0x3effa0,
+    q: { name: 'Hào Quang Hồi Phục', cd: 35, cost: 20, desc: 'Vùng 5m quanh bạn trong 6s: đồng đội +12 HP/s (tối đa 50 HP), bản thân +6 HP/s' },
+    e: { name: 'Khiên Sinh Học', cd: 30, cost: 20, desc: 'Cho đồng đội gần nhất trong 12m (hoặc bản thân) 35 HP khiên, tồn tại 8s' },
+    x: { name: 'Hồi Sinh Nhịp Tim', cd: 0, cost: 100, desc: 'Hồi sinh 1 đồng đội vừa chết trong 9m với 50 HP — vận sức đứng yên 2s, tối đa 1 lần/đồng đội/round' },
+    passive: 'Nhịp Ổn Định: đồng đội trong 5m, ngoài giao tranh 5s, hồi 1 HP/s tới tối đa 70 HP' },
+  DRIFT: { name: 'DRIFT', role: 'RUNE "DRIFT" HALVORSEN — Duelist / Lurker · khói động & dịch chuyển ngắn', color: 0xa8c6ff,
+    q: { name: 'Dịch Khói Ngắn', cd: 35, cost: 10, desc: 'Dịch chuyển tức thời 5m không xuyên tường, 2 charge (2 lần cách nhau ≥5s), để khói 2s ở cả 2 đầu' },
+    e: { name: 'Màn Khói Động', cd: 45, cost: 20, desc: 'Màn khói trượt về phía trước 1m/s trong 3s đầu rồi đứng yên, tổng 10s — chặn tầm nhìn' },
+    x: { name: 'Vô Ảnh', cd: 0, cost: 100, desc: 'Trong 7s: mỗi kill làm mới 1 charge Dịch Khói + tàng hình 2s (bắn là lộ diện)' },
+    passive: 'Bước Nhẹ: khi không chạy nước rút, đạn địch khó trúng bạn hơn' }
 };
 
 // ---------------- WEAPONS ----------------
@@ -258,7 +284,7 @@ const G = {
   phase: 'menu', // menu | buy | live | planted | end | matchend
   timer: 0, round: 1, pScore: 0, eScore: 0,
   plantProgress: 0, defuseProgress: 0, bombPos: null, bombSite: null, bombMesh: null,
-  revealUntil: 0, slowUntil: 0, time: 0, shake: 0, endTimer: 0
+  revealUntil: 0, slowUntil: 0, time: 0, shake: 0, endTimer: 0, qeLockUntil: 0
 };
 
 const player = {
@@ -267,8 +293,10 @@ const player = {
   weapon: 'pistol', ownedRifle: false,
   ammo: { rifle: 30, pistol: 12 }, reserve: { rifle: 90, pistol: 9999 },
   reloadingUntil: 0, lastShot: 0, dead: false,
-  opKey: 'PHANTOM', qCd: 0, eCd: 0,
-  invisibleUntil: 0, domeUntil: 0, spreadBloom: 0
+  opKey: 'FLARE', qCd: 0, eCd: 0,
+  invisibleUntil: 0, domeUntil: 0, spreadBloom: 0,
+  qCharges: 2, qRegenAt: 0, lastQUse: -99, heatTime: 0, heatStacks: 0, stillTime: 0,
+  bioShield: 0, bioShieldUntil: 0, stormUntil: 0, driftUltUntil: 0, reviveChannel: null
 };
 function op() { return OPERATORS[player.opKey]; }
 function nowS() { return G.time; }
@@ -449,26 +477,32 @@ function spawnBots() {
   for (const b of bots) scene.remove(b.mesh);
   bots.length = 0;
   if (decoy) { scene.remove(decoy.mesh); decoy = null; }
-  const allyOps = [0x9d6bff, 0xffd23e, 0x51ff9e];
+  const allyDefs = [
+    { name: 'Đồng đội · NULL', color: 0xff4d6d },
+    { name: 'Đồng đội · AEGIS', color: 0x3effa0 },
+    { name: 'Đồng đội · DRIFT', color: 0xa8c6ff }
+  ];
   ['top', 'mid', 'bot'].forEach((lane, i) => {
-    const mesh = botMesh('ally', allyOps[i]);
+    const mesh = botMesh('ally', allyDefs[i].color);
     const pos = new THREE.Vector3(T_SPAWN.x + 1.5, 0, (i - 1) * 3.2);
     mesh.position.copy(pos); scene.add(mesh);
-    bots.push({ team: 'ally', name: 'Đồng đội ' + (i + 1), mesh, pos, hp: 100, alive: true,
-      lane, wp: 0, speed: 4.6, nextShot: 0, burst: 0, slowUntil: 0, stunUntil: 0, holdPos: null, lastShotAt: -99 });
+    bots.push({ team: 'ally', name: allyDefs[i].name, mesh, pos, hp: 100, alive: true,
+      lane, wp: 0, speed: 4.6, nextShot: 0, burst: 0, slowUntil: 0, stunUntil: 0, trapUntil: 0, holdPos: null, lastShotAt: -99,
+      pingUntil: 0, shieldHp: 0, shieldUntil: 0, shieldMesh: null, deadAt: -99, revivedOnce: false, lastDamageAt: -99, lastMoveAt: -99 });
   });
   const defs = [
-    { name: 'Địch A1', lanePts: GUARDS.A, pos: new THREE.Vector3(40, 0, -28) },
-    { name: 'Địch A2', lanePts: GUARDS.A, pos: new THREE.Vector3(27, 0, -30) },
-    { name: 'Địch B1', lanePts: GUARDS.B, pos: new THREE.Vector3(40, 0, 28) },
-    { name: 'Địch B2', lanePts: GUARDS.B, pos: new THREE.Vector3(27, 0, 30) },
-    { name: 'Địch Mid', lanePts: GUARDS.MID, pos: new THREE.Vector3(30, 0, 4) }
+    { name: 'Địch · FLARE', color: 0xff6b2e, lanePts: GUARDS.A, pos: new THREE.Vector3(40, 0, -28) },
+    { name: 'Địch · PRISM', color: 0x7de8ff, lanePts: GUARDS.A, pos: new THREE.Vector3(27, 0, -30) },
+    { name: 'Địch · BASTION', color: 0xffc44d, lanePts: GUARDS.B, pos: new THREE.Vector3(40, 0, 28) },
+    { name: 'Địch · WHISPER', color: 0xc792ff, lanePts: GUARDS.B, pos: new THREE.Vector3(27, 0, 30) },
+    { name: 'Địch · TETHER', color: 0x4dffb8, lanePts: GUARDS.MID, pos: new THREE.Vector3(30, 0, 4) }
   ];
   defs.forEach((d, i) => {
-    const mesh = botMesh('enemy');
+    const mesh = botMesh('enemy', d.color);
     mesh.position.copy(d.pos); scene.add(mesh);
     bots.push({ team: 'enemy', name: d.name, mesh, pos: d.pos.clone(), hp: 100, alive: true,
-      lanePts: d.lanePts, wp: i % d.lanePts.length, speed: 4.1, nextShot: 0, burst: 0, slowUntil: 0, stunUntil: 0, holdPos: null, lastShotAt: -99 });
+      lanePts: d.lanePts, wp: i % d.lanePts.length, speed: 4.1, nextShot: 0, burst: 0, slowUntil: 0, stunUntil: 0, trapUntil: 0, holdPos: null, lastShotAt: -99,
+      pingUntil: 0, shieldHp: 0, shieldUntil: 0, shieldMesh: null, deadAt: -99, revivedOnce: false, lastDamageAt: -99, lastMoveAt: -99 });
   });
 }
 
@@ -540,32 +574,63 @@ function damagePlayer(amount) {
   if (player.dead || G.phase === 'menu' || G.phase === 'matchend') return;
   if (nowS() < player.domeUntil) { flashHitmarker(false, true); return; }
   let dmg = amount;
-  if (player.armor > 0) { const absorbed = dmg * 0.5; player.armor = Math.max(0, player.armor - absorbed * 1.6); dmg -= absorbed; }
-  if (player.opKey === 'AEGIS') dmg *= 0.88;
+  if (player.reviveChannel) { player.reviveChannel = null; announce('', 'Hồi sinh bị ngắt vì nhận sát thương'); }
+  if (nowS() < player.bioShieldUntil && player.bioShield > 0) { const ab = Math.min(player.bioShield, dmg); player.bioShield -= ab; dmg -= ab; }
+  if (dmg > 0 && player.armor > 0) { const absorbed = dmg * 0.5; player.armor = Math.max(0, player.armor - absorbed * 1.6); dmg -= absorbed; }
+  if (dmg > 0 && player.opKey === 'BASTION') { // Gia Cố: đứng sát công trình của mình giảm 15% sát thương
+    for (const fx of effects) if (fx.kind === 'struct' && hDist(player.pos, fx.mesh.position) < 2.6) { dmg *= 0.85; break; }
+  }
+  if (dmg <= 0) { flashHitmarker(false, true); return; }
   player.hp -= dmg;
   const dv = document.getElementById('dmg-vignette'); dv.style.opacity = 0.9; setTimeout(() => dv.style.opacity = 0, 130);
   if (player.hp <= 0) { player.hp = 0; onPlayerDeath(); }
 }
 function damageBot(bot, amount, attackerName, isHead) {
   if (!bot.alive) return;
+  bot.lastDamageAt = nowS();
+  // Khiên Sinh Học của AEGIS hấp thụ sát thương trước
+  if (bot.shieldHp > 0 && nowS() < (bot.shieldUntil || 0)) {
+    const ab = Math.min(bot.shieldHp, amount); bot.shieldHp -= ab; amount -= ab;
+    if (bot.shieldHp <= 0) detachShieldMesh(bot);
+    if (amount <= 0) { bot.flashUntil = nowS() + 0.09; return; }
+  }
+  // Xiềng Xích của TETHER: 30% damage chia sang kẻ bị xích cùng (tổng chia tối đa 40 HP)
+  let chainOther = null, chainShare = 0;
+  for (const fx of effects) {
+    if (fx.kind === 'chain' && nowS() < fx.until && (fx.a === bot || fx.b === bot)) {
+      const other = fx.a === bot ? fx.b : fx.a;
+      if (other.alive) { chainShare = Math.min(amount * 0.3, 40 - (fx.shared || 0)); if (chainShare > 0) { chainOther = other; fx.shared = (fx.shared || 0) + chainShare; } }
+      break;
+    }
+  }
   bot.hp -= amount;
   bot.flashUntil = nowS() + 0.09;
+  if (chainOther) {
+    chainOther.hp -= chainShare; chainOther.lastDamageAt = nowS(); chainOther.flashUntil = nowS() + 0.09;
+    if (chainOther.hp <= 0) killBot(chainOther, attackerName, false);
+  }
   if (bot.hp <= 0) killBot(bot, attackerName, isHead);
 }
 function killBot(bot, attackerName, isHead) {
-  bot.alive = false; bot.hp = 0;
+  bot.alive = false; bot.hp = 0; bot.deadAt = nowS();
+  if (bot.shieldMesh) detachShieldMesh(bot);
   // simple ragdoll: fall over
   bot.mesh.rotation.z = Math.PI / 2 * (Math.random() > 0.5 ? 1 : -1);
   bot.mesh.position.y = 0.25;
   addKillfeed(attackerName, bot.name, bot.team !== 'enemy', isHead);
   if (attackerName === 'Bạn' && bot.team === 'enemy') {
     player.money += 300; player.energy = Math.min(100, player.energy + 25);
+    if (player.opKey === 'DRIFT' && nowS() < player.driftUltUntil) { // Vô Ảnh: kill hồi 1 charge Q + tàng hình 2s
+      player.qCharges = Math.min(2, player.qCharges + 1);
+      player.invisibleUntil = Math.max(player.invisibleUntil, nowS() + 2);
+    }
   }
   checkRoundEndCombat();
 }
 function onPlayerDeath() {
   player.dead = true;
-  addKillfeed('Địch', 'Bạn', false, false);
+  const killer = bots.find(b => b.team === 'enemy' && b.alive);
+  addKillfeed(killer ? killer.name : 'Địch', 'Bạn', false, false);
   announce('BẠN ĐÃ GỤC', G.phase === 'planted' ? 'Bomb đã đặt — đồng đội và quả bomb vẫn còn cơ hội…' : '');
   if (G.phase === 'live' || G.phase === 'buy') endRound(false, 'Bạn bị hạ trước khi đặt bomb');
   // if planted: round continues — bomb may still explode (defuse race)
@@ -580,9 +645,10 @@ function checkRoundEndCombat() {
 function botTargetFor(b) {
   // returns {type:'player'|'bot'|'decoy', pos, bot?, firePos} — nearest visible opponent
   const myEye = eyeOf(b.pos);
+  if (zoneAt(b.pos, 'deadzone')) return null; // Vùng Chết Sóng của NULL: hệ thống bám mục tiêu bị tê liệt
   const candidates = [];
   if (b.team === 'enemy') {
-    if (!player.dead && nowS() > player.invisibleUntil && (G.phase !== 'menu'))
+    if (!player.dead && nowS() > player.invisibleUntil && (G.phase !== 'menu') && !(zoneAt(player.pos, 'silence') && b.pos.distanceTo(player.pos) >= 8))
       candidates.push({ type: 'player', pos: player.pos, firePos: new THREE.Vector3(player.pos.x, 1.1, player.pos.z) });
     if (decoy && nowS() < decoy.until && decoy.hp > 0)
       candidates.push({ type: 'decoy', pos: decoy.pos, firePos: new THREE.Vector3(decoy.pos.x, 1.1, decoy.pos.z) });
@@ -659,7 +725,8 @@ function moveBotToward(b, dest, dt) {
   const dir = new THREE.Vector3(dest.x - b.pos.x, 0, dest.z - b.pos.z);
   const d = dir.length(); if (d < 0.25) return;
   dir.normalize();
-  const sp = b.speed * (nowS() < (b.slowUntil || 0) ? 0.45 : 1);
+  const sp = b.speed * (nowS() < (b.trapUntil || 0) ? 0.3 : nowS() < (b.slowUntil || 0) ? 0.45 : 1);
+  b.lastMoveAt = nowS();
   collideMove(b.pos, 0.55, dir.x * sp * dt, dir.z * sp * dt);
   b.mesh.position.copy(b.pos);
   b.mesh.lookAt(b.pos.x + dir.x, 0, b.pos.z + dir.z);
@@ -675,10 +742,15 @@ function botShoot(b, found) {
   const dist = found.dist;
   let hitChance = THREE.MathUtils.clamp(0.52 - dist * 0.008, 0.12, 0.5);
   if (fp.type === 'player' && playerSprinting()) hitChance *= 0.7;
+  if (fp.type === 'player') {
+    if (player.opKey === 'PRISM' && player.stillTime > 1.5) hitChance *= 0.5; // Giác Quan Quang Học (bản rút gọn)
+    if (player.opKey === 'DRIFT' && !playerSprinting()) hitChance *= 0.85;   // Bước Nhẹ
+    if (player.opKey === 'NULL' && dist < 10) hitChance *= 0.85;              // Chống Nhiễu
+  }
   if (Math.random() > hitChance) return; // miss
   if (fp.type === 'player') damagePlayer(b.team === 'enemy' ? 8 + Math.random() * 6 : 6);
   else if (fp.type === 'decoy') { decoy.hp -= 18; if (decoy.hp <= 0) destroyDecoy(); }
-  else if (fp.bot) damageBot(fp.bot, 13 + Math.random() * 10, b.team === 'enemy' ? 'Địch' : b.name, false);
+  else if (fp.bot) damageBot(fp.bot, 13 + Math.random() * 10, b.name, false);
 }
 
 // ---------------- PLAYER COMBAT ----------------
@@ -705,6 +777,18 @@ function tryShoot() {
   dir.normalize();
   const maxD = wallDistance(origin, dir);
   const hit = rayHitBot(origin, dir, ['enemy'], maxD);
+  const bh = firstBlockerHit(origin, dir, maxD + 1);
+  const sfx = bh ? effects.find(fx => fx.mesh === bh.object && (fx.kind === 'struct' || fx.kind === 'fortress')) : null;
+  if (sfx && (!hit || bh.distance < hit.dist)) {
+    // Đạn trúng công trình có HP (tường gương / chốt chặn / pháo đài) gần hơn bot → công trình ăn đạn
+    const endS = origin.clone().add(dir.clone().multiplyScalar(bh.distance));
+    tracer(origin.clone().add(new THREE.Vector3(0, -0.12, 0)), endS, 0xffe28a);
+    flashHitmarker(false, false); AudioSys.hit(false);
+    damageStructure(sfx, w.dmg);
+    if (player.ammo[player.weapon] === 0) startReload();
+    updateAmmoHUD();
+    return;
+  }
   const end = origin.clone().add(dir.clone().multiplyScalar(hit ? hit.dist : Math.min(maxD, 90)));
   tracer(origin.clone().add(new THREE.Vector3(0, -0.12, 0)), end, 0xffe28a);
   if (hit) {
@@ -722,7 +806,7 @@ function startReload() {
   if (player.ammo[player.weapon] >= w.mag || nowS() < player.reloadingUntil) return;
   const need = w.mag - player.ammo[player.weapon];
   if (player.reserve[player.weapon] <= 0) return;
-  let dur = w.reload; if (player.opKey === 'ORACLE') dur *= 0.65;
+  let dur = w.reload; if (isInFortress(player.pos)) dur *= 0.8; // Pháo Đài của BASTION: +20% tốc độ nạp khi ở trong vùng
   player.reloadingUntil = nowS() + dur;
   AudioSys.reload();
   setTimeout(() => {
@@ -745,71 +829,328 @@ function spendAbility(kind) {
 }
 // Yaw convention: camera rotation order YXZ; forward on XZ = (-sin yaw, -cos yaw)
 function dirXZ() { return new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw)).normalize(); }
-function castQ() {
-  if (player.dead || !['live', 'planted'].includes(G.phase) || !spendAbility('q')) return;
-  const f = dirXZ();
-  if (player.opKey === 'PHANTOM') { // Blink 6m
-    for (let d = 6; d >= 1; d -= 0.5) {
-      const nx = player.pos.x + f.x * d, nz = player.pos.z + f.z * d;
-      if (!pointInCollider(nx, nz, 0.6)) { player.pos.x = nx; player.pos.z = nz; break; }
+function hDist(a, b) { return Math.hypot(a.x - b.x, a.z - b.z); }
+function fxCenter(fx) { return fx.center || fx.mesh.position; }
+function destroyFx(fx) {
+  scene.remove(fx.mesh);
+  if (fx.col) removeCollider(fx.col);
+  if (fx.inBlockers) { const i = blockers.indexOf(fx.mesh); if (i >= 0) blockers.splice(i, 1); }
+}
+function killFx(fx) { const i = effects.indexOf(fx); if (i >= 0) effects.splice(i, 1); destroyFx(fx); }
+function zoneAt(pos, kind) {
+  for (const fx of effects) if (fx.kind === kind && nowS() < fx.until && hDist(pos, fxCenter(fx)) < fx.radius) return fx;
+  return null;
+}
+function isInFortress(pos) { return !!zoneAt(pos, 'fortress'); }
+// Di chuyển từng bước nhỏ có kiểm tra va chạm (dash / blink / grapple) — trả về quãng đường thật đi được
+function stepMove(pos, radius, dir, maxDist, step) {
+  let moved = 0; step = step || 0.4;
+  while (moved < maxDist) {
+    const s = Math.min(step, maxDist - moved);
+    const bx = pos.x, bz = pos.z;
+    collideMove(pos, radius, dir.x * s, dir.z * s);
+    const d = Math.hypot(pos.x - bx, pos.z - bz);
+    moved += d;
+    if (d < s * 0.5) break;
+  }
+  return moved;
+}
+function createSmoke(center, radius, dur, opts) {
+  opts = opts || {};
+  const mat = new THREE.MeshStandardMaterial({ color: 0x9fb4cc, transparent: true, opacity: 0.55, roughness: 1, depthWrite: false });
+  const m = opts.box ? new THREE.Mesh(new THREE.BoxGeometry(4, 2.5, 1.2), mat)
+                     : new THREE.Mesh(new THREE.SphereGeometry(radius, 18, 14), mat);
+  m.position.copy(center);
+  if (opts.yaw !== undefined) m.rotation.y = opts.yaw;
+  scene.add(m);
+  const fx = { kind: 'smoke', mesh: m, radius, until: nowS() + dur };
+  if (opts.vel) { fx.vel = opts.vel; fx.slideUntil = nowS() + (opts.slideFor || 3); }
+  effects.push(fx);
+  return fx;
+}
+// Công trình có HP: collider + chắn raycast (trừ khi noCollide), bị phá bằng đạn qua damageStructure
+function createStructure(cx, cz, sx, sz, h, colorHex, hp, dur, opts) {
+  opts = opts || {};
+  const col = addBox(cx, cz, sx, sz, h, colorHex, { transparent: true, opacity: opts.opacity !== undefined ? opts.opacity : 0.45,
+    emissive: colorHex, emissiveIntensity: 0.7, noCollide: !!opts.noCollide });
+  const fx = { kind: 'struct', mesh: col.mesh, col, hp, maxHp: hp, until: nowS() + dur, structType: opts.structType || 'generic' };
+  effects.push(fx);
+  return fx;
+}
+function damageStructure(fx, dmg) {
+  fx.hp -= dmg;
+  spawnRingFx(fx.mesh.position, 0xffffff);
+  if (fx.hp <= 0) { announce('', 'Một công trình đã bị phá hủy'); killFx(fx); }
+}
+function firstBlockerHit(origin, dir, far) {
+  raycaster.set(origin, dir); raycaster.far = far || 200;
+  const hits = raycaster.intersectObjects(blockers, false);
+  return hits.length ? hits[0] : null;
+}
+// Q/E bị chặn khi: Sập Nguồn của NULL đang khóa toàn cục, hoặc bản thân đứng trong Vùng Chết Sóng
+function qeBlocked() {
+  if (nowS() < G.qeLockUntil) { announce('', '⚡ Q/E đang bị khóa bởi Sập Nguồn (' + Math.ceil(G.qeLockUntil - nowS()) + 's)'); return true; }
+  if (zoneAt(player.pos, 'deadzone')) { announce('', '⚡ Bạn đang đứng trong Vùng Chết Sóng — không dùng được Q/E'); return true; }
+  return false;
+}
+// EMP của NULL: phá vùng hiệu ứng + trừ 300 HP công trình trong bán kính (fullDestroy = phá hẳn, dùng cho ult)
+function empPulse(radius, localOnly, fullDestroy) {
+  let broken = 0;
+  for (let i = effects.length - 1; i >= 0; i--) {
+    const fx = effects[i];
+    const inRange = !localOnly || hDist(player.pos, fxCenter(fx)) <= radius;
+    if (!inRange) continue;
+    if (['smoke', 'firezone', 'anchor', 'trap', 'silence', 'deadzone', 'chorus', 'aura'].includes(fx.kind)) { killFx(fx); broken++; }
+    else if (fx.kind === 'struct' || fx.kind === 'fortress') {
+      if (fullDestroy) { killFx(fx); broken++; }
+      else { fx.hp -= 300; broken++; if (fx.hp <= 0) killFx(fx); }
     }
-    spawnRingFx(player.pos, 0x9d6bff);
-  } else if (player.opKey === 'VOLT') { // Shock dart
+  }
+  return broken;
+}
+function attachShieldMesh(b) {
+  detachShieldMesh(b);
+  const m = new THREE.Mesh(new THREE.SphereGeometry(1.05, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0x3effa0, transparent: true, opacity: 0.22, depthWrite: false }));
+  m.position.y = 1.05; b.mesh.add(m); b.shieldMesh = m;
+}
+function detachShieldMesh(b) { if (b.shieldMesh) { b.mesh.remove(b.shieldMesh); b.shieldMesh = null; } }
+
+function castQ() {
+  if (player.dead || !['live', 'planted'].includes(G.phase)) return;
+  if (qeBlocked()) return;
+  const f = dirXZ(); const t = nowS();
+  if (player.opKey === 'DRIFT') { castDriftQ(f); return; } // DRIFT Q dùng hệ charge riêng
+  if (!spendAbility('q')) return;
+  if (player.opKey === 'FLARE') { // Lướt Tàn Lửa: lướt 6m + vệt lửa 3s
+    const start = player.pos.clone();
+    const moved = stepMove(player.pos, 0.6, f, 6, 0.4);
+    const end = player.pos.clone();
+    for (let d = 1.5; d <= moved + 0.01; d += 1.5) {
+      const p = start.clone().lerp(end, moved > 0.01 ? d / moved : 0);
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 0.35, 16),
+        new THREE.MeshStandardMaterial({ color: 0xff6b2e, emissive: 0xff4400, emissiveIntensity: 1.1, transparent: true, opacity: 0.75 }));
+      m.position.set(p.x, 0.18, p.z); scene.add(m);
+      effects.push({ kind: 'firezone', mesh: m, radius: 1.45, until: t + 3, _acc: 0 });
+    }
+    spawnRingFx(player.pos, 0xff6b2e);
+  } else if (player.opKey === 'PRISM') { // Tường Gương: HP 250, 12s, chặn đạn/LOS, không chặn người
+    const px = player.pos.x + f.x * 2.6, pz = player.pos.z + f.z * 2.6;
+    createStructure(px, pz, Math.abs(f.z) > 0.7 ? 6 : 0.35, Math.abs(f.x) > 0.7 ? 6 : 0.35, 2.5, 0x7de8ff, 250, 12,
+      { noCollide: true, structType: 'mirror' });
+    announce('', 'Tường Gương dựng lên — chặn đạn & tầm nhìn, người đi xuyên được');
+  } else if (player.opKey === 'BASTION') { // Chốt Chặn Cứng: HP 400, tối đa 2 khối
+    const mine = effects.filter(fx => fx.kind === 'struct' && fx.structType === 'block');
+    if (mine.length >= 2) killFx(mine[0]);
+    const px = player.pos.x + f.x * 2.2, pz = player.pos.z + f.z * 2.2;
+    createStructure(px, pz, Math.abs(f.z) > 0.7 ? 1.8 : 0.4, Math.abs(f.x) > 0.7 ? 1.8 : 0.4, 1.9, 0xffc44d, 400, 999,
+      { structType: 'block', opacity: 0.85 });
+  } else if (player.opKey === 'WHISPER') { // Xung Quét Âm: nón 120°, 22m, cần LOS
+    let n = 0;
+    for (const b of bots) {
+      if (b.team !== 'enemy' || !b.alive || hDist(player.pos, b.pos) > 22) continue;
+      const dir = new THREE.Vector3(b.pos.x - player.pos.x, 0, b.pos.z - player.pos.z).normalize();
+      if (dir.dot(f) < 0.5) continue;
+      if (!hasLOS(eyeOf(player.pos), eyeOf(b.pos))) continue;
+      b.pingUntil = t + 3; n++; // ping hiển thị qua minimap ~2 nhịp trong 3s
+    }
+    spawnRingFx(player.pos, 0xc792ff);
+    announce('', 'Xung Quét Âm — ping ' + n + ' địch lên minimap');
+  } else if (player.opKey === 'TETHER') { // Dây Neo Kéo
     const origin = camera.position.clone(); const dir = cameraDir();
     const maxD = wallDistance(origin, dir);
-    const hit = rayHitBot(origin, dir, ['enemy'], maxD);
-    tracer(origin, origin.clone().add(dir.clone().multiplyScalar(hit ? hit.dist : Math.min(maxD, 60))), 0xffe93e);
-    if (hit) { hit.bot.slowUntil = nowS() + 4; damageBot(hit.bot, 20, 'Bạn', false); announce('', hit.bot.name + ' bị giật điện — chậm 55% trong 4s'); }
-  } else if (player.opKey === 'AEGIS') { // Energy shield in front
-    const px = player.pos.x + f.x * 2.4, pz = player.pos.z + f.z * 2.4;
-    const col = addBox(px, pz, Math.abs(f.z) > 0.7 ? 3.4 : 0.5, Math.abs(f.x) > 0.7 ? 3.4 : 0.5, 2.6, 0x41d9ff,
-      { transparent: true, opacity: 0.4, emissive: 0x41d9ff, emissiveIntensity: 0.9 });
-    effects.push({ kind: 'temp', mesh: col.mesh, col, until: nowS() + 8 });
-  } else if (player.opKey === 'ORACLE') { // Scan pulse
-    G.revealUntil = nowS() + 6; spawnRingFx(player.pos, 0x51ff9e);
-    announce('', 'Đã quét — vị trí địch hiện trên minimap 6s');
+    const hit = rayHitBot(origin, dir, ['enemy', 'ally'], Math.min(maxD, 18));
+    if (hit) {
+      const b = hit.bot;
+      const toPlayer = new THREE.Vector3(player.pos.x - b.pos.x, 0, player.pos.z - b.pos.z);
+      const dist = toPlayer.length(); toPlayer.normalize();
+      if (b.team === 'enemy') { stepMove(b.pos, 0.55, toPlayer, 3, 0.3); b.slowUntil = t + 1.5; announce('', 'Dây Neo kéo ' + b.name + ' lại gần + làm chậm'); }
+      else { stepMove(b.pos, 0.55, toPlayer, dist * 0.7, 0.3); announce('', 'Dây Neo kéo ' + b.name + ' về phía bạn'); }
+      b.mesh.position.copy(b.pos);
+      tracer(new THREE.Vector3(player.pos.x, 1.4, player.pos.z), new THREE.Vector3(b.pos.x, 1.2, b.pos.z), 0x4dffb8);
+    } else if (maxD <= 18) { // trúng tường → grapple tự kéo mình 5m
+      stepMove(player.pos, 0.6, f, 5, 0.4);
+      spawnRingFx(player.pos, 0x4dffb8);
+      announce('', 'Grapple — Dây Neo kéo bạn về phía trước');
+    } else { // trượt hoàn toàn → chỉ tốn nửa cooldown (doc 4.2)
+      player.qCd = t + op().q.cd / 2;
+      announce('', 'Dây Neo trượt — chỉ tốn nửa hồi chiêu');
+    }
+  } else if (player.opKey === 'NULL') { // Xung EMP Cục Bộ 7m
+    const broken = empPulse(7, true, false);
+    for (const b of bots) if (b.team === 'enemy' && b.alive && hDist(player.pos, b.pos) <= 7) damageBot(b, 5, 'EMP', false);
+    spawnRingFx(player.pos, 0xff4d6d);
+    announce('', 'Xung EMP — phá ' + broken + ' công trình/vùng trong 7m');
+  } else if (player.opKey === 'AEGIS') { // Hào Quang Hồi Phục: vùng 5m bám theo người, 6s
+    const m = new THREE.Mesh(new THREE.CircleGeometry(5, 28),
+      new THREE.MeshBasicMaterial({ color: 0x3effa0, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; m.position.set(player.pos.x, 0.12, player.pos.z); scene.add(m);
+    effects.push({ kind: 'aura', mesh: m, radius: 5, until: t + 6, heals: {} });
+    spawnRingFx(player.pos, 0x3effa0);
   }
+}
+// DRIFT Q — Dịch Khói Ngắn: 2 charge, mỗi charge hồi sau cd, 2 lần liên tiếp cách nhau ≥5s
+function castDriftQ(f) {
+  const t = nowS(); const a = op().q;
+  if (player.qCharges <= 0) { announce('', 'Dịch Khói Ngắn — hết charge, chờ hồi'); return; }
+  if (t - player.lastQUse < 5) { announce('', 'Dịch Khói Ngắn — hai lần dùng phải cách nhau ≥5s'); return; }
+  if (player.energy < a.cost) { announce('', 'Chưa đủ năng lượng cho ' + a.name + ' (' + a.cost + ')'); return; }
+  player.energy -= a.cost; player.lastQUse = t; player.qCharges--;
+  if (player.qCharges < 2 && !player.qRegenAt) player.qRegenAt = t + a.cd;
+  player.qCd = player.qCharges > 0 ? t : player.qRegenAt;
+  AudioSys.ability();
+  createSmoke(new THREE.Vector3(player.pos.x, 1.1, player.pos.z), 1, 2);
+  stepMove(player.pos, 0.6, f, 5, 0.35);
+  createSmoke(new THREE.Vector3(player.pos.x, 1.1, player.pos.z), 1, 2);
+  spawnRingFx(player.pos, 0xa8c6ff);
 }
 function castE() {
-  if (player.dead || !['live', 'planted'].includes(G.phase) || !spendAbility('e')) return;
-  const f = dirXZ();
-  if (player.opKey === 'PHANTOM') { // Smoke
-    const c = new THREE.Vector3(player.pos.x + f.x * 7, 1.6, player.pos.z + f.z * 7);
-    const m = new THREE.Mesh(new THREE.SphereGeometry(4, 18, 14),
-      new THREE.MeshStandardMaterial({ color: 0x9fb4cc, transparent: true, opacity: 0.55, roughness: 1, depthWrite: false }));
-    m.position.copy(c); scene.add(m);
-    effects.push({ kind: 'smoke', mesh: m, radius: 4, until: nowS() + 8 });
-  } else if (player.opKey === 'VOLT') { // Electric wall
-    const px = player.pos.x + f.x * 3, pz = player.pos.z + f.z * 3;
-    const col = addBox(px, pz, Math.abs(f.z) > 0.7 ? 4 : 0.5, Math.abs(f.x) > 0.7 ? 4 : 0.5, 3, 0xffd23e,
-      { transparent: true, opacity: 0.35, emissive: 0xffd23e, emissiveIntensity: 1.2 });
-    effects.push({ kind: 'elecwall', mesh: col.mesh, col, until: nowS() + 10 });
-  } else if (player.opKey === 'AEGIS') { // Heal pulse
-    player.hp = Math.min(100, player.hp + 40); spawnRingFx(player.pos, 0x51ff9e);
-  } else if (player.opKey === 'ORACLE') { // Decoy
+  if (player.dead || !['live', 'planted'].includes(G.phase)) return;
+  if (qeBlocked()) return;
+  if (!spendAbility('e')) return;
+  const f = dirXZ(); const t = nowS();
+  if (player.opKey === 'FLARE') { // Bom Chói Nhiệt: choáng địch trong nón 12m có LOS
+    let n = 0;
+    for (const b of bots) {
+      if (b.team !== 'enemy' || !b.alive || hDist(player.pos, b.pos) > 12) continue;
+      const dir = new THREE.Vector3(b.pos.x - player.pos.x, 0, b.pos.z - player.pos.z).normalize();
+      if (dir.dot(f) < 0.5) continue;
+      if (!hasLOS(eyeOf(player.pos), eyeOf(b.pos))) continue;
+      b.stunUntil = t + 1.4; n++;
+    }
+    fxVignette(0.85); AudioSys.beep(1600, 0.15);
+    announce('', 'Bom Chói Nhiệt — làm choáng ' + n + ' địch');
+  } else if (player.opKey === 'PRISM') { // Lăng Kính Đánh Lạc: hologram chạy thẳng, vỡ sau 1 hit
     if (decoy) destroyDecoy();
-    const pos = new THREE.Vector3(player.pos.x + f.x * 4, 0, player.pos.z + f.z * 4);
-    const mesh = botMesh('ally', 0x51ff9e); mesh.position.copy(pos); scene.add(mesh);
-    decoy = { pos, hp: 30, until: nowS() + 6, mesh };
+    const pos = new THREE.Vector3(player.pos.x + f.x * 3, 0, player.pos.z + f.z * 3);
+    const mesh = botMesh('ally', 0x7de8ff); mesh.position.copy(pos); scene.add(mesh);
+    decoy = { pos, hp: 18, until: t + 6, mesh, vel: f.clone().multiplyScalar(3), slideUntil: t + 4 };
+    announce('', 'Hologram giả đã chạy ra — địch sẽ ưu tiên bắn nó');
+  } else if (player.opKey === 'BASTION') { // Bẫy Trọng Trường Nhẹ: bẫy sàn 4m, kích hoạt 1 lần
+    const c = new THREE.Vector3(player.pos.x + f.x * 4, 0, player.pos.z + f.z * 4);
+    const m = new THREE.Mesh(new THREE.RingGeometry(3.5, 4, 28),
+      new THREE.MeshBasicMaterial({ color: 0xffc44d, transparent: true, opacity: 0.85, side: THREE.DoubleSide }));
+    m.rotation.x = -Math.PI / 2; m.position.set(c.x, 0.07, c.z); scene.add(m);
+    effects.push({ kind: 'trap', mesh: m, center: c.clone(), radius: 4, until: t + 120 });
+    announce('', 'Đã đặt Bẫy Trọng Trường');
+  } else if (player.opKey === 'WHISPER') { // Vùng Câm Lặng 6m, 8s
+    const c = new THREE.Vector3(player.pos.x + f.x * 5, 1.6, player.pos.z + f.z * 5);
+    const m = new THREE.Mesh(new THREE.SphereGeometry(6, 20, 14),
+      new THREE.MeshStandardMaterial({ color: 0xc792ff, transparent: true, opacity: 0.13, roughness: 1, depthWrite: false }));
+    m.position.copy(c); scene.add(m);
+    effects.push({ kind: 'silence', mesh: m, radius: 6, until: t + 8 });
+    announce('', 'Vùng Câm Lặng — đứng trong vùng để địch khó phát hiện bạn');
+  } else if (player.opKey === 'TETHER') { // Mỏ Neo Trọng Lực: hút bot về tâm 5s
+    const c = new THREE.Vector3(player.pos.x + f.x * 6, 0.9, player.pos.z + f.z * 6);
+    const m = new THREE.Mesh(new THREE.SphereGeometry(5, 18, 12),
+      new THREE.MeshBasicMaterial({ color: 0x4dffb8, wireframe: true, transparent: true, opacity: 0.25 }));
+    m.position.copy(c); scene.add(m);
+    effects.push({ kind: 'anchor', mesh: m, center: c.clone(), radius: 5, until: t + 5 });
+  } else if (player.opKey === 'NULL') { // Vùng Chết Sóng: trụ 4m, 10s
+    const c = new THREE.Vector3(player.pos.x + f.x * 5, 1.5, player.pos.z + f.z * 5);
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 3, 24, 1, true),
+      new THREE.MeshStandardMaterial({ color: 0xff4d6d, emissive: 0xff4d6d, emissiveIntensity: 0.7, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }));
+    m.position.copy(c); scene.add(m);
+    effects.push({ kind: 'deadzone', mesh: m, radius: 4, until: t + 10 });
+    announce('', 'Vùng Chết Sóng kích hoạt — Q/E bị khóa với bất kỳ ai đứng trong vùng');
+  } else if (player.opKey === 'AEGIS') { // Khiên Sinh Học: đồng đội gần nhất ≤12m, không có thì bản thân
+    let target = null, best = 12;
+    for (const b of bots) if (b.team === 'ally' && b.alive) { const d = hDist(player.pos, b.pos); if (d < best) { best = d; target = b; } }
+    if (target) {
+      target.shieldHp = 35; target.shieldUntil = t + 8; attachShieldMesh(target);
+      spawnRingFx(target.pos, 0x3effa0);
+      announce('', 'Khiên Sinh Học cho ' + target.name + ' (35 HP, 8s)');
+    } else {
+      player.bioShield = 35; player.bioShieldUntil = t + 8;
+      spawnRingFx(player.pos, 0x3effa0);
+      announce('', 'Khiên Sinh Học cho bản thân (35 HP, 8s)');
+    }
+  } else if (player.opKey === 'DRIFT') { // Màn Khói Động: khói hộp trượt 3s rồi đứng yên, tổng 10s
+    const c = new THREE.Vector3(player.pos.x + f.x * 4, 1.25, player.pos.z + f.z * 4);
+    createSmoke(c, 2.3, 10, { box: true, yaw: player.yaw, vel: f.clone(), slideFor: 3 });
   }
 }
-function castX() {
-  if (player.dead || !['live', 'planted'].includes(G.phase) || !spendAbility('x')) return;
-  if (player.opKey === 'PHANTOM') { player.invisibleUntil = nowS() + 6; fxVignette(0.55); }
-  else if (player.opKey === 'VOLT') { // Lightning storm AoE
-    let hits = 0;
-    for (const b of bots) {
-      if (b.team !== 'enemy' || !b.alive) continue;
-      if (b.pos.distanceTo(player.pos) <= 13) {
-        const top = new THREE.Vector3(b.pos.x, 14, b.pos.z), botP = new THREE.Vector3(b.pos.x, 1.4, b.pos.z);
-        tracer(top, botP, 0xfff27a); tracer(top.clone().add(new THREE.Vector3(1, 0, 0)), botP, 0xffd23e);
-        b.stunUntil = nowS() + 2; damageBot(b, 55, 'Bạn', false); hits++;
-      }
-    }
-    G.shake = 0.5; AudioSys.explosion(); announce('', 'BÃO SÉT — trúng ' + hits + ' địch');
+function findChainPair() {
+  let a = null, best = 20;
+  for (const b of bots) {
+    if (b.team !== 'enemy' || !b.alive || hDist(player.pos, b.pos) >= best) continue;
+    if (!hasLOS(eyeOf(player.pos), eyeOf(b.pos))) continue;
+    a = b; best = hDist(player.pos, b.pos);
   }
-  else if (player.opKey === 'AEGIS') { player.domeUntil = nowS() + 5; fxVignette(0.5); spawnRingFx(player.pos, 0x41d9ff); }
-  else if (player.opKey === 'ORACLE') { G.slowUntil = nowS() + 5; fxVignette(0.6); announce('', 'THỜI GIAN BỊ LÀM CHẬM — địch chỉ còn 35% tốc độ'); }
+  if (!a) return null;
+  let c = null, bd = 6;
+  for (const b of bots) {
+    if (b.team !== 'enemy' || !b.alive || b === a) continue;
+    const d = hDist(a.pos, b.pos); if (d < bd) { c = b; bd = d; }
+  }
+  return c ? { a, b: c } : null;
+}
+function castX() {
+  if (player.dead || !['live', 'planted'].includes(G.phase)) return;
+  const t = nowS(); const f = dirXZ();
+  // Kiểm tra điều kiện TRƯỚC khi trừ năng lượng cho các ult có thể bị "phí" (doc 4.2/4.4)
+  let chainPair = null, reviveTarget = null;
+  if (player.opKey === 'TETHER') {
+    chainPair = findChainPair();
+    if (!chainPair) { announce('', 'Xiềng Xích cần 1 địch trong tầm nhìn 20m có địch khác trong 6m quanh chúng'); return; }
+  }
+  if (player.opKey === 'AEGIS') {
+    for (const b of bots) if (b.team === 'ally' && !b.alive && !b.revivedOnce && hDist(player.pos, b.pos) <= 9) {
+      if (!reviveTarget || (b.deadAt || 0) > (reviveTarget.deadAt || 0)) reviveTarget = b;
+    }
+    if (!reviveTarget) { announce('', 'Hồi Sinh: không có đồng đội vừa chết trong 9m — ult không bị tốn'); return; }
+  }
+  if (!spendAbility('x')) return;
+  if (player.opKey === 'FLARE') { // Bão Nhiệt Hạch Lỏng: cầu 8m bám theo người, 6s
+    player.stormUntil = t + 6;
+    const m = new THREE.Mesh(new THREE.CircleGeometry(8, 32),
+      new THREE.MeshBasicMaterial({ color: 0xff6b2e, transparent: true, opacity: 0.15, side: THREE.DoubleSide, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; m.position.set(player.pos.x, 0.1, player.pos.z); scene.add(m);
+    effects.push({ kind: 'storm', mesh: m, until: t + 6, _acc: 0 });
+    fxVignette(0.5);
+    announce('BÃO NHIỆT HẠCH LỎNG', 'Địch trong 8m quanh bạn bị thiêu đốt và làm chậm');
+  } else if (player.opKey === 'PRISM') { // Nhà Gương: 4 tường gương thành hộp quanh điểm chỉ định
+    const cx = THREE.MathUtils.clamp(player.pos.x + f.x * 9, -48, 48);
+    const cz = THREE.MathUtils.clamp(player.pos.z + f.z * 9, -38, 38);
+    createStructure(cx, cz - 5, 10, 0.35, 2.5, 0x7de8ff, 250, 10, { noCollide: true, structType: 'mirror' });
+    createStructure(cx, cz + 5, 10, 0.35, 2.5, 0x7de8ff, 250, 10, { noCollide: true, structType: 'mirror' });
+    createStructure(cx - 5, cz, 0.35, 10, 2.5, 0x7de8ff, 250, 10, { noCollide: true, structType: 'mirror' });
+    createStructure(cx + 5, cz, 0.35, 10, 2.5, 0x7de8ff, 250, 10, { noCollide: true, structType: 'mirror' });
+    announce('NHÀ GƯƠNG', '4 tường gương (HP 250) dựng quanh điểm chỉ định trong 10s');
+  } else if (player.opKey === 'BASTION') { // Pháo Đài Cuối: trụ 5m chặn đạn 2 chiều, HP 800, 15s
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 3, 24, 1, true),
+      new THREE.MeshStandardMaterial({ color: 0xffc44d, emissive: 0xffc44d, emissiveIntensity: 0.5, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }));
+    m.position.set(player.pos.x, 1.5, player.pos.z); scene.add(m);
+    blockers.push(m);
+    effects.push({ kind: 'fortress', mesh: m, radius: 5, hp: 800, maxHp: 800, until: t + 15, inBlockers: true });
+    announce('PHÁO ĐÀI CUỐI', 'Đạn không xuyên qua pháo đài — hãy bước ra ngoài để bắn; nạp đạn trong vùng +20%');
+  } else if (player.opKey === 'WHISPER') { // Dàn Hợp Xướng Dội Âm: ping địch ≤25m mỗi 1s, 8s
+    const m = new THREE.Mesh(new THREE.RingGeometry(0.6, 1, 20),
+      new THREE.MeshBasicMaterial({ color: 0xc792ff, transparent: true, opacity: 0.7, side: THREE.DoubleSide }));
+    m.rotation.x = -Math.PI / 2; m.position.set(player.pos.x, 0.15, player.pos.z); scene.add(m);
+    effects.push({ kind: 'chorus', mesh: m, until: t + 8, _acc: 0 });
+    announce('DÀN HỢP XƯỚNG DỘI ÂM', 'Mọi tiếng động của địch trong 25m hiện lên minimap trong 8s');
+  } else if (player.opKey === 'TETHER') { // Xiềng Xích Liên Kết: 30% damage chia sẻ, tối đa 40 HP, 6s
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(chainPair.a.pos.x, 1.3, chainPair.a.pos.z),
+      new THREE.Vector3(chainPair.b.pos.x, 1.3, chainPair.b.pos.z)]);
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x4dffb8, transparent: true, opacity: 0.9 }));
+    scene.add(line);
+    effects.push({ kind: 'chain', mesh: line, a: chainPair.a, b: chainPair.b, until: t + 6, shared: 0 });
+    announce('XIỀNG XÍCH LIÊN KẾT', chainPair.a.name + ' ⇄ ' + chainPair.b.name + ' — damage chia sẻ 30%');
+  } else if (player.opKey === 'NULL') { // Sập Nguồn Toàn Cục: phá mọi công trình/vùng + khóa Q/E 4s
+    const broken = empPulse(0, false, true);
+    G.qeLockUntil = t + 4;
+    G.shake = 0.4; fxVignette(0.8); AudioSys.explosion();
+    announce('SẬP NGUỒN TOÀN CỤC', 'Đã phá ' + broken + ' công trình/vùng — Q/E của mọi người bị khóa 4s');
+  } else if (player.opKey === 'AEGIS') { // Hồi Sinh Nhịp Tim: vận sức đứng yên 2s (xử lý ở updateEffects)
+    player.reviveChannel = { bot: reviveTarget, until: t + 2 };
+    announce('ĐANG HỒI SINH ' + reviveTarget.name, 'Đứng yên 2s — di chuyển hoặc nhận sát thương sẽ ngắt');
+  } else if (player.opKey === 'DRIFT') { // Vô Ảnh: 7s, kill hồi charge Q + tàng hình 2s
+    player.driftUltUntil = t + 7;
+    fxVignette(0.6);
+    announce('VÔ ẢNH', '7s: mỗi kill làm mới 1 charge Dịch Khói và cho bạn tàng hình 2s');
+  }
 }
 function spawnRingFx(pos, color) {
   const m = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.85, 32),
@@ -849,9 +1190,12 @@ function startRound() {
   player.ammo = { rifle: WEAPONS.rifle.mag, pistol: WEAPONS.pistol.mag };
   player.reserve = { rifle: 90, pistol: 9999 };
   player.qCd = 0; player.eCd = 0; player.invisibleUntil = 0; player.domeUntil = 0; player.reloadingUntil = 0;
+  player.qCharges = 2; player.qRegenAt = 0; player.lastQUse = -99; player.heatTime = 0; player.heatStacks = 0;
+  player.bioShield = 0; player.bioShieldUntil = 0; player.stormUntil = 0; player.driftUltUntil = 0; player.reviveChannel = null;
+  G.qeLockUntil = 0;
   if (!player.ownedRifle && player.weapon === 'rifle') player.weapon = 'pistol';
   // reset world fx
-  for (const fx of effects) { scene.remove(fx.mesh); if (fx.col) removeCollider(fx.col); }
+  for (const fx of effects) destroyFx(fx);
   effects.length = 0;
   if (G.bombMesh) { scene.remove(G.bombMesh); G.bombMesh = null; }
   G.bombPos = null; G.bombSite = null; G.plantProgress = 0; G.defuseProgress = 0;
@@ -981,9 +1325,12 @@ function refreshHUD(dt) {
   $('crosshair').style.setProperty('--sp', sp + 'px');
   // status fx
   const fx = [];
-  if (nowS() < player.invisibleUntil) fx.push('👻 VÔ HÌNH ' + Math.ceil(player.invisibleUntil - nowS()) + 's');
-  if (nowS() < player.domeUntil) fx.push('🛡 VÒM BẤT TỬ ' + Math.ceil(player.domeUntil - nowS()) + 's');
-  if (nowS() < G.slowUntil) fx.push('⏳ ĐỊCH ĐANG BỊ LÀM CHẬM');
+  if (nowS() < player.invisibleUntil) fx.push('👻 TÀNG HÌNH ' + Math.ceil(player.invisibleUntil - nowS()) + 's');
+  if (nowS() < player.bioShieldUntil && player.bioShield > 0) fx.push('🛡 KHIÊN SINH HỌC ' + Math.ceil(player.bioShield) + ' HP');
+  if (nowS() < G.qeLockUntil) fx.push('⚡ Q/E BỊ KHÓA ' + Math.ceil(G.qeLockUntil - nowS()) + 's');
+  if (player.opKey === 'FLARE' && player.heatStacks > 0) fx.push('🔥 NHIỆT x' + player.heatStacks);
+  if (player.opKey === 'DRIFT' && nowS() < player.driftUltUntil) fx.push('🌫 VÔ ẢNH ' + Math.ceil(player.driftUltUntil - nowS()) + 's');
+  if (player.reviveChannel) fx.push('❤ ĐANG HỒI SINH — ĐỨNG YÊN');
   if (nowS() < player.reloadingUntil) fx.push('⟳ ĐANG NẠP ĐẠN…');
   const site = (G.phase === 'live' && !player.dead) ? siteAt(player.pos) : null;
   if (site) fx.push('📍 SITE ' + site.name + ' — giữ F để đặt bomb');
@@ -1000,7 +1347,8 @@ function refreshHUD(dt) {
       mask.style.height = '0%';
     } else {
       el.classList.remove('ready');
-      cdEl.textContent = remain > 0 ? 'hồi chiêu ' + remain.toFixed(1) + 's' : ('tốn ' + a.cost + ' NL — sẵn sàng');
+      if (kind === 'q' && player.opKey === 'DRIFT') cdEl.textContent = '🔋 ' + player.qCharges + '/2 charge' + (player.qCharges < 2 && remain > 0 ? ' · hồi charge ' + remain.toFixed(0) + 's' : '');
+      else cdEl.textContent = remain > 0 ? 'hồi chiêu ' + remain.toFixed(1) + 's' : ('tốn ' + a.cost + ' NL — sẵn sàng');
       mask.style.height = (remain > 0 ? Math.min(100, remain / a.cd * 100) : 0) + '%';
     }
   });
@@ -1030,7 +1378,8 @@ function drawMinimap() {
     if (!b.alive) continue;
     if (b.team === 'ally') { mm.fillStyle = '#41d9ff'; mm.beginPath(); mm.arc(sx(b.pos.x), sz(b.pos.z), 3, 0, 7); mm.fill(); }
     else {
-      const revealed = nowS() < G.revealUntil || b.pos.distanceTo(player.pos) < 13 || nowS() - b.lastShotAt < 3;
+      const revealed = nowS() < G.revealUntil || nowS() < (b.pingUntil || 0) || b.pos.distanceTo(player.pos) < 13 || nowS() - b.lastShotAt < 3
+        || (player.opKey === 'WHISPER' && b.pos.distanceTo(player.pos) < 15 && nowS() - (b.lastMoveAt || -99) < 0.4);
       if (revealed) { mm.fillStyle = '#ff5d5d'; mm.beginPath(); mm.arc(sx(b.pos.x), sz(b.pos.z), 3.4, 0, 7); mm.fill(); }
     }
   }
@@ -1081,14 +1430,26 @@ function updatePlayer(dt) {
   if (player.dead) { camera.position.set(player.pos.x, 1.1, player.pos.z); camera.rotation.set(-0.5, player.yaw, 0.35); return; }
   let speed = 5.2;
   if (playerSprinting()) speed = 8.0;
-  if (player.opKey === 'PHANTOM') speed *= 1.12;
+  if (player.opKey === 'FLARE') speed *= 1 + 0.03 * (player.heatStacks || 0); // Động Năng Dư
+  if (nowS() < player.stormUntil) speed *= 0.8; // Bão Nhiệt Hạch Lỏng: bản thân chậm −20% khi bão đang chạy
   if (keys['KeyS']) speed *= 0.85;
   const f = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
   const r = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
   const move = new THREE.Vector3();
-  if (keys['KeyW']) move.add(f); if (keys['KeyS']) move.sub(f);
-  if (keys['KeyD']) move.add(r); if (keys['KeyA']) move.sub(r);
-  if (move.lengthSq() > 0) { move.normalize(); collideMove(player.pos, 0.6, move.x * speed * dt, move.z * speed * dt); }
+  if (player.reviveChannel && (keys['KeyW'] || keys['KeyA'] || keys['KeyS'] || keys['KeyD'])) {
+    player.reviveChannel = null; announce('', 'Hồi sinh bị ngắt do di chuyển');
+  }
+  if (!player.reviveChannel) {
+    if (keys['KeyW']) move.add(f); if (keys['KeyS']) move.sub(f);
+    if (keys['KeyD']) move.add(r); if (keys['KeyA']) move.sub(r);
+  }
+  if (move.lengthSq() > 0) { move.normalize(); collideMove(player.pos, 0.6, move.x * speed * dt, move.z * speed * dt); player.stillTime = 0; }
+  else player.stillTime += dt;
+  if (player.opKey === 'FLARE') { // Passive Động Năng Dư: tích Nhiệt khi di chuyển liên tục
+    if (move.lengthSq() > 0) player.heatTime += dt;
+    else if (player.stillTime > 2) player.heatTime = 0;
+    player.heatStacks = Math.min(3, Math.floor(player.heatTime / 3));
+  }
   // gravity / jump
   player.velY -= 22 * dt;
   player.pos.y += player.velY * dt;
@@ -1109,22 +1470,82 @@ function updateEffects(dt) {
   for (let i = effects.length - 1; i >= 0; i--) {
     const fx = effects[i];
     if (fx.kind === 'ring') { const s = 1 + (0.6 - (fx.until - t)) * 14; fx.mesh.scale.set(s, s, s); fx.mesh.material.opacity = Math.max(0, (fx.until - t) / 0.6); }
-    if (fx.kind === 'elecwall') {
-      fx.mesh.material.emissiveIntensity = 1 + Math.sin(t * 30) * 0.5;
+    if (fx.kind === 'smoke' && fx.vel && t < fx.slideUntil) fx.mesh.position.addScaledVector(fx.vel, dt); // khói động của DRIFT trượt
+    if (fx.kind === 'firezone') { // Vệt lửa FLARE: 10 dmg/s lên địch đứng trong vùng
+      fx.mesh.material.emissiveIntensity = 1 + Math.sin(t * 18) * 0.4;
       fx._acc = (fx._acc || 0) + dt;
-      for (const b of bots) if (b.team === 'enemy' && b.alive && Math.abs(b.pos.x - fx.mesh.position.x) < 3 && Math.abs(b.pos.z - fx.mesh.position.z) < 3) {
-        b.slowUntil = t + 0.3;
-        if (fx._acc > 0.5) damageBot(b, 7, 'Tường Điện', false);
-      }
-      if (fx._acc > 0.5) fx._acc = 0;
+      if (fx._acc >= 0.5) { fx._acc = 0; for (const b of bots) if (b.team === 'enemy' && b.alive && hDist(b.pos, fx.mesh.position) < fx.radius) damageBot(b, 5, 'Vệt Lửa', false); }
     }
-    if (t >= fx.until) {
-      scene.remove(fx.mesh);
-      if (fx.col) removeCollider(fx.col);
-      effects.splice(i, 1);
+    if (fx.kind === 'storm') { // Bão Nhiệt FLARE: cầu bám theo người chơi, tick 7.5 dmg/0.5s + chậm, cần LOS
+      fx.mesh.position.set(player.pos.x, 0.1, player.pos.z);
+      fx._acc = (fx._acc || 0) + dt;
+      if (fx._acc >= 0.5) { fx._acc = 0; for (const b of bots) if (b.team === 'enemy' && b.alive && hDist(b.pos, player.pos) <= 8 && hasLOS(eyeOf(player.pos), eyeOf(b.pos))) { b.slowUntil = t + 0.6; damageBot(b, 7.5, 'Bão Nhiệt', false); } }
+    }
+    if (fx.kind === 'aura') { // Hào Quang AEGIS: đồng đội +12 HP/s (trần 50/người), bản thân +6 HP/s
+      fx.mesh.position.set(player.pos.x, 0.12, player.pos.z);
+      player.hp = Math.min(100, player.hp + 6 * dt);
+      for (const b of bots) {
+        if (b.team !== 'ally' || !b.alive || hDist(b.pos, player.pos) > 5) continue;
+        const healed = fx.heals[b.name] || 0;
+        if (healed >= 50 || b.hp >= 100) continue;
+        const amt = Math.min(12 * dt, 50 - healed, 100 - b.hp);
+        b.hp += amt; fx.heals[b.name] = healed + amt;
+      }
+    }
+    if (fx.kind === 'anchor') { // Mỏ Neo TETHER: hút mọi bot trong 5m về tâm 1m/s (người chơi miễn nhiễm — Neo Giữ / chủ vùng)
+      for (const b of bots) {
+        if (!b.alive || hDist(b.pos, fx.center) >= fx.radius) continue;
+        const dir = new THREE.Vector3(fx.center.x - b.pos.x, 0, fx.center.z - b.pos.z);
+        if (dir.length() > 0.4) { dir.normalize(); collideMove(b.pos, 0.55, dir.x * dt, dir.z * dt); b.mesh.position.copy(b.pos); }
+      }
+    }
+    if (fx.kind === 'trap') { // Bẫy BASTION: kích hoạt 1 lần khi địch vào vùng
+      let triggered = false;
+      for (const b of bots) if (b.team === 'enemy' && b.alive && hDist(b.pos, fx.center) < fx.radius) { b.trapUntil = t + 2.5; triggered = true; }
+      if (triggered) { AudioSys.beep(240, 0.25); spawnRingFx(fx.center, 0xffc44d); announce('', 'Bẫy Trọng Trường kích hoạt — địch bị chậm nặng'); fx.until = t; }
+    }
+    if (fx.kind === 'chorus') { // Hợp Xướng WHISPER: ping địch ≤25m mỗi 1s
+      fx._acc = (fx._acc || 0) + dt;
+      if (fx._acc >= 1) { fx._acc = 0; for (const b of bots) if (b.team === 'enemy' && b.alive && hDist(b.pos, player.pos) <= 25) b.pingUntil = t + 1.3; }
+    }
+    if (fx.kind === 'chain') { // Xiềng Xích TETHER: cập nhật dây nối, đứt khi 1 trong 2 chết
+      if (!fx.a.alive || !fx.b.alive) fx.until = t;
+      else fx.mesh.geometry.setFromPoints([new THREE.Vector3(fx.a.pos.x, 1.3, fx.a.pos.z), new THREE.Vector3(fx.b.pos.x, 1.3, fx.b.pos.z)]);
+    }
+    if (fx.kind === 'struct' && player.opKey === 'BASTION' && hDist(player.pos, fx.mesh.position) < 5)
+      fx.hp = Math.min(fx.maxHp, fx.hp + 5 * dt); // Passive Gia Cố
+    if (t >= fx.until) { effects.splice(i, 1); destroyFx(fx); }
+  }
+  // Decoy / hologram của PRISM: chạy thẳng có va chạm, hết hạn hoặc vỡ thì xóa
+  if (decoy) {
+    if (t > decoy.until || decoy.hp <= 0) destroyDecoy();
+    else if (decoy.vel && t < decoy.slideUntil) { collideMove(decoy.pos, 0.55, decoy.vel.x * dt, decoy.vel.z * dt); decoy.mesh.position.copy(decoy.pos); }
+  }
+  // Hết hạn Khiên Sinh Học (bot + người chơi)
+  for (const b of bots) if (b.shieldMesh && (b.shieldHp <= 0 || t > (b.shieldUntil || 0))) { b.shieldHp = 0; detachShieldMesh(b); }
+  if (player.bioShield > 0 && t > player.bioShieldUntil) player.bioShield = 0;
+  // Passive AEGIS — Nhịp Ổn Định: đồng đội trong 5m, ngoài giao tranh 5s, hồi 1 HP/s tới 70
+  if (player.opKey === 'AEGIS') for (const b of bots)
+    if (b.team === 'ally' && b.alive && b.hp < 70 && t - (b.lastDamageAt || -99) > 5 && hDist(b.pos, player.pos) <= 5)
+      b.hp = Math.min(70, b.hp + dt);
+  // AEGIS X — vận sức hồi sinh (đứng yên 2s; ngắt bởi di chuyển / nhận damage / người chơi chết)
+  if (player.reviveChannel) {
+    const rc = player.reviveChannel; const wrap = $('plantbar-wrap');
+    if (player.dead || !rc.bot || rc.bot.alive) { player.reviveChannel = null; wrap.classList.add('hidden'); }
+    else {
+      wrap.classList.remove('hidden');
+      $('plant-label').textContent = '❤ ĐANG HỒI SINH ' + rc.bot.name + '…';
+      $('plant-fill').style.width = Math.min(100, (1 - (rc.until - t) / 2) * 100) + '%';
+      if (t >= rc.until) {
+        const b = rc.bot;
+        b.alive = true; b.hp = 50; b.revivedOnce = true;
+        b.mesh.rotation.z = 0; b.mesh.position.copy(b.pos); b.mesh.position.y = 0;
+        spawnRingFx(b.pos, 0x3effa0); AudioSys.plantDone();
+        announce('ĐÃ HỒI SINH ĐỒNG ĐỘI', b.name + ' trở lại trận với 50 HP');
+        player.reviveChannel = null; wrap.classList.add('hidden');
+      }
     }
   }
-  if (decoy && t > decoy.until) destroyDecoy();
   // bomb blink
   if (G.bombMesh) G.bombMesh.material.emissiveIntensity = (Math.sin(t * (G.timer < 10 ? 18 : 6)) > 0 ? 1.8 : 0.2);
 }
@@ -1141,7 +1562,13 @@ function animate() {
 
   if (playing) {
     // energy regen
-    player.energy = Math.min(100, player.energy + rawDt * (player.opKey === 'VOLT' ? 3.2 : 1.6));
+    player.energy = Math.min(100, player.energy + rawDt * 1.6);
+    // DRIFT: hồi charge Dịch Khói theo thời gian
+    if (player.opKey === 'DRIFT' && player.qCharges < 2 && player.qRegenAt && nowS() >= player.qRegenAt) {
+      player.qCharges++;
+      player.qRegenAt = player.qCharges < 2 ? nowS() + op().q.cd : 0;
+      player.qCd = player.qCharges > 0 ? nowS() : player.qRegenAt;
+    }
     if (mouseDown && WEAPONS[player.weapon].auto && locked) tryShoot();
 
     // phase timers
