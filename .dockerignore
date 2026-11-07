@@ -1,0 +1,6 @@
+.git
+.gitignore
+.github
+docs
+*.md
+*.muse-github-snapshot-sync.json
