@@ -338,6 +338,18 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
   }
+  /* v3 settings panel */
+  #settings-panel { width:min(880px,94vw); margin:14px auto 0; text-align:left;
+    background:rgba(10,22,38,.72); border:1px solid rgba(0,229,255,.28); border-radius:14px;
+    padding:14px 18px 12px; backdrop-filter:blur(8px); box-shadow:0 8px 30px rgba(0,0,0,.35); }
+  #settings-panel .set-title { font-family:var(--fh); font-weight:700; letter-spacing:3px; font-size:13px; color:var(--cy); margin-bottom:10px; }
+  #settings-panel .set-row { display:grid; grid-template-columns:250px 1fr; gap:4px 16px; align-items:center; margin-bottom:10px; }
+  #settings-panel label { font-family:var(--fh); font-weight:600; font-size:14.5px; color:#dfeeff; }
+  #settings-panel label b { color:var(--cy); }
+  #settings-panel input[type=range] { width:100%; accent-color:#00e5ff; cursor:pointer; }
+  #settings-panel .set-note { grid-column:2; font-size:12.5px; color:#8fb6d9; }
+  #settings-panel > .set-note { grid-column:auto; margin-top:2px; }
+  @media (max-width:600px){ #settings-panel .set-row{ grid-template-columns:1fr; } #settings-panel .set-note{ grid-column:1; } }
 </style>
 </head>
 <body>
@@ -400,8 +412,22 @@
   <p class="sub">FPS chiến thuật 4v5 trên map gốc <b>Neon Divide</b> — đặt bomb tại site A/B, hạ hết địch, hoặc giữ bomb nổ.
   Mỗi Operator có bộ kỹ năng riêng. Đội nào thắng 6 round trước là thắng trận.</p>
   <div id="op-grid"></div>
+  <div id="settings-panel">
+    <div class="set-title">⚙ CÀI ĐẶT NGẮM BẮN</div>
+    <div class="set-row">
+      <label for="set-sens">Độ nhạy chuột <b id="sens-val"></b></label>
+      <input type="range" id="set-sens" min="0.5" max="2.5" step="0.01" value="1">
+      <div class="set-note" id="sens-cm"></div>
+    </div>
+    <div class="set-row">
+      <label for="set-fov">Góc nhìn FOV (dọc) <b id="fov-val"></b></label>
+      <input type="range" id="set-fov" min="68" max="80" step="1" value="74">
+      <div class="set-note" id="fov-h"></div>
+    </div>
+    <div class="set-note">Game luôn dùng raw input (unadjustedMovement nếu trình duyệt hỗ trợ) — hãy tắt “Enhance pointer precision” trong Windows. Cài đặt được lưu tự động trên máy này.</div>
+  </div>
   <div class="controls-note">
-    <b>WASD</b> di chuyển · <b>Chuột</b> ngắm · <b>Click trái</b> bắn · <b>Shift</b> chạy · <b>Space</b> nhảy · <b>R</b> nạp đạn ·
+    <b>WASD</b> di chuyển · <b>Chuột</b> ngắm · <b>Click trái</b> bắn · <b>Shift</b> chạy · <b>Space</b> nhảy · <b>Ctrl/C</b> ngồi xổm · <b>R</b> nạp đạn ·
     <b>1/2</b> đổi súng · <b>B</b> mua đồ · <b>Giữ F trong site</b> đặt bomb · <b>Q / E / X</b> kỹ năng<br>
     Ultimate (X): tài liệu gốc tính bằng 6–7 điểm ult — bản prototype ánh xạ thành <b>100 năng lượng</b>
   </div>
@@ -503,9 +529,25 @@ const OPERATORS = {
 
 // ---------------- WEAPONS ----------------
 const WEAPONS = {
-  rifle:  { name: 'VK-7 RIFLE', dmg: 34, headMult: 4, rpm: 600, mag: 30, reload: 2.1, spread: 0.016, auto: true, kick: 0.011 },
-  pistol: { name: 'P9 PISTOL',  dmg: 26, headMult: 4, rpm: 320, mag: 12, reload: 1.5, spread: 0.011, auto: false, kick: 0.007 }
+  // v3 (mechanics/01): VK-7 dùng pattern + recoilIndex; P9 dùng kick + recovery 0,20s. moveSpeed theo mechanics/02.
+  rifle:  { name: 'VK-7 RIFLE', dmg: 34, headMult: 4, rpm: 600, mag: 30, reload: 2.1, auto: true, moveSpeed: 4.73,
+    recoilPattern: [
+      [1.04, 0.00], [1.08, 0.01], [1.08, 0.02], [1.04, 0.03], [1.00, 0.04],
+      [0.96, 0.05], [0.92, 0.07], [0.88, 0.10], [0.84, 0.16], [0.72, 0.20],
+      [0.50, 0.24], [0.38, 0.26], [0.28, 0.26], [0.20, 0.24], [0.14, 0.20],
+      [0.10,-0.22], [0.09,-0.27], [0.08,-0.30], [0.07,-0.30], [0.06,-0.28],
+      [0.05,-0.24], [0.04,-0.19], [0.03,-0.14], [0.03,-0.11], [0.02,-0.08],
+      [0.02,-0.05], [0.02, 0.10], [0.01, 0.14], [0.01, 0.17], [0.01, 0.19]
+    ],
+    recoilScale: 1.0, recoilDelay: 0.07, recoilTau: 0.13, recoilTauCrouch: 0.11,
+    stanceBaseDeg: 0.08, stanceBaseCrouchDeg: 0.06, conePerIndexDeg: 0.075, coneCapDeg: 1.9 },
+  pistol: { name: 'P9 PISTOL',  dmg: 26, headMult: 4, rpm: 320, mag: 12, reload: 1.5, auto: false, moveSpeed: 5.28,
+    kickPitchDeg: 0.55, kickYawDeg: 0.05, recoveryTime: 0.20, rapidPenaltyDeg: 0.25, rapidPenaltyCapDeg: 1.20,
+    stanceBaseDeg: 0.30, stanceBaseCrouchDeg: 0.24 }
 };
+// Vật lý di chuyển Source-lite (mechanics/02 + 05): gia tốc mặt đất / ma sát thả phím / gia tốc counter-strafe / gia tốc trên không
+const MOVE_PHYS = { accel: 40, friction: 17, counterAccel: 46, airAccel: 3, accurateRatio: 0.34 };
+const DEG2RAD = Math.PI / 180;
 
 // ---------------- GAME STATE ----------------
 const T_SPAWN = new THREE.Vector3(-44, 0, 0);
@@ -530,12 +572,24 @@ const player = {
   ammo: { rifle: 30, pistol: 12 }, reserve: { rifle: 90, pistol: 9999 },
   reloadingUntil: 0, lastShot: 0, dead: false,
   opKey: 'FLARE', qCd: 0, eCd: 0,
-  invisibleUntil: 0, domeUntil: 0, spreadBloom: 0,
+  invisibleUntil: 0, domeUntil: 0,
+  // v3 mechanics state: vận tốc ngang, recoil, tagging, tiếp đất, ngồi xổm
+  vel: new THREE.Vector3(), recoilIndex: 0, sprayJitter: null, lastRecoilShot: -99, recoilResetAt: -99,
+  p9Penalty: 0, p9Kick: 0, p9KickSign: 1, tagUntil: 0, landedAt: -99, crouching: false,
   qCharges: 2, qRegenAt: 0, lastQUse: -99, heatTime: 0, heatStacks: 0, stillTime: 0,
   bioShield: 0, bioShieldUntil: 0, stormUntil: 0, driftUltUntil: 0, reviveChannel: null
 };
 function op() { return OPERATORS[player.opKey]; }
 function nowS() { return G.time; }
+
+// ---------------- SETTINGS (v3, mechanics/04) ----------------
+const SETTINGS = { sens: 1.0, fov: 74 };
+try { const _s = JSON.parse(localStorage.getItem('neondivide-settings') || '{}');
+  if (_s.sens >= 0.5 && _s.sens <= 2.5) SETTINGS.sens = _s.sens;
+  if (_s.fov >= 68 && _s.fov <= 80) SETTINGS.fov = _s.fov; } catch (e) {}
+function sensRadPerCount() { return 0.00045 * SETTINGS.sens; }
+function sensCmPer360() { return (2 * Math.PI / sensRadPerCount()) / 800 * 2.54; } // quy đổi ở 800 DPI
+function saveSettings() { try { localStorage.setItem('neondivide-settings', JSON.stringify(SETTINGS)); } catch (e) {} }
 
 // ---------------- THREE SETUP ----------------
 const canvas = document.getElementById('game-canvas');
@@ -545,7 +599,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a1220);
 scene.fog = new THREE.Fog(0x0a1220, 55, 130);
-const camera = new THREE.PerspectiveCamera(78, innerWidth / innerHeight, 0.08, 300);
+const camera = new THREE.PerspectiveCamera(SETTINGS.fov, innerWidth / innerHeight, 0.08, 300);
 scene.add(camera); // required so the gun view-model (child of camera) renders
 scene.add(new THREE.HemisphereLight(0xbdd8ff, 0x1a2436, 0.95));
 const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(30, 60, -20); scene.add(sun);
@@ -675,6 +729,48 @@ function pointInCollider(x, z, r) {
   return false;
 }
 
+// ---------------- V3 PHYSICS & SPREAD (mechanics/01, 02, 05) ----------------
+function entSpeed(e) { return e.vel ? Math.hypot(e.vel.x, e.vel.z) : 0; }
+function gauss() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+// Pipeline di chuyển dùng chung người chơi + bot: wish = hướng mong muốn (đã normalize hoặc 0),
+// effMaxSpeed = trần tốc độ hiệu dụng frame này (đã gồm sprint/tagging/hiệu ứng).
+function physMove(ent, wish, effMaxSpeed, dt, radius) {
+  const v = ent.vel; const grounded = ent.pos.y <= 0.001;
+  const hasInput = wish.lengthSq() > 0.001;
+  if (grounded) {
+    if (!hasInput) { // thả phím: ma sát tuyến tính 17 m/s²
+      const sp = Math.hypot(v.x, v.z);
+      if (sp > 0) { const ns = Math.max(0, sp - MOVE_PHYS.friction * dt); v.x *= ns / sp; v.z *= ns / sp; }
+    } else { // bấm phím ngược vận tốc (dot < 0) = counter-strafe: gia tốc 46 → về ngưỡng chính xác ~75ms
+      const dot = v.x * wish.x + v.z * wish.z;
+      const a = dot < -0.1 ? MOVE_PHYS.counterAccel : MOVE_PHYS.accel;
+      v.x += wish.x * a * dt; v.z += wish.z * a * dt;
+    }
+  } else if (hasInput) { v.x += wish.x * MOVE_PHYS.airAccel * dt; v.z += wish.z * MOVE_PHYS.airAccel * dt; }
+  const sp = Math.hypot(v.x, v.z);
+  if (sp > effMaxSpeed && sp > 0) { v.x *= effMaxSpeed / sp; v.z *= effMaxSpeed / sp; }
+  collideMove(ent.pos, radius, v.x * dt, v.z * dt);
+}
+// moveTerm (mechanics/05): deadzone 34% tốc độ tối đa của vũ khí; tuyến tính tới +0,055 rad ở full speed; sprint ×1,25.
+// Khi đang bị tag, spread tính theo max(tốc độ thật, 50% maxSpeed) — chống lỗi "tag into accuracy".
+function moveSpreadTerm(ent, weaponMaxSpeed, sprinting) {
+  let sp = entSpeed(ent);
+  if (nowS() < (ent.tagUntil || 0)) sp = Math.max(sp, weaponMaxSpeed * 0.5);
+  const ratio = sp / weaponMaxSpeed;
+  if (ratio <= MOVE_PHYS.accurateRatio) return 0;
+  let term = 0.055 * (ratio - MOVE_PHYS.accurateRatio) / (1 - MOVE_PHYS.accurateRatio);
+  if (sprinting) term *= 1.25;
+  return term;
+}
+function airSpreadTerm(ent) { // +0,085 rad trên không; tại đỉnh nhảy (|velY|→0) chỉ còn ×0,45
+  if (ent.pos.y <= 0.001) return 0;
+  return 0.085 * (0.45 + 0.55 * Math.min(1, Math.abs(ent.velY || 0) / 7.6));
+}
+function landSpreadTerm(ent) { // +0,030 rad sau tiếp đất, tắt dần trong 0,25s
+  const since = nowS() - (ent.landedAt === undefined ? -99 : ent.landedAt);
+  return (since >= 0 && since < 0.25) ? 0.030 * (1 - since / 0.25) : 0;
+}
+
 // ---------------- ENTITIES / BOTS ----------------
 const bots = [];        // enemies + teammates
 let decoy = null;       // {pos, hp, until, mesh}
@@ -724,7 +820,8 @@ function spawnBots() {
     mesh.position.copy(pos); scene.add(mesh);
     bots.push({ team: 'ally', name: allyDefs[i].name, mesh, pos, hp: 100, alive: true,
       lane, wp: 0, speed: 4.6, nextShot: 0, burst: 0, slowUntil: 0, stunUntil: 0, trapUntil: 0, holdPos: null, lastShotAt: -99,
-      pingUntil: 0, shieldHp: 0, shieldUntil: 0, shieldMesh: null, deadAt: -99, revivedOnce: false, lastDamageAt: -99, lastMoveAt: -99 });
+      pingUntil: 0, shieldHp: 0, shieldUntil: 0, shieldMesh: null, deadAt: -99, revivedOnce: false, lastDamageAt: -99, lastMoveAt: -99,
+      vel: new THREE.Vector3(), velY: 0, tagUntil: 0, landedAt: -99, seenKey: null, reactAt: 0, aimYaw: null, aimErrA: 0, aimErrR: 0, _aimErr: 0 });
   });
   const defs = [
     { name: 'Địch · FLARE', color: 0xff6b2e, lanePts: GUARDS.A, pos: new THREE.Vector3(40, 0, -28) },
@@ -738,7 +835,8 @@ function spawnBots() {
     mesh.position.copy(d.pos); scene.add(mesh);
     bots.push({ team: 'enemy', name: d.name, mesh, pos: d.pos.clone(), hp: 100, alive: true,
       lanePts: d.lanePts, wp: i % d.lanePts.length, speed: 4.1, nextShot: 0, burst: 0, slowUntil: 0, stunUntil: 0, trapUntil: 0, holdPos: null, lastShotAt: -99,
-      pingUntil: 0, shieldHp: 0, shieldUntil: 0, shieldMesh: null, deadAt: -99, revivedOnce: false, lastDamageAt: -99, lastMoveAt: -99 });
+      pingUntil: 0, shieldHp: 0, shieldUntil: 0, shieldMesh: null, deadAt: -99, revivedOnce: false, lastDamageAt: -99, lastMoveAt: -99,
+      vel: new THREE.Vector3(), velY: 0, tagUntil: 0, landedAt: -99, seenKey: null, reactAt: 0, aimYaw: null, aimErrA: 0, aimErrR: 0, _aimErr: 0 });
   });
 }
 
@@ -817,14 +915,14 @@ function damagePlayer(amount, fromPos) {
     for (const fx of effects) if (fx.kind === 'struct' && hDist(player.pos, fx.mesh.position) < 2.6) { dmg *= 0.85; break; }
   }
   if (dmg <= 0) { flashHitmarker(false, true); return; }
-  player.hp -= dmg;
+  player.hp -= dmg; player.tagUntil = nowS() + 0.35; // tagging: tốc độ tối đa ×0,55 trong 0,35s (mechanics/05)
   const dv = document.getElementById('dmg-vignette'); dv.style.opacity = 0.9; setTimeout(() => dv.style.opacity = 0, 130);
   if (fromPos) showHitDir(fromPos);
   if (player.hp <= 0) { player.hp = 0; onPlayerDeath(); }
 }
 function damageBot(bot, amount, attackerName, isHead) {
   if (!bot.alive) return;
-  bot.lastDamageAt = nowS();
+  bot.lastDamageAt = nowS(); if (amount > 0) bot.tagUntil = nowS() + 0.35; // tagging (mechanics/05)
   // Khiên Sinh Học của AEGIS hấp thụ sát thương trước
   if (bot.shieldHp > 0 && nowS() < (bot.shieldUntil || 0)) {
     const ab = Math.min(bot.shieldHp, amount); bot.shieldHp -= ab; amount -= ab;
@@ -927,16 +1025,28 @@ function updateBot(b, dt) {
   }
 
   if (found) {
-    // engage: strafe slightly, face target, shoot in bursts
+    // v3 bot "như người" (mechanics/04 + 02): trễ phản ứng 220–380ms khi mới thấy địch,
+    // tốc độ xoay tâm giới hạn 540°/s, lỗi ngắm Gauss theo loạt, di chuyển qua pipeline vật lý chung.
     const tp = found.target.pos;
-    b.mesh.lookAt(tp.x, 0, tp.z);
+    const tKey = found.target.type + ':' + (found.target.bot ? found.target.bot.name : 'x');
+    if (b.seenKey !== tKey) { b.seenKey = tKey; b.reactAt = t + 0.22 + Math.random() * 0.16; b.aimYaw = null; }
+    const bearing = Math.atan2(tp.x - b.pos.x, tp.z - b.pos.z);
+    if (b.aimYaw === null || b.aimYaw === undefined) b.aimYaw = b.mesh.rotation.y;
+    let dyA = bearing - b.aimYaw;
+    while (dyA > Math.PI) dyA -= 2 * Math.PI; while (dyA < -Math.PI) dyA += 2 * Math.PI;
+    const maxTurn = 9.42 * dt; // 540°/s
+    b.aimYaw += THREE.MathUtils.clamp(dyA, -maxTurn, maxTurn);
+    b.mesh.rotation.set(0, b.aimYaw, 0);
+    b._aimErr = Math.abs(bearing - b.aimYaw);
     const strafeDir = Math.sin(t * 1.3 + b.pos.x) > 0 ? 1 : -1;
-    if (found.dist > 9) moveBotToward(b, tp, dt * 0.55);
-    else { // small lateral strafe
-      const side = new THREE.Vector3(-(tp.z - b.pos.z), 0, tp.x - b.pos.x).normalize().multiplyScalar(strafeDir * b.speed * 0.35 * dt);
-      collideMove(b.pos, 0.55, side.x, side.z); b.mesh.position.copy(b.pos);
+    if (found.dist > 9) moveBotToward(b, tp, dt, 0.55);
+    else { // strafe ngang qua physMove — vận tốc thật của bot quyết định spread của chính nó
+      const side = new THREE.Vector3(-(tp.z - b.pos.z), 0, tp.x - b.pos.x).normalize().multiplyScalar(strafeDir);
+      physMove(b, side, b.speed * 0.5 * (t < (b.tagUntil || 0) ? 0.55 : 1), dt, 0.55);
+      b.mesh.position.copy(b.pos);
     }
-    if (t >= b.nextShot) {
+    if (t >= b.nextShot && t >= b.reactAt) {
+      if (b.burst === 0) { const sig = 1.4 * DEG2RAD; b.aimErrA = gauss() * sig; b.aimErrR = gauss() * sig; }
       botShoot(b, found);
       b.burst++;
       if (b.burst >= 3) { b.nextShot = t + 0.75 + Math.random() * 0.55; b.burst = 0; }
@@ -944,6 +1054,7 @@ function updateBot(b, dt) {
     }
     return;
   }
+  b.seenKey = null;
 
   // --- travel waypoints ---
   let dest = null;
@@ -958,26 +1069,36 @@ function updateBot(b, dt) {
   }
   if (dest) moveBotToward(b, dest, dt);
 }
-function moveBotToward(b, dest, dt) {
+function moveBotToward(b, dest, dt, speedScale) {
   const dir = new THREE.Vector3(dest.x - b.pos.x, 0, dest.z - b.pos.z);
-  const d = dir.length(); if (d < 0.25) return;
-  dir.normalize();
-  const sp = b.speed * (nowS() < (b.trapUntil || 0) ? 0.3 : nowS() < (b.slowUntil || 0) ? 0.45 : 1);
-  b.lastMoveAt = nowS();
-  collideMove(b.pos, 0.55, dir.x * sp * dt, dir.z * sp * dt);
+  const d = dir.length();
+  const mult = nowS() < (b.trapUntil || 0) ? 0.3 : nowS() < (b.slowUntil || 0) ? 0.45 : 1;
+  const effMax = b.speed * mult * (speedScale || 1) * (nowS() < (b.tagUntil || 0) ? 0.55 : 1); // tagging ×0,55
+  if (d >= 0.25) dir.normalize(); else dir.set(0, 0, 0);
+  physMove(b, dir, effMax, dt, 0.55);
+  if (entSpeed(b) > 0.2) b.lastMoveAt = nowS();
   b.mesh.position.copy(b.pos);
-  b.mesh.lookAt(b.pos.x + dir.x, 0, b.pos.z + dir.z);
-  // walk bob
-  b.mesh.position.y = Math.abs(Math.sin(nowS() * 8 + b.pos.x)) * 0.05;
+  if (entSpeed(b) > 0.4) b.mesh.lookAt(b.pos.x + b.vel.x, 0, b.pos.z + b.vel.z);
+  // walk bob tỉ lệ theo vận tốc thật
+  b.mesh.position.y = Math.abs(Math.sin(nowS() * 8 + b.pos.x)) * 0.05 * Math.min(1, entSpeed(b) / 2);
 }
 function botShoot(b, found) {
   const fp = found.target; b.lastShotAt = nowS();
   const from = new THREE.Vector3(b.pos.x, 1.45, b.pos.z);
-  const to = fp.firePos.clone(); to.x += (Math.random() - 0.5) * 0.8; to.z += (Math.random() - 0.5) * 0.8;
+  const dist = found.dist;
+  // v3: điểm rơi đạn lệch theo lỗi ngắm Gauss của loạt + spread theo vận tốc của chính bot (cùng công thức người chơi)
+  const bMove = moveSpreadTerm(b, b.speed, false) + airSpreadTerm(b) + landSpreadTerm(b);
+  const to = fp.firePos.clone();
+  const rightV = new THREE.Vector3(-(to.z - from.z), 0, to.x - from.x).normalize();
+  to.addScaledVector(rightV, Math.tan(b.aimErrA || 0) * dist + gauss() * bMove * dist);
+  to.y += Math.tan(b.aimErrR || 0) * dist + gauss() * bMove * dist;
+  to.x += (Math.random() - 0.5) * 0.4; to.z += (Math.random() - 0.5) * 0.4;
   tracer(from, to, b.team === 'enemy' ? 0xff6b5c : 0x5cc8ff);
   if (b.team === 'enemy') AudioSys.botShot();
-  const dist = found.dist;
   let hitChance = THREE.MathUtils.clamp(0.52 - dist * 0.008, 0.12, 0.5);
+  if ((b._aimErr || 0) > 0.05) hitChance *= 0.35; // tâm chưa xoay kịp tới mục tiêu
+  const bRatio = entSpeed(b) / b.speed;
+  if (bRatio > MOVE_PHYS.accurateRatio) hitChance *= Math.max(0.25, 1.15 - bRatio); // accuracy-gate theo vận tốc (mechanics/02)
   if (fp.type === 'player' && playerSprinting()) hitChance *= 0.7;
   if (fp.type === 'player') {
     if (player.opKey === 'PRISM' && player.stillTime > 1.5) hitChance *= 0.5; // Giác Quan Quang Học (bản rút gọn)
@@ -1001,17 +1122,48 @@ function tryShoot() {
   if (t < player.reloadingUntil) return;
   if (t - player.lastShot < 60 / w.rpm) return;
   if (player.ammo[player.weapon] <= 0) { AudioSys.beep(220, 0.06); startReload(); return; }
+  const prevShotGap = t - player.lastShot;
   player.lastShot = t; player.ammo[player.weapon]--;
   AudioSys.shot(player.weapon);
-  // recoil + bloom
-  player.pitch += w.kick; player.spreadBloom = Math.min(0.02, player.spreadBloom + 0.006);
+  // v3 recoil (mechanics/01): VK-7 = pattern + recoilIndex; P9 = kick + recovery 0,20s
+  const crouch = player.crouching;
+  const speedRatio = entSpeed(player) / w.moveSpeed;
+  let postureMult = player.pos.y > 0.001 ? 1.50 : (speedRatio > MOVE_PHYS.accurateRatio ? 1.15 : 1.0); // trên không ×1,50 · đang chạy ×1,15
+  let coneRad;
+  if (player.weapon === 'rifle') {
+    if (player.recoilIndex < 0.5 && !player.sprayJitter) { // loạt mới: jitter tất định từ seed cho cả loạt (chống macro, ±0,02°/±0,03°)
+      let sd = (Math.random() * 1e9) | 0;
+      const rnd = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
+      player.sprayJitter = w.recoilPattern.map(() => [(rnd() * 2 - 1) * 0.02, (rnd() * 2 - 1) * 0.03]);
+    }
+    const idx = Math.min(w.recoilPattern.length - 1, Math.floor(player.recoilIndex));
+    const pat = w.recoilPattern[idx], jit = player.sprayJitter ? player.sprayJitter[idx] : [0, 0];
+    const patMult = postureMult * (crouch ? 0.85 : 1.0); // ngồi: pattern ×0,85 (mechanics/01 §7.2)
+    player.pitch += (pat[0] + jit[0]) * DEG2RAD * w.recoilScale * patMult;
+    player.yaw -= (pat[1] + jit[1]) * DEG2RAD * w.recoilScale * patMult;
+    player.recoilIndex = Math.min(w.recoilPattern.length, player.recoilIndex + 1);
+    player.lastRecoilShot = t;
+    const coneDeg = Math.min(w.coneCapDeg, (crouch ? w.stanceBaseCrouchDeg : w.stanceBaseDeg) + w.conePerIndexDeg * player.recoilIndex);
+    coneRad = coneDeg * DEG2RAD * postureMult;
+  } else { // P9: không pattern — kick + phạt spam theo recovery 0,20s
+    if (prevShotGap >= w.recoveryTime) player.p9Penalty = 0; // ngừng bắn đủ 0,20s → reset sạch
+    else player.p9Penalty = Math.min(w.rapidPenaltyCapDeg, player.p9Penalty + w.rapidPenaltyDeg);
+    player.p9KickSign = -player.p9KickSign;
+    const kickRad = w.kickPitchDeg * DEG2RAD * postureMult;
+    player.pitch += kickRad; player.p9Kick += kickRad; // p9Kick được lò xo kéo về trong updateRecoil
+    player.yaw -= player.p9KickSign * w.kickYawDeg * DEG2RAD;
+    player.lastRecoilShot = t;
+    coneRad = ((crouch ? w.stanceBaseCrouchDeg : w.stanceBaseDeg) + player.p9Penalty) * DEG2RAD * postureMult;
+  }
   if (viewGun) { viewGun.position.z = -0.47; muzzle.material.opacity = 0.95; muzzle.rotation.z = Math.random() * 3; }
   const origin = camera.position.clone();
   const dir = cameraDir();
-  dir.x += (Math.random() - 0.5) * (w.spread + player.spreadBloom) * 2;
-  dir.y += (Math.random() - 0.5) * (w.spread + player.spreadBloom) * 2;
-  dir.z += (Math.random() - 0.5) * (w.spread + player.spreadBloom) * 2;
-  dir.normalize();
+  // tổng spread (mechanics/05): nón giật + moveTerm + airTerm + landTerm, mẫu đều trong nón
+  const totalCone = coneRad + moveSpreadTerm(player, w.moveSpeed, playerSprinting()) + airSpreadTerm(player) + landSpreadTerm(player);
+  const _r = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
+  const _u = new THREE.Vector3().crossVectors(_r, dir).normalize();
+  const _ang = Math.random() * Math.PI * 2, _rad = totalCone * Math.sqrt(Math.random());
+  dir.addScaledVector(_r, Math.cos(_ang) * _rad).addScaledVector(_u, Math.sin(_ang) * _rad).normalize();
   const maxD = wallDistance(origin, dir);
   const hit = rayHitBot(origin, dir, ['enemy'], maxD);
   const bh = firstBlockerHit(origin, dir, maxD + 1);
@@ -1037,6 +1189,19 @@ function tryShoot() {
   }
   if (player.ammo[player.weapon] === 0) startReload();
   updateAmmoHUD();
+}
+function updateRecoil(dt) {
+  const w = WEAPONS[player.weapon];
+  if (player.recoilIndex > 0 && nowS() - player.lastRecoilShot > (w.recoilDelay || 0.07)) {
+    const tau = player.crouching ? (w.recoilTauCrouch || 0.11) : (w.recoilTau || 0.13);
+    player.recoilIndex *= Math.exp(-dt / tau); // hồi hàm mũ: burst 5 viên về <0,5 sau ≈0,37s (mechanics/01 §7.3)
+    if (player.recoilIndex < 0.5) { player.recoilIndex = 0; player.sprayJitter = null; player.recoilResetAt = nowS(); }
+  }
+  if (player.p9Kick > 0) { // lò xo kéo tâm về sau kick P9 (~0,12s)
+    const back = player.p9Kick * (1 - Math.exp(-dt * 25));
+    player.pitch -= back; player.p9Kick -= back;
+    if (player.p9Kick < 0.0001) player.p9Kick = 0;
+  }
 }
 function startReload() {
   const w = WEAPONS[player.weapon];
@@ -1440,6 +1605,8 @@ function startRound() {
   player.qCd = 0; player.eCd = 0; player.invisibleUntil = 0; player.domeUntil = 0; player.reloadingUntil = 0;
   player.qCharges = 2; player.qRegenAt = 0; player.lastQUse = -99; player.heatTime = 0; player.heatStacks = 0;
   player.bioShield = 0; player.bioShieldUntil = 0; player.stormUntil = 0; player.driftUltUntil = 0; player.reviveChannel = null;
+  player.vel.set(0, 0, 0); player.recoilIndex = 0; player.sprayJitter = null; player.lastRecoilShot = -99;
+  player.p9Penalty = 0; player.p9Kick = 0; player.tagUntil = 0; player.landedAt = -99; player.crouching = false;
   G.qeLockUntil = 0;
   if (!player.ownedRifle && player.weapon === 'rifle') player.weapon = 'pistol';
   // reset world fx
@@ -1573,8 +1740,16 @@ function refreshHUD(dt) {
   const tm = $('timer'); tm.textContent = fmtTime(G.timer);
   tm.classList.toggle('danger', G.timer <= 10 && (G.phase === 'live' || G.phase === 'planted'));
   // crosshair bloom
-  const sp = 8 + player.spreadBloom * 900 + (isMoving() ? 5 : 0);
+  // crosshair = đồng hồ đo recoilIndex (mechanics/01 §7.5): gap = clamp(6 + 1,5×index + phạt di chuyển, 6, 40)
+  const _w = WEAPONS[player.weapon];
+  const _ratio = entSpeed(player) / _w.moveSpeed;
+  let _movePx = 0;
+  if (player.pos.y > 0.001) _movePx = 20;
+  else if (_ratio > MOVE_PHYS.accurateRatio) _movePx = 6 + 6 * (_ratio - MOVE_PHYS.accurateRatio) / (1 - MOVE_PHYS.accurateRatio);
+  const _recoilPx = player.weapon === 'rifle' ? player.recoilIndex * 1.5 : player.p9Penalty * 8;
+  const sp = THREE.MathUtils.clamp(6 + _recoilPx + _movePx, 6, 40);
   $('crosshair').style.setProperty('--sp', sp + 'px');
+  $('crosshair').style.filter = (player.recoilIndex === 0 && nowS() - player.recoilResetAt < 0.1) ? 'brightness(1.35)' : '';
   // status fx
   const fx = [];
   if (nowS() < player.invisibleUntil) fx.push('👻 TÀNG HÌNH ' + Math.ceil(player.invisibleUntil - nowS()) + 's');
@@ -1665,9 +1840,14 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyX') castX();
 });
 document.addEventListener('keyup', e => keys[e.code] = false);
+function lockPointer() { // raw input: unadjustedMovement khi trình duyệt hỗ trợ, fallback pointer lock thường (mechanics/04)
+  try { const pr = canvas.requestPointerLock({ unadjustedMovement: true });
+    if (pr && pr.catch) pr.catch(() => { try { canvas.requestPointerLock(); } catch (e) {} });
+  } catch (e) { try { canvas.requestPointerLock(); } catch (e2) {} }
+}
 canvas.addEventListener('click', () => {
   AudioSys.ensure();
-  if (!locked && G.phase !== 'menu' && G.phase !== 'matchend' && !buyOpen) canvas.requestPointerLock();
+  if (!locked && G.phase !== 'menu' && G.phase !== 'matchend' && !buyOpen) lockPointer();
 });
 document.addEventListener('pointerlockchange', () => {
   locked = document.pointerLockElement === canvas;
@@ -1675,8 +1855,8 @@ document.addEventListener('pointerlockchange', () => {
 });
 document.addEventListener('mousemove', e => {
   if (!locked) return;
-  player.yaw -= e.movementX * 0.0021;
-  player.pitch -= e.movementY * 0.0021;
+  player.yaw -= e.movementX * sensRadPerCount();
+  player.pitch -= e.movementY * sensRadPerCount();
   player.pitch = THREE.MathUtils.clamp(player.pitch, -1.45, 1.45);
 });
 document.addEventListener('mousedown', e => { if (e.button === 0) { mouseDown = true; if (locked) tryShoot(); } });
@@ -1686,39 +1866,47 @@ document.addEventListener('mouseup', e => { if (e.button === 0) mouseDown = fals
 const EYE = 1.66;
 function updatePlayer(dt) {
   if (player.dead) { camera.position.set(player.pos.x, 1.1, player.pos.z); camera.rotation.set(-0.5, player.yaw, 0.35); return; }
-  let speed = 5.2;
-  if (playerSprinting()) speed = 8.0;
-  if (player.opKey === 'FLARE') speed *= 1 + 0.03 * (player.heatStacks || 0); // Động Năng Dư
-  if (nowS() < player.stormUntil) speed *= 0.8; // Bão Nhiệt Hạch Lỏng: bản thân chậm −20% khi bão đang chạy
-  if (keys['KeyS']) speed *= 0.85;
+  const w = WEAPONS[player.weapon];
+  player.crouching = !!(keys['ControlLeft'] || keys['KeyC']);
   const f = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
   const r = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
-  const move = new THREE.Vector3();
+  const wish = new THREE.Vector3();
   if (player.reviveChannel && (keys['KeyW'] || keys['KeyA'] || keys['KeyS'] || keys['KeyD'])) {
     player.reviveChannel = null; announce('', 'Hồi sinh bị ngắt do di chuyển');
   }
   if (!player.reviveChannel) {
-    if (keys['KeyW']) move.add(f); if (keys['KeyS']) move.sub(f);
-    if (keys['KeyD']) move.add(r); if (keys['KeyA']) move.sub(r);
+    if (keys['KeyW']) wish.add(f); if (keys['KeyS']) wish.sub(f);
+    if (keys['KeyD']) wish.add(r); if (keys['KeyA']) wish.sub(r);
   }
-  if (move.lengthSq() > 0) { move.normalize(); collideMove(player.pos, 0.6, move.x * speed * dt, move.z * speed * dt); player.stillTime = 0; }
-  else player.stillTime += dt;
-  if (player.opKey === 'FLARE') { // Passive Động Năng Dư: tích Nhiệt khi di chuyển liên tục
-    if (move.lengthSq() > 0) player.heatTime += dt;
+  if (wish.lengthSq() > 0) wish.normalize();
+  // tốc độ tối đa theo vũ khí đang cầm (mechanics/02: rifle 4,73 · pistol 5,28 m/s) + hệ số trạng thái
+  let maxSp = w.moveSpeed;
+  if (playerSprinting()) maxSp *= 1.45;
+  if (keys['KeyS']) maxSp *= 0.85;
+  if (player.crouching) maxSp *= 0.45;
+  if (player.opKey === 'FLARE') maxSp *= 1 + 0.03 * (player.heatStacks || 0); // Động Năng Dư
+  if (nowS() < player.stormUntil) maxSp *= 0.8; // Bão Nhiệt Hạch Lỏng: bản thân chậm −20% khi bão đang chạy
+  const effMax = nowS() < player.tagUntil ? w.moveSpeed * 0.55 : maxSp; // tagging ×0,55/0,35s (mechanics/05)
+  physMove(player, wish, effMax, dt, 0.6);
+  const spd = entSpeed(player);
+  if (spd < 0.3) player.stillTime += dt; else player.stillTime = 0;
+  if (player.opKey === 'FLARE') { // Passive Động Năng Dư: tích Nhiệt khi di chuyển liên tục (theo vận tốc thật)
+    if (spd > 0.5) player.heatTime += dt;
     else if (player.stillTime > 2) player.heatTime = 0;
     player.heatStacks = Math.min(3, Math.floor(player.heatTime / 3));
   }
-  // gravity / jump
+  // gravity / jump + ghi nhận thời điểm tiếp đất cho landTerm
+  const wasAir = player.pos.y > 0.001;
   player.velY -= 22 * dt;
   player.pos.y += player.velY * dt;
-  if (player.pos.y <= 0) { player.pos.y = 0; player.velY = 0; if (keys['Space']) player.velY = 7.6; }
+  if (player.pos.y <= 0) { player.pos.y = 0; if (wasAir) player.landedAt = nowS(); player.velY = 0; if (keys['Space']) player.velY = 7.6; }
   // camera
-  const bob = isMoving() && player.pos.y === 0 ? Math.sin(nowS() * (playerSprinting() ? 13 : 9)) * 0.035 : 0;
-  camera.position.set(player.pos.x, player.pos.y + EYE + bob, player.pos.z);
+  const bob = player.pos.y === 0 && spd > 0.5 ? Math.sin(nowS() * (playerSprinting() ? 13 : 9)) * 0.035 * Math.min(1, spd / Math.max(1, maxSp)) : 0;
+  camera.position.set(player.pos.x, player.pos.y + EYE + bob - (player.crouching ? 0.25 : 0), player.pos.z);
   camera.rotation.order = 'YXZ';
   camera.rotation.y = player.yaw; camera.rotation.x = player.pitch; camera.rotation.z = 0;
   if (G.shake > 0) { camera.position.x += (Math.random() - 0.5) * G.shake * 0.35; camera.position.y += (Math.random() - 0.5) * G.shake * 0.35; G.shake = Math.max(0, G.shake - dt * 1.4); }
-  player.spreadBloom = Math.max(0, player.spreadBloom - dt * 0.03);
+  updateRecoil(dt);
   if (viewGun) { viewGun.position.z += (-0.55 - viewGun.position.z) * Math.min(1, dt * 14); if (muzzle) muzzle.material.opacity *= Math.pow(0.0001, dt * 6); }
 }
 
@@ -1888,15 +2076,30 @@ function buildMenu() {
       if (viewGun) { camera.remove(viewGun); }
       buildViewGun();
       startMatch();
-      canvas.requestPointerLock();
+      lockPointer();
     };
     grid.appendChild(card);
   });
 }
-$('btn-again').onclick = () => { $('endscreen').classList.add('hidden'); $('hud').classList.remove('hidden'); startMatch(); canvas.requestPointerLock(); };
+$('btn-again').onclick = () => { $('endscreen').classList.add('hidden'); $('hud').classList.remove('hidden'); startMatch(); lockPointer(); };
+
+function refreshSettingsLabels() {
+  const sv = $('sens-val'), sc = $('sens-cm'), fv = $('fov-val'), fh = $('fov-h');
+  if (sv) sv.textContent = '×' + SETTINGS.sens.toFixed(2);
+  if (sc) sc.textContent = '≈ ' + sensCmPer360().toFixed(1) + ' cm/360° ở 800 DPI (dải pro tactical ≈ 34–58 cm)';
+  if (fv) fv.textContent = SETTINGS.fov + '°';
+  if (fh) { const h = 2 * Math.atan(Math.tan(SETTINGS.fov * Math.PI / 360) * camera.aspect) * 180 / Math.PI; fh.textContent = '≈ ' + h.toFixed(1) + '° ngang theo tỉ lệ màn hình hiện tại' + (SETTINGS.fov === 74 ? ' (= FOV của CS2)' : ''); }
+}
+function bindSettings() {
+  const sEl = $('set-sens'), fEl = $('set-fov');
+  if (sEl) { sEl.value = SETTINGS.sens; sEl.addEventListener('input', () => { SETTINGS.sens = parseFloat(sEl.value); refreshSettingsLabels(); saveSettings(); }); }
+  if (fEl) { fEl.value = SETTINGS.fov; fEl.addEventListener('input', () => { SETTINGS.fov = parseInt(fEl.value, 10); camera.fov = SETTINGS.fov; camera.updateProjectionMatrix(); refreshSettingsLabels(); saveSettings(); }); }
+  refreshSettingsLabels();
+}
 
 buildMap();
 buildMenu();
+bindSettings();
 animate();
 </script>
 </body>
