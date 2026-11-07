@@ -278,6 +278,43 @@
     background:linear-gradient(90deg, transparent, var(--cy), transparent); box-shadow:0 0 14px rgba(65,217,255,.6); }
   #end-score:empty + .end-divider { display:none; }
 
+  /* ================= KILLCAM / REPLAY ================= */
+  #killcam-ui { position:fixed; inset:0; z-index:18; pointer-events:none;
+    border:3px solid rgba(255,60,60,.55); box-shadow:inset 0 0 120px rgba(255,0,0,.25); }
+  #killcam-tag { position:absolute; top:22px; left:50%; transform:translateX(-50%);
+    font-family:var(--fd); font-size:26px; font-weight:900; letter-spacing:5px; color:#ff5d5d;
+    text-shadow:0 0 18px rgba(255,60,60,.8); animation:kcPulse 1s ease-in-out infinite; }
+  @keyframes kcPulse { 0%,100% { opacity:1; } 50% { opacity:.55; } }
+  #killcam-title { position:absolute; top:60px; left:50%; transform:translateX(-50%);
+    font-family:var(--fh); font-size:16px; font-weight:700; letter-spacing:2px; color:#ffe9e9; }
+  #killcam-hint { position:absolute; bottom:26px; left:50%; transform:translateX(-50%);
+    font-family:var(--fh); font-size:13px; letter-spacing:2px; color:#c9d8ee;
+    background:rgba(6,12,24,.6); border:1px solid rgba(140,220,255,.35); border-radius:8px; padding:6px 14px; }
+  #replay-ui { position:fixed; inset:0; z-index:19; pointer-events:none;
+    border:3px solid rgba(65,217,255,.4); box-shadow:inset 0 0 120px rgba(65,217,255,.12); }
+  #replay-top { position:absolute; top:20px; left:50%; transform:translateX(-50%);
+    font-family:var(--fd); font-size:19px; font-weight:900; letter-spacing:4px; color:#aee9ff;
+    text-shadow:0 0 16px rgba(65,217,255,.7); }
+  #replay-bar { position:absolute; left:50%; bottom:22px; transform:translateX(-50%);
+    display:flex; align-items:center; gap:10px; pointer-events:auto; width:min(880px,94vw);
+    background:linear-gradient(170deg, rgba(10,20,42,.95), rgba(4,8,18,.95)); border:1px solid rgba(65,217,255,.5);
+    border-radius:14px; padding:12px 16px; box-shadow:0 20px 50px rgba(0,0,0,.6); }
+  .rp-btn { cursor:pointer; font-family:var(--fh); font-weight:700; font-size:13px; letter-spacing:1px;
+    color:#d5e9ff; background:rgba(255,255,255,.06); border:1px solid rgba(140,220,255,.35);
+    border-bottom-width:2.5px; border-radius:8px; padding:7px 12px; }
+  .rp-btn:hover { border-color:rgba(65,217,255,.8); background:rgba(65,217,255,.12); }
+  .rp-btn.on { background:rgba(65,217,255,.28); color:#fff; }
+  #replay-track { position:relative; flex:1; display:flex; align-items:center; }
+  #replay-seek { width:100%; accent-color:#41d9ff; cursor:pointer; }
+  #replay-markers { position:absolute; left:0; right:0; top:50%; height:0; pointer-events:none; }
+  .rp-mark { position:absolute; width:9px; height:9px; border-radius:50%; transform:translate(-50%,-50%);
+    background:#ff5d5d; box-shadow:0 0 7px rgba(255,60,60,.9); }
+  .rp-mark.plant { background:#ffb02e; box-shadow:0 0 7px rgba(255,176,46,.9); border-radius:2px; }
+  #replay-time { font-family:var(--fd); font-size:13px; color:#aee9ff; min-width:86px; text-align:center; }
+  #btn-replay:disabled { opacity:.38; filter:grayscale(.7); cursor:not-allowed; transform:none; }
+
+  /* ================= BUY MENU ================= */
+
   /* ================= BUY MENU ================= */
   #buy-menu { position:fixed; z-index:15; top:50%; left:50%; transform:translate(-50%,-50%); width:540px; max-width:94vw; max-height:92vh; overflow-y:auto;
     background:linear-gradient(170deg, rgba(10,20,42,.97), rgba(4,8,18,.97)); border:1px solid rgba(65,217,255,.55); border-radius:18px;
@@ -479,6 +516,31 @@
   <div id="end-score"></div><div class="end-divider"></div>
   <p class="sub" id="end-sub"></p>
   <button class="btn" id="btn-again">CHƠI LẠI</button>
+  <button class="btn" id="btn-replay">↺ XEM LẠI ROUND CUỐI</button>
+</div>
+
+<!-- ================= KILLCAM ================= -->
+<div id="killcam-ui" class="hidden">
+  <div id="killcam-tag">🎯 KILLCAM</div>
+  <div id="killcam-title">Góc nhìn của kẻ hạ bạn</div>
+  <div id="killcam-hint">SPACE — bỏ qua</div>
+</div>
+
+<!-- ================= REPLAY ================= -->
+<div id="replay-ui" class="hidden">
+  <div id="replay-top">↺ REPLAY — ROUND <span id="replay-round"></span> · góc nhìn của bạn</div>
+  <div id="replay-bar">
+    <button class="rp-btn" id="replay-play">⏸</button>
+    <div id="replay-track">
+      <input type="range" id="replay-seek" min="0" max="100" step="0.05" value="0">
+      <div id="replay-markers"></div>
+    </div>
+    <span id="replay-time">0:00 / 0:00</span>
+    <button class="rp-btn rp-spd" data-v="0.5">0.5×</button>
+    <button class="rp-btn rp-spd on" data-v="1">1×</button>
+    <button class="rp-btn rp-spd" data-v="2">2×</button>
+    <button class="rp-btn" id="replay-exit">✕ VỀ KẾT QUẢ</button>
+  </div>
 </div>
 
 <script type="module">
@@ -492,6 +554,9 @@ import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
              | Abilities | Rounds | HUD/Minimap | Input | Loop
    v3.2: bot dùng mô hình 3D thật (glTF + AnimationMixer, mục BOT 3D MODELS);
    figure khối chỉ còn là fallback khi nạp model lỗi. Hitbox không đổi.
+   v3.4 (bản gộp trên nền v3.3): Killcam/Replay + hotfix audit B1/B2/spawn +
+   model 3D, và hoàn thiện roster 7 súng (mua/đổi súng theo slot, scope SR-50,
+   pellets SG-12, killReward theo súng, recoil theo recoilType — hết NaN).
    ============================================================ */
 
 // ---------------- AUDIO (WebAudio synthesized, no files) ----------------
@@ -606,7 +671,7 @@ const WEAPONS = {
     kickPitchDeg: 2.60, kickYawDeg: 0.30, recoveryTime: 0.55, rapidPenaltyDeg: 0, rapidPenaltyCapDeg: 0,
     stanceBaseDeg: 2.60, stanceBaseCrouchDeg: 2.60 },
   scout:  { name: 'SR-50 "MẮT MÈO"', slot: 'primary', cls: 'SNIPER', dmg: 80, headMult: 4, rpm: 55, mag: 6, reload: 3.0, auto: false, moveSpeed: 4.40,
-    price: 2200, killReward: 300, penetrationPower: 2, recoilType: 'kick', canScope: true,
+    price: 2200, killReward: 300, penetrationPower: 2, recoilType: 'kick', canScope: true, noScopeDeg: 4.5,
     kickPitchDeg: 2.80, kickYawDeg: 0.15, recoveryTime: 0.90, rapidPenaltyDeg: 0, rapidPenaltyCapDeg: 0,
     stanceBaseDeg: 0.06, stanceBaseCrouchDeg: 0.04 },
   deagle: { name: 'DP-50 "BÚA"', slot: 'sidearm', cls: 'PISTOL', dmg: 53, headMult: 4, rpm: 267, mag: 7, reload: 2.0, auto: false, moveSpeed: 5.06,
@@ -1015,6 +1080,11 @@ function botAnimCrossfade(anim, kind) {
 
 // Cập nhật animation mỗi frame từ trạng thái bot thật (vận tốc qua entSpeed, bắn qua lastShotAt, chết qua alive)
 function updateBotAnimations(dt) {
+  // v3.4 — tương tác với Killcam/Replay: applyFrame() của KC/RP ghi transform đã ghi hình thẳng lên
+  // group cha (bot.mesh); model 3D chỉ là group con nên mixer KHÔNG ghi đè được vị trí/xoay phát lại.
+  // Nhưng mixer suy trạng thái từ vòng lặp TRỰC TIẾP (bot sống/chết, tốc độ hiện tại) → hình phát lại sẽ
+  // cử động sai trạng thái đã ghi. Lựa chọn: tạm dừng hẳn mixer khi killcam/replay đang phát.
+  if (typeof KC !== 'undefined' && (KC.active || RP.active)) return;
   if (BOT_MODEL.status !== 'ready' || dt <= 0) return;
   const t = nowS();
   const step = (mesh, alive, speed, lastShotAt) => {
@@ -1072,10 +1142,10 @@ function spawnBots() {
       vel: new THREE.Vector3(), velY: 0, tagUntil: 0, landedAt: -99, seenKey: null, reactAt: 0, aimYaw: null, aimErrA: 0, aimErrR: 0, _aimErr: 0 });
   });
   const defs = [
-    { name: 'Địch · FLARE', color: 0xff6b2e, lanePts: GUARDS.A, pos: new THREE.Vector3(40, 0, -28) },
+    { name: 'Địch · FLARE', color: 0xff6b2e, lanePts: GUARDS.A, pos: new THREE.Vector3(42, 0, -24) },
     { name: 'Địch · PRISM', color: 0x7de8ff, lanePts: GUARDS.A, pos: new THREE.Vector3(27, 0, -30) },
     { name: 'Địch · BASTION', color: 0xffc44d, lanePts: GUARDS.B, pos: new THREE.Vector3(40, 0, 28) },
-    { name: 'Địch · WHISPER', color: 0xc792ff, lanePts: GUARDS.B, pos: new THREE.Vector3(27, 0, 30) },
+    { name: 'Địch · WHISPER', color: 0xc792ff, lanePts: GUARDS.B, pos: new THREE.Vector3(25, 0, 32) },
     { name: 'Địch · TETHER', color: 0x4dffb8, lanePts: GUARDS.MID, pos: new THREE.Vector3(30, 0, 4) }
   ];
   defs.forEach((d, i) => {
@@ -1089,11 +1159,12 @@ function spawnBots() {
 }
 
 // ---------------- VIEW MODEL (gun in hand) ----------------
-let viewGun = null, muzzle = null;
+let viewGun = null, muzzle = null, viewGunGlowMat = null;
 function buildViewGun() {
   viewGun = new THREE.Group();
   const dark = new THREE.MeshStandardMaterial({ color: 0x1b2434, roughness: 0.4, metalness: 0.5 });
   const glow = new THREE.MeshStandardMaterial({ color: op().color, emissive: op().color, emissiveIntensity: 1.6 });
+  viewGunGlowMat = glow; // R10: giữ tham chiếu để hero-swap nhuộm lại theo operator mới
   const body = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.14, 0.52), dark); viewGun.add(body);
   const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.045, 0.3), dark); barrel.position.set(0, 0.03, -0.38); viewGun.add(barrel);
   const strip = new THREE.Mesh(new THREE.BoxGeometry(0.095, 0.03, 0.3), glow); strip.position.y = 0.06; viewGun.add(strip);
@@ -1204,8 +1275,10 @@ function killBot(bot, attackerName, isHead) {
     bot.mesh.position.y = 0.25;
   }
   addKillfeed(attackerName, bot.name, bot.team !== 'enemy', isHead);
+  REC.ev('kill', attackerName + ' hạ ' + bot.name, bots.indexOf(bot));
   if (attackerName === 'Bạn' && bot.team === 'enemy') {
-    player.money += 300; player.energy = Math.min(100, player.energy + 25);
+    player.money += (WEAPONS[player.weapon] && WEAPONS[player.weapon].killReward) || 300; // v3.4: thưởng hạ theo súng đang cầm (SMG $600 · SG-12 $900 · còn lại $300)
+    player.energy = Math.min(100, player.energy + 25);
     if (player.opKey === 'DRIFT' && nowS() < player.driftUltUntil) { // Vô Ảnh: kill hồi 1 charge Q + tàng hình 2s
       player.qCharges = Math.min(2, player.qCharges + 1);
       player.invisibleUntil = Math.max(player.invisibleUntil, nowS() + 2);
@@ -1215,7 +1288,9 @@ function killBot(bot, attackerName, isHead) {
 }
 function onPlayerDeath() {
   player.dead = true;
-  const killer = bots.find(b => b.team === 'enemy' && b.alive);
+  REC.ev('kill', (KC.lastAttacker ? KC.lastAttacker.name : 'Địch') + ' hạ Bạn', -1);
+  KC.start();
+  const killer = KC.lastAttacker || bots.find(b => b.team === 'enemy' && b.alive); // R9: kẻ hạ thật (botShoot đã lưu KC.lastAttacker), không lấy địch còn sống bất kỳ
   addKillfeed(killer ? killer.name : 'Địch', 'Bạn', false, false);
   announce('BẠN ĐÃ GỤC', G.phase === 'planted' ? 'Bomb đã đặt — đồng đội và quả bomb vẫn còn cơ hội…' : '');
   if (G.phase === 'live' || G.phase === 'buy') endRound(false, 'Bạn bị hạ trước khi đặt bomb');
@@ -1268,10 +1343,16 @@ function updateBot(b, dt) {
     const dBomb = b.pos.distanceTo(G.bombPos);
     if (!found && dBomb > 2.4) { moveBotToward(b, G.bombPos, dt); return; }
     if (dBomb <= 2.6) {
-      b.mesh.lookAt(player.pos.x, 0, player.pos.z);
-      G.defuseProgress += dt;
-      if (G.defuseProgress >= 5) { endRound(false, 'Địch đã gỡ bomb'); }
-      return;
+      // audit B2: chỉ defuser được chỉ định (bot địch còn sống GẦN bomb nhất) mới cộng tiến độ;
+      // các bot còn lại không cộng dồn — rơi xuống hành vi chiến đấu/cover ở dưới
+      let defuser = null, bestD = Infinity;
+      for (const o of bots) { if (o.team === 'enemy' && o.alive) { const dd = o.pos.distanceTo(G.bombPos); if (dd < bestD) { bestD = dd; defuser = o; } } }
+      if (defuser === b) {
+        b.mesh.lookAt(player.pos.x, 0, player.pos.z);
+        G.defuseProgress += dt;
+        if (G.defuseProgress >= 5) { endRound(false, 'Địch đã gỡ bomb'); }
+        return;
+      }
     }
   }
 
@@ -1357,7 +1438,7 @@ function botShoot(b, found) {
     if (player.opKey === 'NULL' && dist < 10) hitChance *= 0.85;              // Chống Nhiễu
   }
   if (Math.random() > hitChance) return; // miss
-  if (fp.type === 'player') damagePlayer(b.team === 'enemy' ? 8 + Math.random() * 6 : 6, b.pos);
+  if (fp.type === 'player') { if (b.team === 'enemy') KC.lastAttacker = b; damagePlayer(b.team === 'enemy' ? 8 + Math.random() * 6 : 6, b.pos); }
   else if (fp.type === 'decoy') { decoy.hp -= 18; if (decoy.hp <= 0) destroyDecoy(); }
   else if (fp.bot) damageBot(fp.bot, 13 + Math.random() * 10, b.name, false);
 }
@@ -1376,12 +1457,12 @@ function tryShoot() {
   const prevShotGap = t - player.lastShot;
   player.lastShot = t; player.ammo[player.weapon]--;
   AudioSys.shot(player.weapon);
-  // v3 recoil (mechanics/01): VK-7 = pattern + recoilIndex; P9 = kick + recovery 0,20s
+  // v3 recoil (mechanics/01): rẽ nhánh theo w.recoilType — 'pattern' (VK-7/SMG/LMG) dùng pattern × patternScale; 'kick' (P9/DP-50/SG-12/SR-50) dùng kick + phạt spam
   const crouch = player.crouching;
   const speedRatio = entSpeed(player) / w.moveSpeed;
   let postureMult = player.pos.y > 0.001 ? 1.50 : (speedRatio > MOVE_PHYS.accurateRatio ? 1.15 : 1.0); // trên không ×1,50 · đang chạy ×1,15
   let coneRad;
-  if (player.weapon === 'rifle') {
+  if (w.recoilType === 'pattern' && Array.isArray(w.recoilPattern)) {
     if (player.recoilIndex < 0.5 && !player.sprayJitter) { // loạt mới: jitter tất định từ seed cho cả loạt (chống macro, ±0,02°/±0,03°)
       let sd = (Math.random() * 1e9) | 0;
       const rnd = () => { sd = (sd * 1664525 + 1013904223) >>> 0; return sd / 4294967296; };
@@ -1390,21 +1471,25 @@ function tryShoot() {
     const idx = Math.min(w.recoilPattern.length - 1, Math.floor(player.recoilIndex));
     const pat = w.recoilPattern[idx], jit = player.sprayJitter ? player.sprayJitter[idx] : [0, 0];
     const patMult = postureMult * (crouch ? 0.85 : 1.0); // ngồi: pattern ×0,85 (mechanics/01 §7.2)
-    player.pitch += (pat[0] + jit[0]) * DEG2RAD * w.recoilScale * patMult;
-    player.yaw -= (pat[1] + jit[1]) * DEG2RAD * w.recoilScale * patMult;
+    const pScale = w.patternScale ?? w.recoilScale ?? 1; // SMG ×0,55 · LMG ×1,10 · VK-7 ×1,0
+    player.pitch += (pat[0] + jit[0]) * DEG2RAD * pScale * patMult;
+    player.yaw -= (pat[1] + jit[1]) * DEG2RAD * pScale * patMult;
     player.recoilIndex = Math.min(w.recoilPattern.length, player.recoilIndex + 1);
     player.lastRecoilShot = t;
     const coneDeg = Math.min(w.coneCapDeg, (crouch ? w.stanceBaseCrouchDeg : w.stanceBaseDeg) + w.conePerIndexDeg * player.recoilIndex);
     coneRad = coneDeg * DEG2RAD * postureMult;
-  } else { // P9: không pattern — kick + phạt spam theo recovery 0,20s
-    if (prevShotGap >= w.recoveryTime) player.p9Penalty = 0; // ngừng bắn đủ 0,20s → reset sạch
-    else player.p9Penalty = Math.min(w.rapidPenaltyCapDeg, player.p9Penalty + w.rapidPenaltyDeg);
+  } else { // kick — MỌI field đều có mặc định an toàn bên dưới: thiếu field cũng không bao giờ sinh NaN cho pitch/yaw/cone
+    const recT = w.recoveryTime ?? 0.2, rpAdd = w.rapidPenaltyDeg ?? 0, rpCap = w.rapidPenaltyCapDeg ?? 0;
+    if (prevShotGap >= recT) player.p9Penalty = 0; // ngừng bắn đủ recoveryTime → reset sạch
+    else player.p9Penalty = Math.min(rpCap, player.p9Penalty + rpAdd);
     player.p9KickSign = -player.p9KickSign;
-    const kickRad = w.kickPitchDeg * DEG2RAD * postureMult;
+    const kickRad = (w.kickPitchDeg ?? 0) * DEG2RAD * postureMult;
     player.pitch += kickRad; player.p9Kick += kickRad; // p9Kick được lò xo kéo về trong updateRecoil
-    player.yaw -= player.p9KickSign * w.kickYawDeg * DEG2RAD;
+    player.yaw -= player.p9KickSign * (w.kickYawDeg ?? 0) * DEG2RAD;
     player.lastRecoilShot = t;
-    coneRad = ((crouch ? w.stanceBaseCrouchDeg : w.stanceBaseDeg) + player.p9Penalty) * DEG2RAD * postureMult;
+    // SR-50: đang scope dùng stanceBase (0,06°); KHÔNG scope dùng noScopeDeg 4,5° cố định (sr50.md §4.3 — van cân bằng chính của súng)
+    const baseDeg = w.canScope ? (player.scoped ? (crouch ? w.stanceBaseCrouchDeg : w.stanceBaseDeg) : (w.noScopeDeg ?? 4.5)) : (crouch ? w.stanceBaseCrouchDeg : w.stanceBaseDeg);
+    coneRad = (baseDeg + player.p9Penalty) * DEG2RAD * postureMult;
   }
   if (viewGun) { viewGun.position.z = -0.47; muzzle.material.opacity = 0.95; muzzle.rotation.z = Math.random() * 3; }
   const origin = camera.position.clone();
@@ -1415,6 +1500,35 @@ function tryShoot() {
   const _u = new THREE.Vector3().crossVectors(_r, dir).normalize();
   const _ang = Math.random() * Math.PI * 2, _rad = totalCone * Math.sqrt(Math.random());
   dir.addScaledVector(_r, Math.cos(_ang) * _rad).addScaledVector(_u, Math.sin(_ang) * _rad).normalize();
+  if (w.canScope && player.scoped) setScoped(false); // SR-50 bolt-action: bắn xong tự thoát scope — ngắm lại bằng chuột phải (sr50.md §3)
+  if ((w.pellets || 1) > 1) {
+    // SG-12 (sg12.md §2): 1 phát = w.pellets tia độc lập, phân bố đĩa đều bán kính stanceBaseDeg (2,6°) quanh trục ngắm;
+    // mỗi pellet dmg = w.dmg, head tính theo từng pellet; chỉ trừ 1 vỏ đạn cho cả phát (đã trừ ở đầu tryShoot).
+    const pelletRad = (w.stanceBaseDeg || 2.6) * DEG2RAD;
+    const baseDir = cameraDir();
+    const _pu = new THREE.Vector3().crossVectors(_r, baseDir).normalize();
+    let anyHit = false, anyHead = false;
+    for (let pi = 0; pi < w.pellets; pi++) {
+      const pa = Math.random() * Math.PI * 2, pr = pelletRad * Math.sqrt(Math.random()); // sqrt(rand) → mật độ đều trên đĩa
+      const pd = baseDir.clone().addScaledVector(_r, Math.cos(pa) * pr).addScaledVector(_pu, Math.sin(pa) * pr).normalize();
+      const pMaxD = wallDistance(origin, pd);
+      const pHit = rayHitBot(origin, pd, ['enemy'], pMaxD);
+      const pBh = firstBlockerHit(origin, pd, pMaxD + 1);
+      const pSfx = pBh ? effects.find(fx => fx.mesh === pBh.object && (fx.kind === 'struct' || fx.kind === 'fortress')) : null;
+      if (pSfx && (!pHit || pBh.distance < pHit.dist)) { // pellet này găm vào công trình có HP trước khi tới bot
+        tracer(origin.clone().add(new THREE.Vector3(0, -0.12, 0)), origin.clone().add(pd.clone().multiplyScalar(pBh.distance)), 0xffe28a);
+        damageStructure(pSfx, w.dmg);
+        continue;
+      }
+      const pEnd = origin.clone().add(pd.clone().multiplyScalar(pHit ? pHit.dist : Math.min(pMaxD, 90)));
+      tracer(origin.clone().add(new THREE.Vector3(0, -0.12, 0)), pEnd, 0xffe28a);
+      if (pHit) { const pHead = pHit.part === 'head'; anyHit = true; anyHead = anyHead || pHead; damageBot(pHit.bot, w.dmg * (pHead ? w.headMult : 1), 'Bạn', pHead); }
+    }
+    if (anyHit) { flashHitmarker(anyHead, false); AudioSys.hit(anyHead); } // hitmarker tổng hợp cho cả phát
+    if (player.ammo[player.weapon] === 0) startReload();
+    updateAmmoHUD();
+    return;
+  }
   const maxD = wallDistance(origin, dir);
   const hit = rayHitBot(origin, dir, ['enemy'], maxD);
   const bh = firstBlockerHit(origin, dir, maxD + 1);
@@ -1843,7 +1957,7 @@ function addKillfeed(killer, victim, killerUs, head) {
 }
 function startMatch() {
   G.pScore = 0; G.eScore = 0; G.round = 1;
-  player.money = 2000; player.ownedRifle = false; player.weapon = 'pistol';
+  player.money = 2000; player.primary = null; player.sidearm = 'pistol'; player.weapon = 'pistol';
   player.energy = 30;
   player.swapsUsed = 0; player.swappedThisRound = false; swapArmKey = null; // ngân sách đổi operator tính theo trận
   startRound();
@@ -1852,8 +1966,7 @@ function startRound() {
   // reset player
   player.pos.copy(T_SPAWN); player.velY = 0; player.yaw = -Math.PI / 2; player.pitch = 0;
   player.hp = 100; player.armor = 0; player.dead = false;
-  player.ammo = { rifle: WEAPONS.rifle.mag, pistol: WEAPONS.pistol.mag };
-  player.reserve = { rifle: 90, pistol: 9999 };
+  resetAmmoAll(); // v3.4: nạp đầy băng + dự trữ cho CẢ 7 súng (bản cũ chỉ rifle/pistol → 5 súng mới thành undefined/NaN từ round 2)
   player.qCd = 0; player.eCd = 0; player.invisibleUntil = 0; player.domeUntil = 0; player.reloadingUntil = 0;
   player.qCharges = 2; player.qRegenAt = 0; player.lastQUse = -99; player.heatTime = 0; player.heatStacks = 0;
   player.swappedThisRound = false; swapArmKey = null; // hero-swap: mỗi round được đổi tối đa 1 lần
@@ -1861,12 +1974,16 @@ function startRound() {
   player.vel.set(0, 0, 0); player.recoilIndex = 0; player.sprayJitter = null; player.lastRecoilShot = -99;
   player.p9Penalty = 0; player.p9Kick = 0; player.tagUntil = 0; player.landedAt = -99; player.crouching = false;
   G.qeLockUntil = 0;
-  if (!player.ownedRifle && player.weapon === 'rifle') player.weapon = 'pistol';
+  // giữ súng qua round theo slot: primary đang cầm không còn là primary sở hữu → rơi về sidearm; deagle không còn là sidearm → pistol
+  if (WEAPONS[player.weapon].slot === 'primary' && player.primary !== player.weapon) player.weapon = player.sidearm;
+  else if (player.weapon === 'deagle' && player.sidearm !== 'deagle') player.weapon = 'pistol';
+  setScoped(false); // không để scope/FOV zoom rò sang round mới
   // reset world fx
   for (const fx of effects) destroyFx(fx);
   effects.length = 0;
   if (G.bombMesh) { scene.remove(G.bombMesh); G.bombMesh = null; }
   G.bombPos = null; G.bombSite = null; G.plantProgress = 0; G.defuseProgress = 0;
+  REC.reset(); // killcam/replay: reset đệm snapshot + slot entity mỗi round (review R-04)
   G.revealUntil = 0; G.slowUntil = 0;
   spawnBots();
   G.phase = 'buy'; G.timer = BUY_TIME;
@@ -1901,6 +2018,7 @@ function tryPlant(dt) {
 function plantBomb(site) {
   G.phase = 'planted'; G.timer = BOMB_TIME; G.bombSite = site;
   G.bombPos = player.pos.clone();
+  REC.ev('plant', 'Bomb đặt tại site ' + site.name, -2);
   player.money += 300;
   const m = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.3, 0.4),
     new THREE.MeshStandardMaterial({ color: 0x222222, emissive: 0xff2222, emissiveIntensity: 1.2 }));
@@ -1917,6 +2035,7 @@ function explodeBomb() {
 }
 function endRound(usWin, reason) {
   if (G.phase === 'end' || G.phase === 'matchend') return;
+  setBuyOpen(false); // audit B12: không để buy menu kẹt qua hết round/trận
   G.phase = 'end'; G.endTimer = 4;
   if (usWin) { G.pScore++; player.money += 1400; } else { G.eScore++; player.money += 800; }
   player.money = Math.min(9999, player.money);
@@ -1932,6 +2051,7 @@ function endMatch() {
   $('end-title').style.color = G.pScore > G.eScore ? '#7dffce' : '#ff5d5d';
   const esEl = $('end-score'); if (esEl) esEl.textContent = G.pScore + ' — ' + G.eScore;
   $('end-sub').textContent = 'Tỉ số chung cuộc: ' + G.pScore + ' — ' + G.eScore + ' sau ' + (G.round) + ' round. Operator: ' + player.opKey;
+  const brp = $('btn-replay'); if (brp) brp.disabled = REC.frames.length < 20;
   $('endscreen').classList.remove('hidden');
   $('hud').classList.add('hidden');
 }
@@ -1939,15 +2059,21 @@ function endMatch() {
 // ---------------- BUY MENU ----------------
 let buyOpen = false;
 function setBuyOpen(open) {
+  if (open && G.phase !== 'buy') open = false; // audit B1: chỉ cho mua trong buy phase — chặn mở menu giữa giao tranh
   buyOpen = open;
   $('buy-menu').classList.toggle('hidden', !open);
   if (open) { document.exitPointerLock && document.exitPointerLock(); refreshBuy(); }
   else $('pause-hint').classList.toggle('hidden', locked || G.phase === 'menu' || G.phase === 'matchend');
 }
+const WEAPON_BUY_BUTTONS = [['deagle', 'buy-deagle'], ['smg', 'buy-smg'], ['shotgun', 'buy-shotgun'], ['rifle', 'buy-rifle'], ['scout', 'buy-scout'], ['lmg', 'buy-lmg']];
 function refreshBuy() {
   $('bm-money-val').textContent = '$' + player.money;
-  $('buy-rifle').disabled = player.ownedRifle || player.money < 1500;
-  $('buy-rifle').textContent = player.ownedRifle ? 'ĐÃ CÓ' : '$1500';
+  for (const [wKey, btnId] of WEAPON_BUY_BUTTONS) { // cả 6 nút súng mua được: "ĐÃ CÓ" theo slot đang sở hữu + khóa khi thiếu tiền (giá lấy từ WEAPONS)
+    const bw = WEAPONS[wKey], bEl = $(btnId);
+    const owned = bw.slot === 'primary' ? player.primary === wKey : player.sidearm === wKey;
+    bEl.disabled = owned || player.money < bw.price;
+    bEl.textContent = owned ? 'ĐÃ CÓ' : '$' + bw.price;
+  }
   $('buy-armor').disabled = player.armor >= 100 || player.money < 650;
   $('buy-energy').disabled = player.money < 300 || player.energy >= 100;
   $('buy-med').disabled = player.money < 250 || player.hp >= 100;
@@ -1955,10 +2081,29 @@ function refreshBuy() {
   document.querySelectorAll('#buy-menu .buy-item').forEach(it => { const b = it.querySelector('button'); it.classList.toggle('cant', !!b.disabled); });
   refreshSwap();
 }
-$('buy-rifle').onclick = () => { if (player.money >= 1500 && !player.ownedRifle) { player.money -= 1500; player.ownedRifle = true; player.weapon = 'rifle'; AudioSys.beep(880, 0.1); refreshBuy(); updateAmmoHUD(); } };
-$('buy-armor').onclick = () => { if (player.money >= 650) { player.money -= 650; player.armor = 100; AudioSys.beep(880, 0.1); refreshBuy(); } };
-$('buy-energy').onclick = () => { if (player.money >= 300) { player.money -= 300; player.energy = Math.min(100, player.energy + 50); AudioSys.beep(880, 0.1); refreshBuy(); } };
-$('buy-med').onclick = () => { if (player.money >= 250) { player.money -= 250; player.hp = Math.min(100, player.hp + 50); AudioSys.beep(880, 0.1); refreshBuy(); } };
+// Mua súng (v3.4): giá + slot lấy từ WEAPONS (nguồn sự thật duy nhất). Mua primary mới = THAY primary đang sở hữu
+// (trừ tiền một lần, khẩu cũ mất); mua sidearm DP-50 = thay P9 ở slot phụ. Trang bị ngay khẩu vừa mua qua switchWeapon().
+function buyWeapon(key) {
+  const w = WEAPONS[key]; if (!w || !w.price) return;
+  if (G.phase !== 'buy') return; // audit B1: chỉ mua trong buy phase
+  if (w.slot === 'primary' ? player.primary === key : player.sidearm === key) return; // đã sở hữu đúng khẩu này
+  if (player.money < w.price) return;
+  player.money -= w.price;
+  if (w.slot === 'primary') player.primary = key; else player.sidearm = key;
+  player.ammo[key] = w.mag; player.reserve[key] = RESERVE0[key]; // băng đầy + dự trữ chuẩn cho khẩu mới
+  switchWeapon(key); // trang bị ngay: thoát scope, reset recoil/nạp đạn, cập nhật HUD
+  AudioSys.beep(880, 0.1);
+  refreshBuy();
+}
+$('buy-deagle').onclick = () => buyWeapon('deagle');
+$('buy-smg').onclick = () => buyWeapon('smg');
+$('buy-shotgun').onclick = () => buyWeapon('shotgun');
+$('buy-rifle').onclick = () => buyWeapon('rifle');
+$('buy-scout').onclick = () => buyWeapon('scout');
+$('buy-lmg').onclick = () => buyWeapon('lmg');
+$('buy-armor').onclick = () => { if (G.phase === 'buy' && player.money >= 650) { player.money -= 650; player.armor = 100; AudioSys.beep(880, 0.1); refreshBuy(); } };
+$('buy-energy').onclick = () => { if (G.phase === 'buy' && player.money >= 300) { player.money -= 300; player.energy = Math.min(100, player.energy + 50); AudioSys.beep(880, 0.1); refreshBuy(); } };
+$('buy-med').onclick = () => { if (G.phase === 'buy' && player.money >= 250) { player.money -= 250; player.hp = Math.min(100, player.hp + 50); AudioSys.beep(880, 0.1); refreshBuy(); } };
 
 // ---------------- HERO SWAP — PHƯƠNG ÁN B (mechanics/06) ----------------
 // Chỉ trong buy phase, người chơi còn sống và đứng trong vùng spawn đội mình (bán kính 6m quanh T_SPAWN).
@@ -2026,6 +2171,7 @@ function doSwap(key) {
   player.money -= cost;
   player.opKey = key;
   const o = op();
+  if (viewGunGlowMat) { viewGunGlowMat.color.setHex(o.color); viewGunGlowMat.emissive.setHex(o.color); } // R10: dải phát sáng view-gun theo màu operator mới
   player.energy = Math.min(25, Math.floor(oldEnergy * 0.25));
   const t = nowS();
   player.qCd = t + o.q.cd / 2;
@@ -2082,7 +2228,7 @@ function refreshHUD(dt) {
   let _movePx = 0;
   if (player.pos.y > 0.001) _movePx = 20;
   else if (_ratio > MOVE_PHYS.accurateRatio) _movePx = 6 + 6 * (_ratio - MOVE_PHYS.accurateRatio) / (1 - MOVE_PHYS.accurateRatio);
-  const _recoilPx = player.weapon === 'rifle' ? player.recoilIndex * 1.5 : player.p9Penalty * 8;
+  const _recoilPx = WEAPONS[player.weapon].recoilType === 'pattern' ? player.recoilIndex * 1.5 : player.p9Penalty * 8; // v3.4: crosshair bloom theo recoilType (SMG/LMG cũng nở tâm theo recoilIndex như VK-7)
   const sp = THREE.MathUtils.clamp(6 + _recoilPx + _movePx, 6, 40);
   $('crosshair').style.setProperty('--sp', sp + 'px');
   $('crosshair').style.filter = (player.recoilIndex === 0 && nowS() - player.recoilResetAt < 0.1) ? 'brightness(1.35)' : '';
@@ -2165,12 +2311,15 @@ const keys = {};
 let locked = false, mouseDown = false;
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
+  if (KC.active && e.code === 'Space') { e.preventDefault(); KC.stop(); return; }
+  if (RP.active && e.code === 'Space') { e.preventDefault(); RP.toggle(); return; }
+  if (RP.active && e.code === 'Escape') { RP.close(); return; }
   if (G.phase === 'menu' || G.phase === 'matchend') return;
   if (e.code === 'KeyB') { setBuyOpen(!buyOpen); return; }
   if (buyOpen) return;
   if (e.code === 'KeyR') startReload();
-  if (e.code === 'Digit1' && player.ownedRifle) { player.weapon = 'rifle'; player.reloadingUntil = 0; updateAmmoHUD(); }
-  if (e.code === 'Digit2') { player.weapon = 'pistol'; player.reloadingUntil = 0; updateAmmoHUD(); }
+  if (e.code === 'Digit1' && player.primary) switchWeapon(player.primary); // súng chính đang sở hữu — MỌI primary, không chỉ VK-7
+  if (e.code === 'Digit2') switchWeapon(player.sidearm); // slot phụ: DP-50 nếu đã mua, không thì P9
   if (e.code === 'KeyQ') castQ();
   if (e.code === 'KeyE') castE();
   if (e.code === 'KeyX') castX();
@@ -2196,6 +2345,8 @@ document.addEventListener('mousemove', e => {
   player.pitch = THREE.MathUtils.clamp(player.pitch, -1.45, 1.45);
 });
 document.addEventListener('mousedown', e => { if (e.button === 0) { mouseDown = true; if (locked) tryShoot(); } });
+document.addEventListener('mousedown', e => { if (e.button === 2 && locked && !player.dead && !buyOpen) setScoped(!player.scoped); }); // chuột phải: bật/tắt scope — setScoped tự chỉ nhận súng canScope (SR-50)
+document.addEventListener('contextmenu', e => e.preventDefault()); // chặn menu chuột phải, nhường nút cho scope
 document.addEventListener('mouseup', e => { if (e.button === 0) mouseDown = false; });
 
 // ---------------- PLAYER UPDATE ----------------
@@ -2334,6 +2485,156 @@ function updateEffects(dt) {
 
 // ---------------- MAIN LOOP ----------------
 const clock = new THREE.Clock();
+// ---------------- KILLCAM + REPLAY (feature) ----------------
+/* Ghi snapshot 20Hz mỗi round (người chơi + mọi bot), phát killcam 4s từ góc kẻ hạ
+   khi người chơi chết, và replay round cuối ở màn kết thúc (timeline + tốc độ). */
+const REC = {
+  frames: [], events: [], acc: 0,
+  reset() { this.frames.length = 0; this.events.length = 0; this.acc = 0; if (KC.active) KC.stop(); },
+  ev(type, label, botIdx) { this.events.push({ t: G.time, type, label, botIdx }); },
+  tick(dt) {
+    if (!bots.length) return;
+    // review R-04: bot được tạo mới mỗi round — nếu đồng hồ trận quay lui (round mới) mà reset() bị sót,
+    // tự dọn đệm để frame/slot entity của round cũ không lẫn sang round mới
+    if (this.frames.length && G.time < this.frames[this.frames.length - 1].t - 0.001) { this.frames.length = 0; this.events.length = 0; this.acc = 0; }
+    this.acc += dt;
+    if (this.acc < 0.05) return;
+    this.acc = 0;
+    this.frames.push({
+      t: G.time,
+      p: [player.pos.x, player.pos.y, player.pos.z, player.yaw, player.pitch, player.hp, player.dead ? 1 : 0],
+      b: bots.map(b => [b.pos.x, b.mesh.position.y, b.pos.z, b.mesh.rotation.y, b.mesh.rotation.z, b.alive ? 1 : 0])
+    });
+    if (this.frames.length > 4200) this.frames.shift();
+  },
+  frameAt(t) {
+    const F = this.frames; if (!F.length) return null;
+    if (t <= F[0].t) return F[0];
+    if (t >= F[F.length - 1].t) return F[F.length - 1];
+    let lo = 0, hi = F.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (F[mid].t <= t) lo = mid; else hi = mid; }
+    const a = F[lo], b = F[hi], k = (t - a.t) / Math.max(1e-6, b.t - a.t);
+    const L = (u, v) => u + (v - u) * k;
+    const LA = (u, v) => { let d = v - u; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return u + d * k; };
+    return {
+      t,
+      p: [L(a.p[0], b.p[0]), L(a.p[1], b.p[1]), L(a.p[2], b.p[2]), LA(a.p[3], b.p[3]), L(a.p[4], b.p[4]), L(a.p[5], b.p[5]), b.p[6]],
+      b: a.b.map((bf, i) => { const cf = b.b[i] || bf; return [L(bf[0], cf[0]), L(bf[1], cf[1]), L(bf[2], cf[2]), LA(bf[3], cf[3]), L(bf[4], cf[4]), cf[5]]; })
+    };
+  }
+};
+function applyFrame(fr, camMode, killerIdx) {
+  if (!fr) return;
+  for (let i = 0; i < bots.length; i++) {
+    const bf = fr.b[i]; if (!bf) continue;
+    bots[i].mesh.position.set(bf[0], bf[1], bf[2]);
+    bots[i].mesh.rotation.set(0, bf[3], bf[4]);
+  }
+  if (camMode === 'player') {
+    camera.position.set(fr.p[0], fr.p[1] + EYE, fr.p[2]);
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = fr.p[3]; camera.rotation.x = fr.p[4]; camera.rotation.z = 0;
+  } else { // killer POV: mắt kẻ hạ nhìn về phía nạn nhân (vị trí người chơi đã ghi)
+    const kf = fr.b[killerIdx]; if (!kf) return;
+    // review R-02: lùi camera 0,55m sau lưng kẻ hạ theo hướng nhìn — tránh camera nằm trong mesh của chính kẻ bắn
+    const dx = fr.p[0] - kf[0], dz = fr.p[2] - kf[2];
+    const dl = Math.hypot(dx, dz) || 1;
+    camera.position.set(kf[0] - dx / dl * 0.55, 1.62, kf[2] - dz / dl * 0.55);
+    camera.lookAt(fr.p[0], 1.1, fr.p[2]);
+  }
+}
+const KC = {
+  active: false, lastAttacker: null, killerIdx: -1, from: 0, deathT: 0, win: 0, realDur: 0, elapsed: 0,
+  start() {
+    if (REC.frames.length < 2) return;
+    let idx = this.lastAttacker ? bots.indexOf(this.lastAttacker) : -1;
+    if (idx < 0) idx = bots.findIndex(b => b.team === 'enemy');
+    if (idx < 0) return;
+    this.killerIdx = idx; this.deathT = G.time;
+    this.from = Math.max(REC.frames[0].t, this.deathT - 4);
+    this.win = this.deathT - this.from;
+    if (this.win < 0.3) return;
+    const norm = Math.max(0, this.win - 1), slow = Math.min(1, this.win);
+    this.realDur = norm + slow / 0.85; // giây cuối phát chậm 0,85×
+    this.elapsed = 0; this.active = true;
+    $('killcam-title').textContent = 'Góc nhìn của ' + bots[idx].name + ' — 4 giây trước khi bạn gục';
+    $('killcam-ui').classList.remove('hidden');
+    if (viewGun) viewGun.visible = false;
+  },
+  recT(e) {
+    const norm = Math.max(0, this.win - 1);
+    if (e < norm) return this.from + e;
+    return Math.min(this.deathT, this.from + norm + (e - norm) * 0.85);
+  },
+  update(dt) {
+    if (!this.active) return;
+    this.elapsed += dt;
+    if (this.elapsed >= this.realDur) { this.stop(); return; }
+    applyFrame(REC.frameAt(this.recT(this.elapsed)), 'killer', this.killerIdx);
+  },
+  stop() {
+    this.active = false;
+    $('killcam-ui').classList.add('hidden');
+    if (viewGun) viewGun.visible = true;
+  }
+};
+const RP = {
+  active: false, t: 0, speed: 1, playing: false,
+  dur() { const F = REC.frames; return F.length ? F[F.length - 1].t - F[0].t : 0; },
+  open() {
+    if (REC.frames.length < 20) return;
+    this.active = true; this.playing = true; this.speed = 1; this.t = REC.frames[0].t;
+    $('endscreen').classList.add('hidden');
+    $('replay-ui').classList.remove('hidden');
+    $('replay-round').textContent = G.round;
+    const seek = $('replay-seek'); seek.max = this.dur(); seek.value = 0;
+    document.querySelectorAll('.rp-spd').forEach(b => b.classList.toggle('on', parseFloat(b.dataset.v) === 1));
+    $('replay-play').textContent = '⏸';
+    const mk = $('replay-markers'); mk.innerHTML = '';
+    const t0 = REC.frames[0].t, d = Math.max(0.001, this.dur());
+    for (const e of REC.events) {
+      const s = document.createElement('span');
+      s.className = 'rp-mark' + (e.type === 'plant' ? ' plant' : '');
+      s.style.left = ((e.t - t0) / d * 100) + '%'; s.title = e.label;
+      mk.appendChild(s);
+    }
+    if (viewGun) viewGun.visible = false;
+    applyFrame(REC.frameAt(this.t), 'player', -1);
+  },
+  close() {
+    this.active = false; this.playing = false;
+    $('replay-ui').classList.add('hidden');
+    $('endscreen').classList.remove('hidden');
+    if (viewGun) viewGun.visible = true;
+  },
+  toggle() {
+    if (!this.active) return;
+    this.playing = !this.playing;
+    if (this.playing && this.t >= REC.frames[REC.frames.length - 1].t - 0.01) this.t = REC.frames[0].t;
+    $('replay-play').textContent = this.playing ? '⏸' : '▶';
+  },
+  update(dt) {
+    if (!this.active) return;
+    const F = REC.frames; if (!F.length) return;
+    if (this.playing) {
+      this.t += dt * this.speed;
+      if (this.t >= F[F.length - 1].t) { this.t = F[F.length - 1].t; this.playing = false; $('replay-play').textContent = '▶'; }
+    }
+    applyFrame(REC.frameAt(this.t), 'player', -1);
+    const seek = $('replay-seek');
+    if (document.activeElement !== seek) seek.value = this.t - F[0].t;
+    $('replay-time').textContent = fmtTime(this.t - F[0].t) + ' / ' + fmtTime(this.dur());
+  }
+};
+$('btn-replay').onclick = () => RP.open();
+$('replay-exit').onclick = () => RP.close();
+$('replay-play').onclick = () => RP.toggle();
+$('replay-seek').addEventListener('input', e => { if (REC.frames.length) RP.t = REC.frames[0].t + parseFloat(e.target.value); });
+document.querySelectorAll('.rp-spd').forEach(b => b.onclick = () => {
+  RP.speed = parseFloat(b.dataset.v);
+  document.querySelectorAll('.rp-spd').forEach(x => x.classList.toggle('on', x === b));
+});
+
 function animate() {
   requestAnimationFrame(animate);
   const rawDt = Math.min(clock.getDelta(), 0.05);
@@ -2356,7 +2657,7 @@ function animate() {
     // phase timers
     if (G.phase === 'buy' || G.phase === 'live' || G.phase === 'planted') {
       G.timer -= rawDt;
-      if (G.phase === 'buy' && G.timer <= 0) { G.phase = 'live'; G.timer = ROUND_TIME; announce('ROUND ' + G.round + ' BẮT ĐẦU', 'Đặt bomb ở A hoặc B, hoặc hạ hết địch'); }
+      if (G.phase === 'buy' && G.timer <= 0) { setBuyOpen(false); G.phase = 'live'; G.timer = ROUND_TIME; announce('ROUND ' + G.round + ' BẮT ĐẦU', 'Đặt bomb ở A hoặc B, hoặc hạ hết địch'); }
       else if (G.phase === 'live' && G.timer <= 0) endRound(false, 'Hết giờ mà chưa đặt bomb');
       else if (G.phase === 'planted' && G.timer <= 0) explodeBomb();
       if ((G.phase === 'live') && Math.ceil(G.timer) !== Math.ceil(G.timer + rawDt) && G.timer <= 5.5 && G.timer > 0) AudioSys.beep(980, 0.08);
@@ -2374,12 +2675,16 @@ function animate() {
     updateEffects(rawDt);
     refreshHUD(rawDt);
     drawMinimap();
+    REC.tick(rawDt);
   } else if (G.phase === 'menu') {
     // slow menu camera orbit around the map
     const t = performance.now() * 0.00012;
     camera.position.set(Math.sin(t) * 40, 17, Math.cos(t) * 40);
     camera.lookAt(0, 0, 0);
   }
+  if (KC.active && !player.dead) KC.stop(); // review R-03: được hồi sinh (AEGIS) giữa killcam thì hủy ngay, trả camera/súng
+  if (KC.active) KC.update(rawDt);
+  if (RP.active) RP.update(rawDt);
   renderer.render(scene, camera);
 }
 
