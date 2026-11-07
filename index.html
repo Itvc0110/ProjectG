@@ -7,6 +7,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <title>NEON DIVIDE — Tactical FPS · 8 Operators</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
 <style>
   /* ============================================================
      NEON DIVIDE — UI v3 "ESPORTS NEON" (presentation layer only)
@@ -476,12 +482,16 @@
 </div>
 
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 
 /* ============================================================
    NEON DIVIDE — tactical FPS prototype (single file)
    Sections: Audio | Operators | State | Map | Entities | Combat
              | Abilities | Rounds | HUD/Minimap | Input | Loop
+   v3.2: bot dùng mô hình 3D thật (glTF + AnimationMixer, mục BOT 3D MODELS);
+   figure khối chỉ còn là fallback khi nạp model lỗi. Hitbox không đổi.
    ============================================================ */
 
 // ---------------- AUDIO (WebAudio synthesized, no files) ----------------
@@ -879,6 +889,158 @@ function botMesh(team, opColor) {
   return g;
 }
 
+// ---------------- BOT 3D MODELS (v3.2) ----------------
+/* Mô hình nhân vật 3D thật (glTF có xương + animation) thay figure khối cho bot.
+   Nguồn model chính: ../assets/models/soldier.glb (humanoid "Vanguard" trong kho
+   three.js examples, r160) — clip sẵn có: Idle / Walk / Run / TPose.
+   Chuỗi dự phòng khi nạp: file local → cùng model qua CDN jsdelivr (gh mrdoob/three.js@r160)
+   → figure khối botMesh() ở trên (không bao giờ để bot vô hình).
+   NGUYÊN TẮC KHÔNG ĐỔI GAMEPLAY: hitbox vẫn là 2 cầu logic trong rayHitBot()
+   (đầu r=0,30 tại y=1,72 · thân r=0,55 tại y=1,02) — model chỉ là lớp hiển thị,
+   được tự động co giãn về chiều cao BOT_MODEL_HEIGHT để khớp các tâm cầu đó. */
+const BOT_MODEL_HEIGHT = 1.80; // m — đầu model ~1,80 khớp cầu đầu 1,72±0,30 và thân 1,02±0,55
+const BOT_MODEL_SOURCES = [
+  '../assets/models/soldier.glb',
+  'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/Soldier.glb'
+];
+const BOT_MODEL = { status: 'loading', scene: null, animations: [] }; // status: loading | ready | failed
+
+function loadBotModel(srcIdx) {
+  if (srcIdx >= BOT_MODEL_SOURCES.length) {
+    BOT_MODEL.status = 'failed';
+    console.warn('[NeonDivide] Không nạp được model 3D cho bot — dùng figure khối dự phòng.');
+    return;
+  }
+  new GLTFLoader().load(BOT_MODEL_SOURCES[srcIdx], gltf => {
+    BOT_MODEL.scene = gltf.scene;
+    BOT_MODEL.animations = gltf.animations || [];
+    BOT_MODEL.status = 'ready';
+    console.info('[NeonDivide] Đã nạp model bot:', BOT_MODEL_SOURCES[srcIdx],
+      '| clips:', BOT_MODEL.animations.map(a => a.name).join(', '));
+    upgradeAllBotFigures();
+  }, undefined, err => {
+    console.warn('[NeonDivide] Lỗi nạp model', BOT_MODEL_SOURCES[srcIdx], err && err.message);
+    loadBotModel(srcIdx + 1);
+  });
+}
+
+// Ánh xạ trạng thái bot → tên clip. Model thiếu clip (Soldier không có Death/Shoot)
+// thì trả null: death dùng ngã vật lý sẵn có trong killBot(), shoot giữ locomotion + giật hiển thị.
+function botClipFor(gltfAnimNames, kind) {
+  const pick = names => { for (const n of names) { const a = BOT_MODEL.animations.find(x => x.name.toLowerCase() === n); if (a) return a; } return null; };
+  if (kind === 'idle')  return pick(['idle']);
+  if (kind === 'walk')  return pick(['walk', 'walking']);
+  if (kind === 'run')   return pick(['run', 'running', 'walk', 'walking']);
+  if (kind === 'death') return pick(['death', 'die', 'dying']);
+  if (kind === 'shoot') return pick(['shoot', 'fire', 'attack', 'punch']);
+  return null;
+}
+
+function attachBotModel(group, team, opColor) {
+  const clone = skeletonClone(BOT_MODEL.scene); // clone xương; geometry được CHIA SẺ giữa các bot
+  // Tự khớp tỉ lệ: đo bbox thế giới ở bind pose rồi scale về BOT_MODEL_HEIGHT, chân chạm đất y=0, tâm trục qua gốc
+  clone.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(clone);
+  const size = box.getSize(new THREE.Vector3());
+  if (size.y > 0.001) {
+    const s = BOT_MODEL_HEIGHT / size.y;
+    clone.scale.multiplyScalar(s);
+    clone.position.x -= (box.min.x + box.max.x) / 2 * s;
+    clone.position.z -= (box.min.z + box.max.z) / 2 * s;
+    clone.position.y -= box.min.y * s;
+  }
+  // Tint theo phe/operator: nhân bản material cho từng bot (không tint chung template)
+  const teamCol = new THREE.Color(team === 'enemy' ? 0xd8404a : 0x2e9fd8);
+  const accentCol = new THREE.Color(opColor || (team === 'enemy' ? 0xff8a5c : 0x7dffce));
+  clone.traverse(o => {
+    if (!o.isMesh) return;
+    o.frustumCulled = false; // skinned mesh: bounding sphere tĩnh không theo xương — tắt culling để model không "nháy" mất hình
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    const cloned = mats.map(m => {
+      if (!m || !m.color) return m;
+      const c = m.clone();
+      if ((c.name || '').toLowerCase().includes('visor')) { c.color.copy(accentCol); if ('emissive' in c) { c.emissive.copy(accentCol); c.emissiveIntensity = 0.7; } }
+      else c.color.lerp(teamCol, 0.45); // giữ chất liệu gốc, nhuộm 45% về màu phe
+      return c;
+    });
+    o.material = Array.isArray(o.material) ? cloned : cloned[0];
+  });
+  group.add(clone);
+  // AnimationMixer riêng cho từng bot (bộ xương đã clone nên mixer độc lập được)
+  const names = BOT_MODEL.animations.map(a => a.name.toLowerCase());
+  const mixer = new THREE.AnimationMixer(clone);
+  const actions = {};
+  for (const kind of ['idle', 'walk', 'run', 'death', 'shoot']) {
+    const clip = botClipFor(names, kind);
+    if (clip) actions[kind] = mixer.clipAction(clip);
+  }
+  if (actions.death) { actions.death.setLoop(THREE.LoopOnce, 1); actions.death.clampWhenFinished = true; }
+  group.userData.anim = { mixer, actions, current: '', model: clone };
+  if (actions.idle) { actions.idle.play(); group.userData.anim.current = 'idle'; }
+}
+
+function makeBotFigure(team, opColor) {
+  const g = new THREE.Group();
+  g.userData.team = team; g.userData.opColor = opColor;
+  if (BOT_MODEL.status === 'ready') attachBotModel(g, team, opColor);
+  else { // đang nạp hoặc nạp lỗi → figure khối tạm; upgradeAllBotFigures() sẽ thay khi model sẵn sàng
+    const fb = botMesh(team, opColor); fb.name = 'fallbackFigure';
+    g.add(fb); g.userData.pendingModel = true;
+  }
+  return g;
+}
+
+function upgradeFigure(group) {
+  if (!group || !group.userData.pendingModel || BOT_MODEL.status !== 'ready') return;
+  const fb = group.getObjectByName('fallbackFigure');
+  if (fb) group.remove(fb);
+  group.userData.pendingModel = false;
+  attachBotModel(group, group.userData.team, group.userData.opColor);
+}
+function upgradeAllBotFigures() {
+  for (const b of bots) upgradeFigure(b.mesh);
+  if (decoy) upgradeFigure(decoy.mesh);
+}
+
+function botAnimCrossfade(anim, kind) {
+  const next = anim.actions[kind];
+  if (!next || anim.current === kind) return;
+  const prev = anim.actions[anim.current];
+  if (prev && prev !== next) prev.fadeOut(0.18);
+  next.reset(); next.setLoop(kind === 'death' ? THREE.LoopOnce : THREE.LoopRepeat, Infinity);
+  next.clampWhenFinished = kind === 'death';
+  next.fadeIn(kind === 'death' ? 0.05 : 0.18); next.play();
+  anim.current = kind;
+}
+
+// Cập nhật animation mỗi frame từ trạng thái bot thật (vận tốc qua entSpeed, bắn qua lastShotAt, chết qua alive)
+function updateBotAnimations(dt) {
+  if (BOT_MODEL.status !== 'ready' || dt <= 0) return;
+  const t = nowS();
+  const step = (mesh, alive, speed, lastShotAt) => {
+    const anim = mesh && mesh.userData.anim;
+    if (!anim) return;
+    if (!alive) { // chết: có clip Death thì phát 1 lần; không có thì tắt dần locomotion (ngã do killBot lo)
+      if (anim.actions.death) botAnimCrossfade(anim, 'death');
+      else if (anim.current !== 'dead') { for (const k in anim.actions) anim.actions[k].fadeOut(0.1); anim.current = 'dead'; }
+      anim.mixer.update(dt); return;
+    }
+    let kind = speed > 3.2 ? 'run' : speed > 0.3 ? 'walk' : 'idle';
+    if (anim.actions.shoot && t - (lastShotAt || -99) < 0.28) kind = 'shoot'; // chỉ khi model có clip bắn
+    botAnimCrossfade(anim, kind);
+    const act = anim.actions[anim.current];
+    if (act) { // chống trượt chân: tốc độ phát clip tỉ lệ vận tốc thật (walk gốc ~1,6 m/s · run gốc ~4,6 m/s)
+      if (anim.current === 'walk') act.timeScale = THREE.MathUtils.clamp(speed / 1.6, 0.6, 1.6);
+      else if (anim.current === 'run') act.timeScale = THREE.MathUtils.clamp(speed / 4.6, 0.6, 1.5);
+      else act.timeScale = 1;
+    }
+    anim.mixer.update(dt);
+  };
+  for (const b of bots) step(b.mesh, b.alive, entSpeed(b), b.lastShotAt);
+  if (decoy) step(decoy.mesh, nowS() < decoy.until && decoy.hp > 0, decoy.vel ? decoy.vel.length() : 0, -99);
+}
+loadBotModel(0);
+
 const LANES = {
   top: [new THREE.Vector3(-38, 0, -12), new THREE.Vector3(-38, 0, -24), new THREE.Vector3(-12, 0, -24), new THREE.Vector3(14, 0, -24), new THREE.Vector3(27, 0, -24)],
   mid: [new THREE.Vector3(-36, 0, 0), new THREE.Vector3(-16, 0, 0), new THREE.Vector3(4, 0, 0), new THREE.Vector3(20, 0, 0), new THREE.Vector3(25, 0, -8)],
@@ -901,7 +1063,7 @@ function spawnBots() {
     { name: 'Đồng đội · DRIFT', color: 0xa8c6ff }
   ];
   ['top', 'mid', 'bot'].forEach((lane, i) => {
-    const mesh = botMesh('ally', allyDefs[i].color);
+    const mesh = makeBotFigure('ally', allyDefs[i].color);
     const pos = new THREE.Vector3(T_SPAWN.x + 1.5, 0, (i - 1) * 3.2);
     mesh.position.copy(pos); scene.add(mesh);
     bots.push({ team: 'ally', name: allyDefs[i].name, mesh, pos, hp: 100, alive: true,
@@ -917,7 +1079,7 @@ function spawnBots() {
     { name: 'Địch · TETHER', color: 0x4dffb8, lanePts: GUARDS.MID, pos: new THREE.Vector3(30, 0, 4) }
   ];
   defs.forEach((d, i) => {
-    const mesh = botMesh('enemy', d.color);
+    const mesh = makeBotFigure('enemy', d.color);
     mesh.position.copy(d.pos); scene.add(mesh);
     bots.push({ team: 'enemy', name: d.name, mesh, pos: d.pos.clone(), hp: 100, alive: true,
       lanePts: d.lanePts, wp: i % d.lanePts.length, speed: 4.1, nextShot: 0, burst: 0, slowUntil: 0, stunUntil: 0, trapUntil: 0, holdPos: null, lastShotAt: -99,
@@ -1035,9 +1197,12 @@ function damageBot(bot, amount, attackerName, isHead) {
 function killBot(bot, attackerName, isHead) {
   bot.alive = false; bot.hp = 0; bot.deadAt = nowS();
   if (bot.shieldMesh) detachShieldMesh(bot);
-  // simple ragdoll: fall over
-  bot.mesh.rotation.z = Math.PI / 2 * (Math.random() > 0.5 ? 1 : -1);
-  bot.mesh.position.y = 0.25;
+  // simple ragdoll: fall over — trừ khi model 3D có clip Death (clip tự lo việc ngã, tránh ngã kép)
+  const deathAnim = bot.mesh.userData.anim;
+  if (!(deathAnim && deathAnim.actions && deathAnim.actions.death)) {
+    bot.mesh.rotation.z = Math.PI / 2 * (Math.random() > 0.5 ? 1 : -1);
+    bot.mesh.position.y = 0.25;
+  }
   addKillfeed(attackerName, bot.name, bot.team !== 'enemy', isHead);
   if (attackerName === 'Bạn' && bot.team === 'enemy') {
     player.money += 300; player.energy = Math.min(100, player.energy + 25);
@@ -1511,7 +1676,7 @@ function castE() {
   } else if (player.opKey === 'PRISM') { // Lăng Kính Đánh Lạc: hologram chạy thẳng, vỡ sau 1 hit
     if (decoy) destroyDecoy();
     const pos = new THREE.Vector3(player.pos.x + f.x * 3, 0, player.pos.z + f.z * 3);
-    const mesh = botMesh('ally', 0x7de8ff); mesh.position.copy(pos); scene.add(mesh);
+    const mesh = makeBotFigure('ally', 0x7de8ff); mesh.position.copy(pos); scene.add(mesh);
     decoy = { pos, hp: 18, until: t + 6, mesh, vel: f.clone().multiplyScalar(3), slideUntil: t + 4 };
     announce('', 'Hologram giả đã chạy ra — địch sẽ ưu tiên bắn nó');
   } else if (player.opKey === 'BASTION') { // Bẫy Trọng Trường Nhẹ: bẫy sàn 4m, kích hoạt 1 lần
@@ -2205,6 +2370,7 @@ function animate() {
     tryPlant(rawDt);
     updatePlayer(rawDt);
     for (const b of bots) updateBot(b, rawDt * botScale);
+    updateBotAnimations(rawDt * botScale);
     updateEffects(rawDt);
     refreshHUD(rawDt);
     drawMinimap();
