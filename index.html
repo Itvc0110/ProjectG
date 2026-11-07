@@ -241,8 +241,8 @@ const OPERATORS = {
 
 // ---------------- WEAPONS ----------------
 const WEAPONS = {
-  rifle:  { name: 'VK-7 RIFLE', dmg: 34, headMult: 2, rpm: 600, mag: 30, reload: 2.1, spread: 0.016, auto: true, kick: 0.011 },
-  pistol: { name: 'P9 PISTOL',  dmg: 26, headMult: 2, rpm: 320, mag: 12, reload: 1.5, spread: 0.011, auto: false, kick: 0.007 }
+  rifle:  { name: 'VK-7 RIFLE', dmg: 34, headMult: 4, rpm: 600, mag: 30, reload: 2.1, spread: 0.016, auto: true, kick: 0.011 },
+  pistol: { name: 'P9 PISTOL',  dmg: 26, headMult: 4, rpm: 320, mag: 12, reload: 1.5, spread: 0.011, auto: false, kick: 0.007 }
 };
 
 // ---------------- GAME STATE ----------------
@@ -252,7 +252,7 @@ const SITES = {
   A: { name: 'A', pos: new THREE.Vector3(32, 0, -24), color: 0xff9f2e },
   B: { name: 'B', pos: new THREE.Vector3(32, 0, 24), color: 0xc44dff }
 };
-const WIN_SCORE = 6, ROUND_TIME = 100, BOMB_TIME = 35, BUY_TIME = 12;
+const WIN_SCORE = 6, ROUND_TIME = 115, BOMB_TIME = 35, BUY_TIME = 12, PLANT_TIME = 3.2;
 
 const G = {
   phase: 'menu', // menu | buy | live | planted | end | matchend
@@ -874,16 +874,16 @@ function tryPlant(dt) {
   if (G.phase === 'live' && site && keys['KeyF'] && !player.dead) {
     wrap.classList.remove('hidden'); $('plant-label').textContent = 'ĐANG ĐẶT BOMB TẠI SITE ' + site.name + '…';
     G.plantProgress += dt;
-    $('plant-fill').style.width = Math.min(100, G.plantProgress / 3 * 100) + '%';
+    $('plant-fill').style.width = Math.min(100, G.plantProgress / PLANT_TIME * 100) + '%';
     if (Math.floor(G.plantProgress * 2) !== Math.floor((G.plantProgress - dt) * 2)) AudioSys.beep(740, 0.07);
-    if (G.plantProgress >= 3) plantBomb(site);
+    if (G.plantProgress >= PLANT_TIME) plantBomb(site);
   } else {
     if (G.phase === 'planted' && G.defuseProgress > 0) {
       wrap.classList.remove('hidden'); $('plant-label').textContent = '⚠ ĐỊCH ĐANG GỠ BOMB…';
       $('plant-fill').style.width = Math.min(100, G.defuseProgress / 5 * 100) + '%';
     } else wrap.classList.add('hidden');
     G.plantProgress = Math.max(0, G.plantProgress - dt * 1.5);
-    $('plant-fill').style.width = Math.min(100, G.plantProgress / 3 * 100) + '%';
+    $('plant-fill').style.width = Math.min(100, G.plantProgress / PLANT_TIME * 100) + '%';
   }
 }
 function plantBomb(site) {
