@@ -9,8 +9,8 @@
 <title>NEON DIVIDE — Tactical FPS · 8 Operators</title>
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  "three": "./vendor/three.module.min.js",
+  "three/addons/": "./vendor/addons/"
 } }
 </script>
 <style>
@@ -960,7 +960,7 @@ setTimeout(function () {
   if (window.__gameBooted) return;
   if (document.getElementById('boot-error').classList.contains('show')) return; // lỗi WebGL đã hiện từ module
   window.__showBootError('Không tải được thư viện 3D',
-    'Không tải được Three.js từ CDN — kiểm tra kết nối mạng rồi tải lại trang. Nếu mạng công ty/trường chặn CDN, hãy thử mạng khác.', true);
+    'Không tải được thư viện Three.js (bản đóng gói trong thư mục vendor/) — hãy chắc chắn bạn đã pull đủ bản mới nhất rồi tải lại trang.', true);
 }, 8000);
 </script>
 <script type="module">
