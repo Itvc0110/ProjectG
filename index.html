@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Be+Vietnam+Pro:wght@600;700;800;900&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Be+Vietnam+Pro:wght@600;700;800;900&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" crossorigin="anonymous">
 <title>NEON DIVIDE — Tactical FPS · 8 Operators</title>
 <script type="importmap">
 { "imports": {
@@ -104,9 +104,22 @@
   .kf { background:var(--glass); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
     border:1px solid var(--line-soft); border-right:3px solid var(--rd); padding:6px 12px; border-radius:7px;
     font-family:var(--fh); font-size:13.5px; font-weight:600; letter-spacing:.4px; color:#e6f1ff;
-    box-shadow:0 8px 22px rgba(0,0,0,.4); animation:kfIn .22s cubic-bezier(.2,.9,.3,1.3) both; max-width:100%; }
+    box-shadow:0 8px 22px rgba(0,0,0,.4); animation:kfIn .22s cubic-bezier(.2,.9,.3,1.3) both; max-width:100%;
+    display:flex; align-items:center; gap:7px; transition:opacity 1s linear; } /* A2 (v52): fade tuyến tính 1 s ở cuối đời — JS chỉ đặt opacity:0 sau mốc giữ */
   .kf.us { border-right-color:var(--cy); }
+  .kf.self { border-left:3px solid #ffb02e; background:rgba(10,20,40,.88); } /* A2: dòng liên quan người chơi nổi bật + giữ lâu hơn */
+  .kf .kf-sil { width:27px; height:14px; flex:none; } /* silhouette súng (.sil-*) thu nhỏ cho killfeed — cao 14 px theo đặc tả */
+  .kf .kf-sep { color:var(--dim); flex:none; } /* fallback '▸' khi không có súng (kỹ năng EMP/lửa…) */
+  .kf .kf-hs { color:#ff9a3c; font-size:10.5px; font-weight:800; letter-spacing:1px; flex:none; } /* tag HEADSHOT cam — khớp màu hitmarker head */
   @keyframes kfIn { from { transform:translateX(26px); opacity:0 } to { transform:none; opacity:1 } }
+
+  /* ---------- Alive count (A1, v52) — chấm quân số còn sống trong topbar ---------- */
+  .alive-dots { display:flex; gap:4px; justify-content:center; margin-top:4px; min-height:7px; }
+  .alive-dots i { width:7px; height:7px; border-radius:50%; background:currentColor; box-shadow:0 0 6px currentColor; }
+  .alive-dots i.off { opacity:.22; box-shadow:none; }
+  .tb-side.us .alive-dots { color:#41d9ff; } .tb-side.them .alive-dots { color:#ff5d5d; }
+  .alive-dots i.last { animation:alivePulse 1s ease-in-out infinite; } /* người chơi là người cuối cùng sống sót (1vX) */
+  @keyframes alivePulse { 0%,100% { transform:scale(1); opacity:1 } 50% { transform:scale(1.45); opacity:.65 } }
 
   /* ---------- Vital bars (bottom-left glass panel) ---------- */
   #bottom-left { position:absolute; left:16px; bottom:16px; transform:scale(var(--hud-scale,1)); transform-origin:bottom left; width:262px; padding:13px 15px 11px; border-radius:var(--r-lg);
@@ -502,6 +515,41 @@
   #settings-panel .set-note { grid-column:2; font-size:12.5px; color:#8fb6d9; }
   #settings-panel > .set-note { grid-column:auto; margin-top:2px; }
   @media (max-width:600px){ #settings-panel .set-row{ grid-template-columns:1fr; } #settings-panel .set-note{ grid-column:1; } }
+
+  /* ================= v3.6-ui (dev-v49): MENU VÀO GAME + SETTINGS 1 PANEL + FIRST-RUN ================= */
+  .menu-actions { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; align-items:stretch; margin:2px 0 4px; }
+  .menu-actions .btn { margin-top:0; }
+  .btn-play { font-size:21px; letter-spacing:4px; padding:16px 58px; border-radius:14px;
+    background:linear-gradient(90deg,#0d9e6e,#2fe0a8 55%,#41d9ff); border:1px solid rgba(190,255,225,.65); color:#04160d;
+    box-shadow:0 14px 40px rgba(20,220,160,.35), 0 0 26px rgba(65,217,255,.25); }
+  .btn-play:hover { box-shadow:0 20px 50px rgba(20,220,160,.45), 0 0 34px rgba(65,217,255,.35); }
+  .btn-ghost { background:rgba(10,24,44,.66); border:1px solid rgba(120,190,255,.4); color:#d5e9ff;
+    font-size:15px; letter-spacing:2.5px; padding:14px 30px; box-shadow:0 8px 24px rgba(0,0,0,.35); }
+  .btn-ghost:hover { border-color:var(--cy); color:#fff; box-shadow:0 12px 30px rgba(0,0,0,.45), 0 0 18px rgba(65,217,255,.25); }
+  .menu-pick-note { min-height:22px; margin:2px 0 14px; font-family:var(--fh); font-weight:600; font-size:14px;
+    letter-spacing:1.2px; color:#a9ffdf; text-align:center; }
+  .menu-pick-note:empty { margin-bottom:2px; }
+  .op-card.selected { border-color:var(--c); transform:translateY(-5px);
+    box-shadow:0 18px 42px rgba(0,0,0,.6), 0 0 0 2px var(--c), 0 0 30px color-mix(in srgb, var(--c) 55%, transparent); }
+  .op-card.selected .op-pick { color:var(--c); }
+  #howto-panel { width:min(880px,94vw); }
+  #howto-panel .controls-note { margin-top:6px; background:rgba(10,22,38,.72); border:1px solid rgba(0,229,255,.22);
+    border-radius:14px; padding:14px 18px; backdrop-filter:blur(8px); }
+  #settings-overlay { position:fixed; inset:0; z-index:26; overflow-y:auto; display:flex; align-items:flex-start;
+    justify-content:center; padding:36px 12px 30px; background:rgba(2,5,10,.68);
+    backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
+  #settings-overlay #settings-panel { margin:0; flex:none; box-shadow:0 30px 80px rgba(0,0,0,.65); }
+  #settings-panel .set-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:10px; }
+  #settings-panel .set-head .set-title { margin-bottom:0; padding-top:3px; }
+  .set-close { flex:none; width:32px; height:32px; border-radius:9px; cursor:pointer; font-size:15px; line-height:1;
+    color:#cfe9ff; background:rgba(255,255,255,.06); border:1px solid rgba(140,220,255,.35); transition:background .15s, border-color .15s; }
+  .set-close:hover { background:rgba(255,93,120,.22); border-color:rgba(255,120,150,.6); color:#fff; }
+  #firstrun-note { margin:0 0 14px; padding:11px 14px; border-radius:11px; font-size:13.5px; line-height:1.55; color:#eafff5;
+    background:linear-gradient(90deg, rgba(18,120,84,.35), rgba(20,90,140,.30)); border:1px solid rgba(90,255,190,.45); }
+  #settings-panel .set-foot { display:flex; justify-content:flex-end; margin-top:14px; padding-top:13px;
+    border-top:1px solid rgba(110,200,255,.18); }
+  #settings-panel .set-foot .btn { margin-top:0; font-size:16px; padding:12px 34px; }
+  @media (max-width:600px){ .btn-play{ padding:14px 34px; font-size:18px; } .btn-ghost{ padding:12px 20px; font-size:13.5px; } }
 </style>
 </head>
 <body>
@@ -520,9 +568,9 @@
   <div id="hit-dir"><div class="hit-arc"></div></div>
   <div id="minimap-frame"><canvas id="minimap" width="200" height="164"></canvas><div id="mm-label"><span data-i18n="hud.map">TACTICAL MAP</span><span><b data-i18n="hud.siteA">● A</b>&nbsp;&nbsp;<i data-i18n="hud.siteB">● B</i></span></div></div>
   <div id="topbar">
-    <div class="tb-side us"><div class="tb-tag" data-i18n="hud.teamUs">ĐỘI BẠN</div><div id="score-us">0</div></div>
+    <div class="tb-side us"><div class="tb-tag" data-i18n="hud.teamUs">ĐỘI BẠN</div><div id="score-us">0</div><div class="alive-dots" id="alive-us"></div></div>
     <div class="tb-mid"><div id="timer">1:40</div><div id="round-label">ROUND 1</div></div>
-    <div class="tb-side them"><div class="tb-tag" data-i18n="hud.teamThem">ĐỊCH</div><div id="score-them">0</div></div>
+    <div class="tb-side them"><div class="tb-tag" data-i18n="hud.teamThem">ĐỊCH</div><div id="score-them">0</div><div class="alive-dots" id="alive-them"></div></div>
     <div id="bomb-icon" class="hidden" data-i18n="hud.bomb">● BOMB</div>
   </div>
   <div id="status-fx"></div>
@@ -627,9 +675,20 @@
   <h1>NEON <em>DIVIDE</em></h1>
   <p class="sub" data-i18n-html="menu.sub">FPS chiến thuật 4v5 trên map gốc <b>Neon Divide</b> — đặt bomb tại site A/B, hạ hết địch, hoặc giữ bomb nổ.
   Mỗi Operator có bộ kỹ năng riêng. Đội nào thắng 6 round trước là thắng trận.</p>
+  <div class="menu-actions">
+    <button class="btn btn-play" id="btn-play" data-i18n="menu.play">▶ VÀO GAME</button>
+    <button class="btn btn-ghost" id="btn-menu-howto" data-i18n="menu.howto">❓ CÁCH CHƠI</button>
+    <button class="btn btn-ghost" id="btn-menu-settings" data-i18n="menu.settings">⚙ CÀI ĐẶT</button>
+  </div>
+  <div class="menu-pick-note" id="menu-pick-note"></div>
   <div id="op-grid"></div>
+  <div id="settings-overlay" class="hidden">
   <div id="settings-panel">
-    <div class="set-title" data-i18n="menu.settingsTitle">⚙ CÀI ĐẶT NGẮM BẮN</div>
+    <div class="set-head">
+      <div class="set-title" data-i18n="menu.settingsTitle">⚙ CÀI ĐẶT NGẮM BẮN</div>
+      <button type="button" class="set-close" id="btn-settings-close" aria-label="Đóng cài đặt">✕</button>
+    </div>
+    <div id="firstrun-note" class="hidden" data-i18n="settings.firstRunNote">👋 Chào mừng bạn tới Neon Divide! Đây là lần đầu vào game — chỉnh nhanh độ nhạy chuột, góc nhìn và âm lượng theo ý bạn. Cài đặt được lưu trên máy này (IndexedDB) và panel này chỉ tự hiện một lần này thôi — về sau bấm nút CÀI ĐẶT ở menu khi cần.</div>
     <div class="set-row">
       <label>Ngôn ngữ / Language</label>
       <button type="button" class="btn" id="btn-lang">English</button>
@@ -699,8 +758,12 @@
       <div class="set-note">Xem trước đổi ngay — tâm ngắm trong trận khớp sau khi chơi tiếp. Lưu riêng ở key <b>neondivide-crosshair</b>, không đụng cài đặt sens/FOV.</div>
     </div>
     <div class="set-note" data-i18n="menu.rawInputNote">Game luôn dùng raw input (unadjustedMovement nếu trình duyệt hỗ trợ) — hãy tắt “Enhance pointer precision” trong Windows. Cài đặt được lưu tự động trên máy này.</div>
+    <div class="set-foot"><button type="button" class="btn btn-play" id="btn-settings-done" data-i18n="settings.done">✓ XONG</button></div>
   </div>
-  <div class="controls-note" id="controls-note"></div>
+  </div>
+  <div id="howto-panel" class="hidden">
+    <div class="controls-note" id="controls-note"></div>
+  </div>
 </div>
 
 <!-- ================= END SCREEN ================= -->
@@ -1035,6 +1098,14 @@ const vi = {
   'menu.rawInputNote': 'Game luôn dùng raw input (unadjustedMovement nếu trình duyệt hỗ trợ) — hãy tắt “Enhance pointer precision” trong Windows. Cài đặt được lưu tự động trên máy này.',
   'menu.passiveLabel': 'Nội tại:',
   'menu.select': '▶ CHỌN {name}',
+  'menu.play': '▶ VÀO GAME',
+  'menu.howto': '❓ CÁCH CHƠI',
+  'menu.settings': '⚙ CÀI ĐẶT',
+  'menu.selectedOp': 'Operator đã chọn: {name} — bấm VÀO GAME để bắt đầu',
+  'menu.selectedBadge': '✓ ĐÃ CHỌN',
+  'settings.firstRunNote': '👋 Chào mừng bạn tới Neon Divide! Đây là lần đầu vào game — chỉnh nhanh độ nhạy chuột, góc nhìn và âm lượng theo ý bạn. Cài đặt được lưu trên máy này (IndexedDB) và panel này chỉ tự hiện một lần này thôi — về sau bấm nút CÀI ĐẶT ở menu khi cần.',
+  'settings.firstRunDone': 'LƯU & VÀO GAME',
+  'settings.done': '✓ XONG',
   'menu.skillCost': '{cost} NL · CD {cd}s',
   'menu.skillCostUlt': 'ULT · {cost} NL',
 
@@ -1416,6 +1487,14 @@ const en = {
   'menu.rawInputNote': 'The game always uses raw input (unadjustedMovement when the browser supports it) — turn off “Enhance pointer precision” in Windows. Settings are saved automatically on this machine.',
   'menu.passiveLabel': 'Passive:',
   'menu.select': '▶ SELECT {name}',
+  'menu.play': '▶ PLAY',
+  'menu.howto': '❓ HOW TO PLAY',
+  'menu.settings': '⚙ SETTINGS',
+  'menu.selectedOp': 'Selected operator: {name} — press PLAY to start',
+  'menu.selectedBadge': '✓ SELECTED',
+  'settings.firstRunNote': '👋 Welcome to Neon Divide! This is your first run — take a moment to set mouse sensitivity, FOV and volume. Settings are stored on this machine (IndexedDB) and this panel only appears automatically this once — later, open it from the SETTINGS button in the menu.',
+  'settings.firstRunDone': 'SAVE & PLAY',
+  'settings.done': '✓ DONE',
   'menu.skillCost': '{cost} EN · CD {cd}s',
   'menu.skillCostUlt': 'ULT · {cost} EN',
 
@@ -2705,7 +2784,9 @@ function switchWeapon(key) {
 
 // ---------------- SETTINGS (v3, mechanics/04) ----------------
 const SETTINGS = { sens: 1.0, fov: 74, hudScale: 1, vol: 1, volSfx: 1, volUi: 1, volVoice: 1, invertY: false, xhColor: '#a9ffdf', xhLen: 10, xhGap: 6, xhDot: true };
-try { const _s = JSON.parse(localStorage.getItem('neondivide-settings') || '{}');
+/** Áp một object cài đặt (từ localStorage hoặc record IndexedDB) vào SETTINGS — validate TỪNG field độc lập, field sai/ngoài dải bị bỏ qua (bản lưu cũ vẫn nạp được phần hợp lệ). */
+function applySettingsData(_s) {
+  if (!_s || typeof _s !== 'object') return;
   if (_s.sens >= 0.5 && _s.sens <= 2.5) SETTINGS.sens = _s.sens;
   if (_s.fov >= 68 && _s.fov <= 80) SETTINGS.fov = _s.fov;
   if (_s.vol >= 0 && _s.vol <= 1) SETTINGS.vol = _s.vol;
@@ -2717,7 +2798,10 @@ try { const _s = JSON.parse(localStorage.getItem('neondivide-settings') || '{}')
   if (_s.xhLen >= 4 && _s.xhLen <= 20) SETTINGS.xhLen = _s.xhLen;
   if (_s.xhGap >= 0 && _s.xhGap <= 12) SETTINGS.xhGap = _s.xhGap;
   if (typeof _s.xhDot === 'boolean') SETTINGS.xhDot = _s.xhDot;
-  if (_s.hudScale >= 0.8 && _s.hudScale <= 1.2) SETTINGS.hudScale = _s.hudScale; } catch (e) {}
+  if (_s.hudScale >= 0.8 && _s.hudScale <= 1.2) SETTINGS.hudScale = _s.hudScale;
+}
+try { const _s = JSON.parse(localStorage.getItem('neondivide-settings') || '{}');
+  applySettingsData(_s); } catch (e) {}
 
 // ---------------- CROSSHAIR v3.6 (dev-v38): module crosshair-customizer.js ----------------
 // Nạp ĐỘNG (dynamic import + try/catch) để module lỗi vẫn chơi được: khi đó CHX = null,
@@ -2754,12 +2838,103 @@ function setChx(key, val) {
   if (!CHX) return;
   chCfg = CHX.validate({ ...chCfg, [key]: val }).value;
   CHX.save(chCfg);
+  if (typeof scheduleSettingsDbSave === 'function') scheduleSettingsDbSave();
   applyChx();
   refreshChxLabels();
 }
 function sensRadPerCount() { return 0.00045 * SETTINGS.sens; }
 function sensCmPer360() { return (2 * Math.PI / sensRadPerCount()) / 800 * 2.54; } // quy đổi ở 800 DPI
-function saveSettings() { try { localStorage.setItem('neondivide-settings', JSON.stringify(SETTINGS)); } catch (e) {} }
+function saveSettings() { try { localStorage.setItem('neondivide-settings', JSON.stringify(SETTINGS)); } catch (e) {} if (typeof scheduleSettingsDbSave === 'function') scheduleSettingsDbSave(); }
+
+// ================= SETTINGS DB (dev-v49-ui): IndexedDB 'projectg-db' =================
+// Kho settings bền vững CHÍNH: database 'projectg-db', object store 'settings',
+// đúng MỘT record key 'main' = { ...SETTINGS, crosshair: {...}, initialized: true }.
+//  - Boot: initSettingsFromDb() chạy TRƯỚC buildMenu/HUD (await ở cuối khối này).
+//    Có record DB -> áp record (DB là nguồn mới nhất). Chưa có record mà localStorage
+//    'neondivide-settings' có dữ liệu cũ -> migrate sang DB + initialized=true.
+//    Chưa có cả hai -> first run (settingsInitialized=false -> panel setup tự hiện 1 lần).
+//  - Mọi thay đổi settings đi qua saveSettings(): ghi localStorage (mirror/fallback)
+//    + scheduleSettingsDbSave() debounce 250 ms; đóng panel (leaveSettingsPanel) và
+//    closeMenuSettings() gọi flushSettingsDbSave() để chốt ghi ngay.
+//  - IndexedDB không khả dụng (private mode / trình duyệt chặn): settingsDbAvailable=false,
+//    game chạy hoàn toàn bằng localStorage như cũ; first-run suy từ localStorage có dữ liệu hay chưa.
+const SETTINGS_DB_NAME = 'projectg-db';
+const SETTINGS_DB_KEY = 'main';
+let settingsDbAvailable = false;  // true khi mở được IndexedDB
+let settingsInitialized = false;  // cờ first-run: true khi đã có record settings (DB hoặc bản lưu cũ)
+let _settingsDbPromise = null;
+function openSettingsDb() {
+  if (typeof indexedDB === 'undefined') return Promise.resolve(null);
+  if (_settingsDbPromise) return _settingsDbPromise;
+  _settingsDbPromise = new Promise(resolve => {
+    let req;
+    try { req = indexedDB.open(SETTINGS_DB_NAME, 1); } catch (e) { resolve(null); return; }
+    req.onupgradeneeded = () => { const db = req.result; if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings'); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+    req.onblocked = () => resolve(null);
+  });
+  return _settingsDbPromise;
+}
+function settingsDbGet() {
+  return openSettingsDb().then(db => new Promise(resolve => {
+    if (!db) { resolve(null); return; }
+    try {
+      const rq = db.transaction('settings', 'readonly').objectStore('settings').get(SETTINGS_DB_KEY);
+      rq.onsuccess = () => resolve(rq.result || null);
+      rq.onerror = () => resolve(null);
+    } catch (e) { resolve(null); }
+  }));
+}
+function settingsDbPut(record) {
+  return openSettingsDb().then(db => new Promise(resolve => {
+    if (!db) { resolve(false); return; }
+    try {
+      const rq = db.transaction('settings', 'readwrite').objectStore('settings').put(record, SETTINGS_DB_KEY);
+      rq.onsuccess = () => resolve(true);
+      rq.onerror = () => resolve(false);
+    } catch (e) { resolve(false); }
+  }));
+}
+function currentSettingsRecord() {
+  const rec = { ...SETTINGS, initialized: true };
+  if (typeof chCfg !== 'undefined' && chCfg) rec.crosshair = { ...chCfg };
+  return rec;
+}
+let _settingsDbSaveTimer = null;
+function scheduleSettingsDbSave() {
+  if (!settingsDbAvailable) return;
+  if (_settingsDbSaveTimer) clearTimeout(_settingsDbSaveTimer);
+  _settingsDbSaveTimer = setTimeout(() => { _settingsDbSaveTimer = null; settingsDbPut(currentSettingsRecord()); }, 250);
+}
+function flushSettingsDbSave() {
+  if (_settingsDbSaveTimer) { clearTimeout(_settingsDbSaveTimer); _settingsDbSaveTimer = null; }
+  if (settingsDbAvailable) return settingsDbPut(currentSettingsRecord());
+  return Promise.resolve(false);
+}
+async function initSettingsFromDb() {
+  let legacy = null;
+  try { legacy = JSON.parse(localStorage.getItem('neondivide-settings') || 'null'); } catch (e) { legacy = null; }
+  const db = await openSettingsDb();
+  if (!db) { settingsInitialized = !!legacy; return; } // fallback localStorage thuần
+  settingsDbAvailable = true;
+  const rec = await settingsDbGet();
+  if (rec && typeof rec === 'object') {
+    applySettingsData(rec); // DB thắng localStorage (bản mới nhất)
+    if (rec.crosshair && CHX) { try { chCfg = CHX.validate(rec.crosshair).value; CHX.save(chCfg); } catch (e) {} }
+    settingsInitialized = rec.initialized !== false;
+    return;
+  }
+  if (legacy) { // MIGRATE 1 lần: localStorage -> IndexedDB
+    const mig = { ...legacy, initialized: true };
+    if (typeof chCfg !== 'undefined' && chCfg) mig.crosshair = { ...chCfg };
+    await settingsDbPut(mig);
+    settingsInitialized = true;
+    return;
+  }
+  settingsInitialized = false; // FIRST RUN thật sự: chưa có record ở đâu cả
+}
+await initSettingsFromDb(); // nạp settings từ DB TRƯỚC khi dựng menu/HUD ở cuối file
 
 // ---------------- THREE SETUP ----------------
 const canvas = document.getElementById('game-canvas');
@@ -3812,7 +3987,9 @@ function killBot(bot, attackerName, isHead, isChainKill) {
     bot.mesh.rotation.z = Math.PI / 2 * (Math.random() > 0.5 ? 1 : -1);
     bot.mesh.position.y = 0.25;
   }
-  addKillfeed(attackerName, bot.name, bot.team !== 'enemy', isHead);
+  addKillfeed(attackerName, bot.name, bot.team !== 'enemy', isHead,
+    attackerName === 'Bạn' ? player.weapon : (bots.some(b => b.name === attackerName) ? BOT_FALLOFF_KEY : undefined)); // A2: silhouette theo súng hạ — bot dùng profile rifle (BOT_FALLOFF_KEY); nguồn kỹ năng (EMP/lửa) không có súng → fallback '▸'
+  updateAliveDots(); // A1
   REC.ev('kill', t('replay.eventKill', { killer: displayName(attackerName), victim: displayName(bot.name) }), bots.indexOf(bot));
   if (attackerName === 'Bạn' && bot.team === 'enemy' && (G.phase === 'live' || G.phase === 'planted')) { // B7: không farm tiền/năng lượng trong phase end (round đã chốt)
     if (isChainKill) player.money += Math.round(((WEAPONS[player.weapon] && WEAPONS[player.weapon].killReward) || 300) / 2); // B10: kill dây chuyền TETHER chỉ thưởng 50%
@@ -3832,7 +4009,8 @@ function onPlayerDeath() {
   KC.start();
   const killer = KC.lastAttacker || bots.find(b => b.team === 'enemy' && b.alive); // R9: kẻ hạ thật (botShoot đã lưu KC.lastAttacker), không lấy địch còn sống bất kỳ
   EVLOG.kill(killer ? killer.name : 'system', { victim: 'player', pos: player.pos });
-  addKillfeed(killer ? killer.name : 'Địch', 'Bạn', false, false);
+  addKillfeed(killer ? killer.name : 'Địch', 'Bạn', false, false, killer ? BOT_FALLOFF_KEY : undefined); // A2: bot hạ người chơi bằng profile rifle
+  updateAliveDots(); // A1
   announce(t('ann.youDown'), G.phase === 'planted' ? t('ann.youDownSubPlanted') : t('ann.youDownSub'));
   // B5: chỉ thua ngay khi CẢ ĐỘI bị quét sạch (người chơi + 3 ally đều gục) — đồng đội còn sống được đánh tiếp
   if ((G.phase === 'live' || G.phase === 'buy' || G.phase === 'planted') && !bots.some(b => b.team === 'ally' && b.alive))
@@ -4570,14 +4748,48 @@ function announce(main, sub, holdMs) {
   const an = $('announce'); an.classList.remove('show'); if (main) { void an.offsetWidth; an.classList.add('show'); }
   if (main) { clearTimeout(announce._t); announce._t = setTimeout(() => { $('announce-main').textContent = ''; $('announce-sub').textContent = ''; }, holdMs || 3400); }
 }
-function addKillfeed(killer, victim, killerUs, head) {
+// A2 (v52): map lớp súng (WEAPONS[key].cls) → silhouette CSS .sil-* tự vẽ của buy menu
+const KF_SIL = { RIFLE: 'sil-rifle', PISTOL: 'sil-pistol', SMG: 'sil-smg', SHOTGUN: 'sil-shotgun', SNIPER: 'sil-sniper', LMG: 'sil-lmg', MELEE: 'sil-knife' };
+function kfSilClass(weaponKey) {
+  const w = weaponKey && WEAPONS[weaponKey];
+  return w ? (KF_SIL[w.cls] || null) : null;
+}
+function addKillfeed(killer, victim, killerUs, head, weaponKey) {
   const el = document.createElement('div');
-  el.className = 'kf' + (killerUs ? ' us' : '');
-  el.textContent = displayName(killer) + '  ▸  ' + displayName(victim) + (head ? '  ' + t('hud.headshotTag') : '');
+  const selfRow = killer === 'Bạn' || victim === 'Bạn'; // A2: dòng liên quan người chơi giữ 6,0 s (đọc lâu hơn), còn lại 5,0 s
+  el.className = 'kf' + (killerUs ? ' us' : '') + (selfRow ? ' self' : '');
+  const kSpan = document.createElement('span'); kSpan.textContent = displayName(killer); el.appendChild(kSpan);
+  const sil = kfSilClass(weaponKey);
+  if (sil) { const s = document.createElement('span'); s.className = 'sil ' + sil + ' kf-sil'; el.appendChild(s); }
+  else { const s = document.createElement('span'); s.className = 'kf-sep'; s.textContent = '▸'; el.appendChild(s); } // không có súng (EMP/vệt lửa/không rõ) → giữ ký tự cũ
+  const vSpan = document.createElement('span'); vSpan.textContent = displayName(victim); el.appendChild(vSpan);
+  if (head) { const h = document.createElement('span'); h.className = 'kf-hs'; h.textContent = t('hud.headshotTag'); el.appendChild(h); }
   const kf = $('killfeed'); kf.prepend(el);
   while (kf.children.length > 6) kf.lastChild.remove();
-  setTimeout(() => { el.style.opacity = '0.25'; }, 4200);
-  setTimeout(() => el.remove(), 6000);
+  // A2 (v52): nhịp CS2 — full opacity tới 4,0 s (dòng của mình 5,0 s) → fade tuyến tính 1 s (CSS transition) → xoá. Bỏ hẳn mốc mờ 0,25 ở 4,2 s + xoá cứng 6,0 s.
+  const holdMs = selfRow ? 5000 : 4000;
+  setTimeout(() => { el.style.animation = 'none'; void el.offsetWidth; el.style.opacity = '0'; }, holdMs); // animation:none gỡ fill của kfIn để transition opacity chạy thật
+  setTimeout(() => el.remove(), holdMs + 1000);
+}
+// A1 (v52): chấm quân số còn sống trong topbar — chấm đầu bên ta = người chơi, tiếp theo là bot đồng đội; bên địch = bot địch.
+// Chỉ chạm DOM khi trạng thái đổi (chữ ký so sánh) nên gọi mỗi frame trong refreshHUD vẫn ~0 chi phí.
+let _aliveSig = '';
+function updateAliveDots() {
+  const usStates = [!player.dead].concat(bots.filter(b => b.team === 'ally').map(b => !!b.alive));
+  const themStates = bots.filter(b => b.team === 'enemy').map(b => !!b.alive);
+  const usAlive = usStates.filter(Boolean).length;
+  const sig = usStates.join(',') + '|' + themStates.join(',');
+  if (sig === _aliveSig) return;
+  _aliveSig = sig;
+  const fill = (id, states, lastIdx) => {
+    const box = $(id); if (!box) return;
+    while (box.children.length > states.length) box.lastChild.remove();
+    while (box.children.length < states.length) box.appendChild(document.createElement('i'));
+    for (let i = 0; i < states.length; i++)
+      box.children[i].className = (states[i] ? '' : 'off') + (i === lastIdx ? ' last' : '');
+  };
+  fill('alive-us', usStates, (usAlive === 1 && !player.dead) ? 0 : -1); // người chơi là người cuối cùng sống sót → chấm của mình nhấp nháy
+  fill('alive-them', themStates, -1);
 }
 function startMatch() {
   G.pScore = 0; G.eScore = 0; G.round = 1;
@@ -4910,6 +5122,7 @@ function refreshHUD(dt) {
   $('energy-fill').style.width = player.energy + '%';
   $('money').textContent = '$' + player.money;
   $('score-us').textContent = G.pScore; $('score-them').textContent = G.eScore;
+  updateAliveDots(); // A1: đồng bộ chấm quân số mỗi frame (hàm tự bỏ qua khi trạng thái không đổi)
   $('round-label').textContent = G.phase === 'buy' ? t('hud.roundBuy', { n: G.round }) : t('hud.round', { n: G.round });
   const tm = $('timer'); tm.textContent = fmtTime(G.timer);
   tm.classList.toggle('danger', G.timer <= 10 && (G.phase === 'live' || G.phase === 'planted'));
@@ -5223,6 +5436,7 @@ function updateEffects(dt) {
         b.mesh.rotation.z = 0; b.mesh.position.copy(b.pos); b.mesh.position.y = 0;
         spawnRingFx(b.pos, 0x3effa0); AudioSys.plantDone();
         announce(t('ann.reviveDone'), t('ann.reviveDoneSub', { name: displayName(b.name) }));
+        updateAliveDots(); // A1: hồi sinh → chấm sáng lại
         player.reviveChannel = null; wrap.classList.add('hidden');
       }
     }
@@ -5446,7 +5660,7 @@ function buildMenu() {
   const grid = $('op-grid');
   grid.innerHTML = ''; // i18n: xoá lưới cũ để re-render khi đổi ngôn ngữ (không nhân đôi thẻ)
   Object.values(OPERATORS).forEach(o => {
-    const card = document.createElement('div'); card.className = 'op-card';
+    const card = document.createElement('div'); card.className = 'op-card'; card.dataset.op = o.name;
     const hex = '#' + o.color.toString(16).padStart(6, '0');
     card.style.setProperty('--c', hex);
     const st = OPSTATS[o.name] || [70, 60, 60, 50];
@@ -5463,18 +5677,10 @@ function buildMenu() {
       '<div class="passive">⚡ <b>' + t('menu.passiveLabel') + '</b> ' + s.passive + '</div>' +
       '<div class="op-stats">' + statRow(t('stat.firepower'), st[0]) + statRow(t('stat.speed'), st[1]) + statRow(t('stat.defense'), st[2]) + statRow(t('stat.support'), st[3]) + '</div>' +
       '<div class="op-pick">' + t('menu.select', { name: o.name }) + '</div>';
-    card.onclick = () => {
-      AudioSys.ensure();
-      player.opKey = o.name;
-      $('menu').classList.add('hidden');
-      $('hud').classList.remove('hidden');
-      if (viewGun) { camera.remove(viewGun); }
-      buildViewGun();
-      startMatch();
-      lockPointer();
-    };
+    card.onclick = () => { AudioSys.ensure(); selectMenuOp(o.name); }; // dev-v49-ui: bấm thẻ = CHỌN operator; vào trận bằng nút VÀO GAME
     grid.appendChild(card);
   });
+  if (menuSelectedOp) selectMenuOp(menuSelectedOp); // giữ lựa chọn khi buildMenu chạy lại (đổi ngôn ngữ)
 }
 $('btn-again').onclick = () => { $('endscreen').classList.add('hidden'); $('hud').classList.remove('hidden'); startMatch(); lockPointer(); };
 $('btn-export-stats').onclick = () => { TRACKER.ingestFrom(EVLOG); exportStats(); };
@@ -5489,6 +5695,7 @@ $('btn-resume').addEventListener('click', () => {
   if (panel && slot && _settingsHome.parent && panel.parentNode === slot) { // trả panel về menu chính nếu đang xem cài đặt
     if (_settingsHome.next) _settingsHome.parent.insertBefore(panel, _settingsHome.next); else _settingsHome.parent.appendChild(panel);
   }
+  const menuOv = $('settings-overlay'); if (menuOv) menuOv.classList.add('hidden'); // panel đã về nhà trong lớp phủ -> tắt lớp phủ
   $('pause-settings').classList.add('hidden'); $('pause-main').classList.remove('hidden');
   relock(); // paused chỉ tắt khi pointerlockchange báo khóa thành công
 });
@@ -5522,6 +5729,7 @@ function quitToMenu() {
   const slot = $('pause-settings-slot'), panel = $('settings-panel');
   if (panel && slot && _settingsHome.parent && panel.parentNode === slot) {
     if (_settingsHome.next) _settingsHome.parent.insertBefore(panel, _settingsHome.next); else _settingsHome.parent.appendChild(panel); }
+  const menuOv2 = $('settings-overlay'); if (menuOv2) menuOv2.classList.add('hidden'); // panel đã về nhà trong lớp phủ -> tắt lớp phủ
   $('pause-settings').classList.add('hidden'); $('pause-main').classList.remove('hidden');
   $('pause-menu').classList.add('hidden');
   if (buyOpen) setBuyOpen(false);
@@ -5628,7 +5836,7 @@ function bindChxPanel() {
   const preset = $('ch-preset');
   if (preset && !preset.dataset.built) { preset.dataset.built = '1';
     Object.entries(CHX.COLOR_PRESETS).forEach(([k, p]) => { const o = document.createElement('option'); o.value = k; o.textContent = p.label; preset.appendChild(o); });
-    preset.addEventListener('change', () => { chCfg = CHX.withPreset(chCfg, preset.value); CHX.save(chCfg); applyChx(); syncChxInputs(); refreshChxLabels(); });
+    preset.addEventListener('change', () => { chCfg = CHX.withPreset(chCfg, preset.value); CHX.save(chCfg); scheduleSettingsDbSave(); applyChx(); syncChxInputs(); refreshChxLabels(); });
   }
   const bindRange = (id, key, parse) => { const el = $(id); if (!el) return; el.addEventListener('input', () => setChx(key, parse(el.value))); };
   const bindCheck = (id, key) => { const el = $(id); if (!el) return; el.addEventListener('change', () => setChx(key, el.checked)); };
@@ -5655,11 +5863,11 @@ function bindChxPanel() {
     const inp = $('ch-share'), msg = $('ch-share-msg');
     const next = inp ? CHX.decodeConfig(inp.value.trim()) : null;
     if (!next) { if (msg) msg.textContent = 'Mã không hợp lệ (đúng dạng NDCH1.…).'; return; }
-    chCfg = next; CHX.save(chCfg); applyChx(); syncChxInputs(); refreshChxLabels();
+    chCfg = next; CHX.save(chCfg); scheduleSettingsDbSave(); applyChx(); syncChxInputs(); refreshChxLabels();
     if (msg) msg.textContent = 'Đã áp cấu hình từ mã chia sẻ.';
   });
   $('ch-reset').addEventListener('click', () => {
-    chCfg = CHX.reset(); applyChx(); syncChxInputs(); refreshChxLabels();
+    chCfg = CHX.reset(); CHX.save(chCfg); scheduleSettingsDbSave(); applyChx(); syncChxInputs(); refreshChxLabels();
     const msg = $('ch-share-msg'); if (msg) msg.textContent = 'Đã về tâm ngắm mặc định của game.';
   });
   syncChxInputs();
@@ -5681,25 +5889,97 @@ function bindSettings() {
   refreshSettingsLabels();
 }
 
+// ================= MENU VÀO GAME + SETTINGS MỘT PANEL (dev-v49-ui) =================
+// Luồng mới: boot -> MENU CHÍNH (tiêu đề + nút VÀO GAME là hành động chính; thẻ operator
+// chỉ CHỌN, không vào trận ngay). Settings vẫn là ĐÚNG MỘT node #settings-panel:
+//  - Ở menu: panel nằm trong #settings-overlay (ẩn mặc định), mở bằng nút CÀI ĐẶT,
+//    hoặc TỰ MỞ đúng 1 lần ở first run (DB chưa có record settings).
+//  - Ở pause (ESC): nút Cài đặt của pause DỜI nguyên node vào #pause-settings-slot như cũ
+//    (không clone); Resume/Về menu trả node về lớp phủ và tắt lớp phủ.
+let menuSelectedOp = null;   // operator đang chọn ở menu (nút VÀO GAME dùng lựa chọn này)
+let firstRunSetup = false;   // true khi panel đang mở ở chế độ setup lần đầu
+function refreshMenuPickNote() {
+  const el = $('menu-pick-note'); if (!el) return;
+  el.textContent = menuSelectedOp ? t('menu.selectedOp', { name: menuSelectedOp }) : '';
+}
+function selectMenuOp(name) {
+  menuSelectedOp = name;
+  document.querySelectorAll('#op-grid .op-card').forEach(c => {
+    const sel = c.dataset.op === name;
+    c.classList.toggle('selected', sel);
+    const pick = c.querySelector('.op-pick');
+    if (pick) pick.textContent = sel ? t('menu.selectedBadge') : t('menu.select', { name: c.dataset.op });
+  });
+  refreshMenuPickNote();
+}
+function startGameWithSelectedOp() {
+  const name = menuSelectedOp || Object.keys(OPERATORS)[0];
+  AudioSys.ensure();
+  player.opKey = name;
+  closeMenuSettings();
+  $('menu').classList.add('hidden');
+  $('hud').classList.remove('hidden');
+  if (viewGun) { camera.remove(viewGun); }
+  buildViewGun();
+  startMatch();
+  lockPointer();
+}
+function openMenuSettings(isFirstRun) {
+  firstRunSetup = !!isFirstRun;
+  const ov = $('settings-overlay'); if (ov) ov.classList.remove('hidden');
+  const fr = $('firstrun-note'); if (fr) fr.classList.toggle('hidden', !firstRunSetup);
+  const done = $('btn-settings-done'); if (done) done.textContent = firstRunSetup ? t('settings.firstRunDone') : t('settings.done');
+}
+function closeMenuSettings() {
+  const ov = $('settings-overlay'); if (ov) ov.classList.add('hidden');
+  flushSettingsDbSave(); // chốt ghi DB mỗi lần đóng panel ở menu
+}
+/** Thoát panel settings bằng nút ✕ (startGame=false) hoặc nút chính (startGame=true).
+ *  Luôn lưu + chốt DB; ở first run thì đánh dấu đã khởi tạo để không tự hiện lại.
+ *  Panel đang ở pause (trong slot) -> chỉ quay lại menu pause như nút Quay lại cũ. */
+function leaveSettingsPanel(startGame) {
+  saveSettings();
+  flushSettingsDbSave();
+  const wasFirstRun = firstRunSetup; firstRunSetup = false;
+  if (wasFirstRun) settingsInitialized = true;
+  const panel = $('settings-panel'), slot = $('pause-settings-slot');
+  if (panel && slot && panel.parentNode === slot) {
+    $('pause-settings').classList.add('hidden'); $('pause-main').classList.remove('hidden');
+    return;
+  }
+  closeMenuSettings();
+  if (startGame && wasFirstRun) startGameWithSelectedOp();
+}
+$('btn-play').addEventListener('click', () => { startGameWithSelectedOp(); });
+$('btn-menu-settings').addEventListener('click', () => { AudioSys.ensure(); openMenuSettings(false); });
+$('btn-menu-howto').addEventListener('click', () => { const hp = $('howto-panel'); if (hp) hp.classList.toggle('hidden'); });
+$('btn-settings-close').addEventListener('click', () => { leaveSettingsPanel(false); });
+$('btn-settings-done').addEventListener('click', () => { leaveSettingsPanel(true); });
+
 buildMap();
 renderer.shadowMap.needsUpdate = true; // render shadow map LAN DAU sau khi map dung xong (autoUpdate = false)
 buildMenu();
 bindSettings();
+selectMenuOp(Object.keys(OPERATORS)[0]); // chọn sẵn operator đầu tiên — VÀO GAME vào trận ngay được
 applyCrosshairVars(); // fallback --xh-* (chỉ có tác dụng khi module crosshair lỗi)
 applyHudScale();
 applyChx(); // v3.6 (dev-v38): inject CSS module + áp cấu hình lên #crosshair + vẽ xem trước
 window.__gameBooted = true; // v3.8 robustness (§1): watchdog CDN xác nhận game đã boot xong
+if (window.__hideBootError) window.__hideBootError(); // boot chậm >8s: watchdog đã hiện overlay lỗi giả — boot xong phải tự gỡ (fix #64 A1)
 // i18n (dev-v38-i18n): nút chuyển ngôn ngữ VI/EN + re-render chuỗi động khi đổi nóng (không reload trang)
 $('btn-lang').addEventListener('click', () => setLang(getLang() === 'vi' ? 'en' : 'vi'));
 onLangChange(() => {
   refreshLangButton();
   renderControlsNote();
   refreshSettingsLabels();
+  refreshMenuPickNote();
+  const dn49 = $('btn-settings-done'); if (dn49) dn49.textContent = firstRunSetup ? t('settings.firstRunDone') : t('settings.done');
   buildMenu();    // thẻ operator + tên/mô tả kỹ năng (buildMenu tự xoá lưới cũ)
   updateAllHUD(); // topbar, thẻ kỹ năng, buy menu
   if (typeof RP !== 'undefined' && RP.active) $('replay-top').innerHTML = t('replay.title', { n: G.round }); // replay đang mở: cập nhật tiêu đề
 });
 applyI18n(); renderControlsNote(); refreshLangButton(); // áp ngôn ngữ khởi động (mặc định theo trình duyệt / lựa chọn đã lưu) cho chuỗi tĩnh + ghi chú điều khiển + nút chuyển ngữ
+if (!settingsInitialized) openMenuSettings(true); // SETUP LẦN ĐẦU (dev-v49-ui): DB chưa có record settings -> hiện panel đúng 1 lần này
 animate();
 </script>
 </body>
