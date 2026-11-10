@@ -10,7 +10,7 @@ RUN apk add --no-cache wget \
     && rm -rf /var/cache/apk/*
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY index.html event-log-core.js stats-tracker.js crosshair-customizer.js /usr/share/nginx/html/
+COPY index.html event-log-core.js stats-tracker.js crosshair-customizer.js lobby-client.js /usr/share/nginx/html/
 COPY vendor /usr/share/nginx/html/vendor
 
 EXPOSE 80

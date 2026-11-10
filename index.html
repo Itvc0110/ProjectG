@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Be+Vietnam+Pro:wght@600;700;800;900&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Be+Vietnam+Pro:wght@600;700;800;900&display=swap" rel="stylesheet" crossorigin="anonymous">
+<link rel="preload" href="assets/fonts/space-grotesk-var-subset.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/chakra-petch-700-subset.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/chakra-petch-600-subset.woff2" as="font" type="font/woff2" crossorigin>
 <title>NEON DIVIDE — Tactical FPS · 8 Operators</title>
 <script type="importmap">
 { "imports": {
@@ -14,30 +17,50 @@
 } }
 </script>
 <style>
+  /* Font hiển thị TỰ HOST theo quyết định #110 qua pipeline subset #112 (charset
+     522 codepoint, OFL 1.1 — OFL-*.txt cạnh file): Space Grotesk variable cho
+     số/timer (có tnum), Chakra Petch 600/700 cho tiêu đề. */
+  @font-face { font-family:'Space Grotesk'; src:url('assets/fonts/space-grotesk-var-subset.woff2') format('woff2'); font-weight:300 700; font-display:swap; }
+  @font-face { font-family:'Chakra Petch'; src:url('assets/fonts/chakra-petch-600-subset.woff2') format('woff2'); font-weight:600; font-display:swap; }
+  @font-face { font-family:'Chakra Petch'; src:url('assets/fonts/chakra-petch-700-subset.woff2') format('woff2'); font-weight:700; font-display:swap; }
   /* ============================================================
-     NEON DIVIDE — UI v3 "ESPORTS NEON" (presentation layer only)
-     Fonts: Be Vietnam Pro (display/headings — full Vietnamese subset) · Orbitron (pure-ASCII fallback) · Rajdhani (latin fallback) · Inter (body)
+     NEON DIVIDE — UI v3.5.3 "ESPORTS NEON" · v53-ui2: phân cấp menu/HUD/buy + motion ≤250 ms (presentation layer only)
+     Fonts: Space Grotesk (số/timer — subset vietnamese, tabular qua tnum) · Chakra Petch (tiêu đề — subset vietnamese) · Be Vietnam Pro (fallback ký tự) · Inter (body)
      ============================================================ */
   :root {
     --cy:#38b6ff; --gn:#7dffce; --mg:#ff6bd5; --pu:#b45cff; --am:#ffd76b; --rd:#ff5d5d;
-    --ink:#eaf4ff; --dim:#9db8d8; --faint:#6f87a8;
-    --glass:rgba(8,14,28,.72); --glass2:rgba(10,20,40,.55);
-    --line:rgba(110,200,255,.35); --line-soft:rgba(110,200,255,.16);
-    --fd:'Be Vietnam Pro','Orbitron','Rajdhani',sans-serif; --fh:'Be Vietnam Pro','Rajdhani','Segoe UI',sans-serif; --fb:'Inter','Segoe UI',Arial,sans-serif;
+    --ink:#eaf4ff; --dim:#a8c2e0; --faint:#7e97b5;
+    --glass:rgba(8,14,28,.72); --glass2:rgba(10,20,40,.55); --glass-hi:rgba(5,10,20,.86);
+    --line:rgba(110,200,255,.35); --line-soft:rgba(110,200,255,.16); --line-strong:rgba(110,200,255,.55);
+    --fd:'Space Grotesk','Be Vietnam Pro',sans-serif; --fh:'Chakra Petch','Be Vietnam Pro',sans-serif; --fb:'Inter','Segoe UI',Arial,sans-serif;
     --r-lg:16px; --r-md:12px; --r-sm:8px;
+    --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:24px; --sp6:32px;
+    --ease:cubic-bezier(.2,.7,.3,1);
+    /* A0 (v53-ui2 đợt 1): motion token — fast=hover/press, std=panel/tab/killfeed, screen=đổi màn.
+       Mọi animation chặn tương tác phải ≤ var(--m-screen) (chuẩn cộng đồng <250 ms). */
+    --m-fast:120ms; --m-std:200ms; --m-screen:240ms;
+    /* A0: thang chữ 6 bậc — 12 nhãn caps / 14 UI / 16 nhấn / 22 số phụ / 32 số chính / 48 display.
+       Không dùng cỡ ngoài thang ở menu + HUD. */
+    --t-label:12px; --t-ui:14px; --t-emph:16px; --t-sub:22px; --t-main:32px; --t-display:48px;
     --shadow:0 18px 50px rgba(0,0,0,.55);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
+  /* Số/timer/đạn/tỉ số/giá: số tabular qua feature tnum của Space Grotesk (#110) —
+     bề rộng chuỗi số không nhảy khi giá trị thay đổi. */
+  #timer, #score-us, #score-them, #ammo, #end-score, .ab .cdbig, #replay-time, .stat .sv, .bar-label span:last-child,
+  #buy-menu .buy-item button, #bm-money-line, #money { font-variant-numeric: tabular-nums; }
   html,body { width:100%; height:100%; overflow:hidden; background:#04060b; font-family:var(--fb); color:var(--ink);
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
   ::selection { background:rgba(65,217,255,.35); }
   #game-canvas { position:fixed; inset:0; display:block; }
   .hidden { display:none !important; }
   button { font-family:inherit; }
-  button:focus-visible, .op-card:focus-visible { outline:2px solid var(--cy); outline-offset:2px; }
+  /* Focus state nhất quán toàn UI (bàn phím): mọi phần tử tương tác đều có viền focus rõ. */
+  :focus-visible { outline:2px solid var(--cy); outline-offset:2px; }
+  input[type=range]:focus-visible, input[type=checkbox]:focus-visible { outline-offset:4px; }
 
   /* ================= HUD SHELL ================= */
-  #hud { position:fixed; inset:0; pointer-events:none; z-index:5; animation:hudIn .5s ease both; --hud-scale:1; }
+  #hud { position:fixed; inset:0; pointer-events:none; z-index:5; animation:hudIn var(--m-std) ease both; --hud-scale:1; }
   @keyframes hudIn { from { opacity:0 } to { opacity:1 } }
 
   /* ---------- Crosshair ---------- */
@@ -59,10 +82,14 @@
   #hitmarker.head:before { left:12px; height:26px; } #hitmarker.head:after { top:12px; width:26px; }
   #hitmarker.blocked:before, #hitmarker.blocked:after { background:#aebdd2; box-shadow:none; }
   #hitmarker { filter:drop-shadow(0 0 1.5px rgba(0,0,0,.9)); }
+  /* GF-1a (topic #91): biến thể KILL — đỏ, phình 1,4× (28 px), hiện 130 ms; trước đây hitmarker khi kill giống hệt hit thường */
+  #hitmarker.kill { width:28px; height:28px; }
+  #hitmarker.kill:before, #hitmarker.kill:after { background:#ff3b4e; box-shadow:0 0 0 1px rgba(0,0,0,.85), 0 0 11px rgba(255,50,70,1); }
+  #hitmarker.kill:before { left:13px; height:28px; } #hitmarker.kill:after { top:13px; width:28px; }
 
   /* ---------- Directional hit indicator ---------- */
-  #hit-dir { position:absolute; left:calc(50% - 62px); top:calc(50% - 62px); width:124px; height:124px; opacity:0; pointer-events:none; }
-  #hit-dir .hit-arc { position:absolute; left:50%; top:-4px; width:70px; height:26px; margin-left:-35px;
+  #hit-dir { position:absolute; left:calc(50% - 74px); top:calc(50% - 74px); width:148px; height:148px; opacity:0; pointer-events:none; }
+  #hit-dir .hit-arc { position:absolute; left:50%; top:-4px; width:84px; height:30px; margin-left:-42px;
     border-top:6px solid #ff4d5e; border-radius:50% 50% 0 0 / 100% 100% 0 0;
     filter:drop-shadow(0 0 8px rgba(255,60,80,.95)); }
   #hit-dir.show { animation:hitDirFade .75s ease-out forwards; }
@@ -70,20 +97,20 @@
 
   /* ---------- Top scoreboard pill ---------- */
   #topbar { position:absolute; top:12px; left:50%; transform:translateX(-50%) scale(var(--hud-scale,1)); transform-origin:top center; display:flex; align-items:stretch; gap:0;
-    background:var(--glass); border:1px solid var(--line); border-radius:999px; padding:5px 8px;
+    background:var(--glass-hi); border:1px solid var(--line); border-radius:999px; padding:6px 10px;
     backdrop-filter:blur(10px) saturate(1.3); -webkit-backdrop-filter:blur(10px) saturate(1.3); box-shadow:var(--shadow); overflow:hidden; }
   .tb-side { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:64px; padding:1px 10px; border-radius:999px; }
   .tb-side.us { background:linear-gradient(180deg, rgba(65,217,255,.20), rgba(65,217,255,.05)); }
   .tb-side.them { background:linear-gradient(180deg, rgba(255,93,93,.20), rgba(255,93,93,.05)); }
-  .tb-tag { font-family:var(--fh); font-size:9.5px; font-weight:700; letter-spacing:3px; color:var(--dim); line-height:1; }
+  .tb-tag { font-family:var(--fh); font-size:var(--t-label); font-weight:700; letter-spacing:2px; color:var(--dim); line-height:1; }
   .tb-side.us .tb-tag { color:#8fe8ff; } .tb-side.them .tb-tag { color:#ffb1b1; }
-  #score-us, #score-them { font-family:var(--fd); font-weight:800; font-size:23px; line-height:1.05; }
+  #score-us, #score-them { font-family:var(--fd); font-weight:800; font-size:var(--t-sub); line-height:1.05; }
   #score-us { color:var(--cy); text-shadow:0 0 14px rgba(56,182,255,.65); }
   #score-them { color:var(--rd); text-shadow:0 0 14px rgba(255,93,93,.6); }
   .tb-mid { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 14px; }
-  #timer { font-family:var(--fd); font-size:21px; font-weight:800; min-width:70px; text-align:center; letter-spacing:1px; line-height:1.05; }
+  #timer { font-family:var(--fd); font-size:var(--t-sub); font-weight:800; min-width:70px; text-align:center; letter-spacing:1px; line-height:1.05; }
   #timer.danger { color:#ff6b6b; animation:blink .8s infinite; text-shadow:0 0 16px rgba(255,60,60,.8); }
-  #round-label { font-family:var(--fh); font-size:10.5px; font-weight:600; letter-spacing:2.5px; color:var(--dim); text-align:center; line-height:1.1; }
+  #round-label { font-family:var(--fh); font-size:var(--t-label); font-weight:600; letter-spacing:2px; color:var(--dim); text-align:center; line-height:1.1; }
   @keyframes blink { 50% { opacity:.3; } }
   #bomb-icon { align-self:center; margin-left:8px; font-family:var(--fh); color:#fff; font-weight:700; letter-spacing:1.5px; font-size:13px;
     background:linear-gradient(90deg,#c81f36,#ff4d5e); border-radius:999px; padding:4px 12px; animation:blink 1s infinite;
@@ -91,27 +118,30 @@
 
   /* ---------- Minimap ---------- */
   #minimap-frame { position:absolute; top:12px; left:12px; transform:scale(var(--hud-scale,1)); transform-origin:top left; padding:7px 7px 5px; border-radius:var(--r-md);
-    background:var(--glass); border:1px solid var(--line); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:var(--shadow); }
+    background:var(--glass-hi); border:1px solid var(--line); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:var(--shadow); }
   #minimap-frame::before, #minimap-frame::after { content:''; position:absolute; width:14px; height:14px; border:2px solid var(--cy); opacity:.85; }
   #minimap-frame::before { left:-2px; top:-2px; border-right:none; border-bottom:none; border-radius:10px 0 0 0; }
   #minimap-frame::after { right:-2px; bottom:-2px; border-left:none; border-top:none; border-radius:0 0 10px 0; }
   #minimap { display:block; border:1px solid rgba(110,200,255,.25); border-radius:7px; background:#060d1a; }
-  #mm-label { display:flex; justify-content:space-between; font-family:var(--fh); font-size:9.5px; font-weight:700; letter-spacing:2px; color:var(--dim); padding-top:4px; }
+  #mm-label { display:flex; justify-content:space-between; font-family:var(--fh); font-size:var(--t-label); font-weight:700; letter-spacing:2px; color:var(--dim); padding-top:4px; }
   #mm-label b { color:#ffb02e; } #mm-label i { font-style:normal; color:#c86bff; }
 
   /* ---------- Killfeed ---------- */
   #killfeed { position:absolute; top:12px; right:12px; transform:scale(var(--hud-scale,1)); transform-origin:top right; width:292px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
-  .kf { background:var(--glass); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  .kf { background:var(--glass-hi); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
     border:1px solid var(--line-soft); border-right:3px solid var(--rd); padding:6px 12px; border-radius:7px;
-    font-family:var(--fh); font-size:13.5px; font-weight:600; letter-spacing:.4px; color:#e6f1ff;
+    font-family:var(--fh); font-size:var(--t-ui); font-weight:600; letter-spacing:.4px; color:#e6f1ff; text-shadow:0 1px 4px rgba(0,0,0,.65);
     box-shadow:0 8px 22px rgba(0,0,0,.4); animation:kfIn .22s cubic-bezier(.2,.9,.3,1.3) both; max-width:100%;
     display:flex; align-items:center; gap:7px; transition:opacity 1s linear; } /* A2 (v52): fade tuyến tính 1 s ở cuối đời — JS chỉ đặt opacity:0 sau mốc giữ */
   .kf.us { border-right-color:var(--cy); }
   .kf.self { border-left:3px solid #ffb02e; background:rgba(10,20,40,.88); } /* A2: dòng liên quan người chơi nổi bật + giữ lâu hơn */
   .kf .kf-sil { width:27px; height:14px; flex:none; } /* silhouette súng (.sil-*) thu nhỏ cho killfeed — cao 14 px theo đặc tả */
   .kf .kf-sep { color:var(--dim); flex:none; } /* fallback '▸' khi không có súng (kỹ năng EMP/lửa…) */
-  .kf .kf-hs { color:#ff9a3c; font-size:10.5px; font-weight:800; letter-spacing:1px; flex:none; } /* tag HEADSHOT cam — khớp màu hitmarker head */
+  .kf .kf-hs { color:#ff9a3c; font-size:var(--t-label); font-weight:800; letter-spacing:1px; flex:none; } /* tag HEADSHOT cam — khớp màu hitmarker head */
   @keyframes kfIn { from { transform:translateX(26px); opacity:0 } to { transform:none; opacity:1 } }
+  /* GF-1c (topic #91): dòng killfeed của CHÍNH NGƯỜI CHƠI hạ địch — pulse đỏ ngắn lúc xuất hiện (không banner giữa màn hình — bài học clutter Valorant) */
+  .kf.kf-kill { animation:kfIn .22s cubic-bezier(.2,.9,.3,1.3) both, kfKillPulse .55s ease-out; }
+  @keyframes kfKillPulse { 0% { box-shadow:0 8px 22px rgba(0,0,0,.4); } 25% { box-shadow:0 0 0 2px rgba(255,59,78,.9), 0 0 22px rgba(255,59,78,.65); } 100% { box-shadow:0 8px 22px rgba(0,0,0,.4); } }
 
   /* ---------- Alive count (A1, v52) — chấm quân số còn sống trong topbar ---------- */
   .alive-dots { display:flex; gap:4px; justify-content:center; margin-top:4px; min-height:7px; }
@@ -122,44 +152,51 @@
   @keyframes alivePulse { 0%,100% { transform:scale(1); opacity:1 } 50% { transform:scale(1.45); opacity:.65 } }
 
   /* ---------- Vital bars (bottom-left glass panel) ---------- */
-  #bottom-left { position:absolute; left:16px; bottom:16px; transform:scale(var(--hud-scale,1)); transform-origin:bottom left; width:262px; padding:13px 15px 11px; border-radius:var(--r-lg);
-    background:var(--glass); border:1px solid var(--line-soft); backdrop-filter:blur(12px) saturate(1.3); -webkit-backdrop-filter:blur(12px) saturate(1.3);
+  #bottom-left { position:absolute; left:16px; bottom:16px; transform:scale(var(--hud-scale,1)); transform-origin:bottom left; width:262px; padding:14px 16px 12px; border-radius:var(--r-lg);
+    background:var(--glass-hi); border:1px solid var(--line-soft); backdrop-filter:blur(12px) saturate(1.3); -webkit-backdrop-filter:blur(12px) saturate(1.3);
     box-shadow:var(--shadow); }
   #bottom-left::before { content:''; position:absolute; left:0; top:14px; bottom:14px; width:3px; border-radius:3px;
-    background:linear-gradient(180deg,var(--gn),var(--cy),var(--pu)); box-shadow:0 0 10px rgba(56,182,255,.5); }
-  .bar-label { font-family:var(--fh); font-size:11px; font-weight:700; letter-spacing:2.5px; color:var(--dim);
+    background:linear-gradient(180deg,var(--gn),var(--cy)); box-shadow:0 0 10px rgba(56,182,255,.5); }
+  .bar-label { font-family:var(--fh); font-size:var(--t-label); font-weight:700; letter-spacing:2px; color:var(--dim);
     display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; }
   .bar-label span:last-child { font-family:var(--fd); letter-spacing:0; color:var(--ink); font-size:14px; font-weight:700; }
-  #hp-num { font-size:29px !important; font-weight:900 !important; line-height:.95; text-shadow:0 0 16px rgba(125,255,206,.35); }
-  .bar { position:relative; height:13px; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.07);
+  /* A2: HP là SỐ CHÍNH của cụm trái-dưới — cỡ t-main, thanh chia 5 đoạn (mỗi đoạn 20 HP, kiểu cell Apex). */
+  #hp-num { font-size:var(--t-main) !important; font-weight:900 !important; line-height:.95; text-shadow:0 0 16px rgba(125,255,206,.35); }
+  .bar { --segw:20%; position:relative; height:13px; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.07);
     border-radius:5px; overflow:hidden; margin-bottom:9px; }
   .bar::after { content:''; position:absolute; inset:0; z-index:2;
-    background:repeating-linear-gradient(90deg, transparent 0 23px, rgba(3,6,12,.85) 23px 25px); }
-  .bar > div { height:100%; transition:width .15s ease; position:relative; z-index:1; }
+    background:repeating-linear-gradient(90deg, transparent 0 calc(var(--segw) - 2px), rgba(3,6,12,.85) calc(var(--segw) - 2px) var(--segw)); }
+  .bar-hp { --segw:20%; }    /* 5 đoạn × 20 HP */
+  .bar-armor { --segw:25%; } /* 4 ô × 25 giáp */
+  .bar-energy::after { display:none; } /* năng lượng ult: thanh trơn duy nhất trong cụm */
+  .bar > div { height:100%; transition:width var(--m-fast) ease; position:relative; z-index:1; }
   #hp-fill { background:linear-gradient(90deg,#1fc873,#6dffa8); box-shadow:0 0 12px rgba(60,255,150,.45); }
   #armor-fill { background:linear-gradient(90deg,#2f7bff,#4dd8ff); box-shadow:0 0 12px rgba(65,190,255,.4); }
-  #energy-fill { background:linear-gradient(90deg,#a44dff,#ff5fd2); box-shadow:0 0 12px rgba(200,90,255,.45); }
+  #energy-fill { background:linear-gradient(90deg,#59c2ff,#dff6ff); box-shadow:0 0 12px rgba(120,210,255,.45); }
   #bottom-left .bar:last-child { margin-bottom:2px; }
 
   /* ---------- Weapon cluster (bottom-right glass panel) ---------- */
-  #bottom-right { position:absolute; right:16px; bottom:16px; transform:scale(var(--hud-scale,1)); transform-origin:bottom right; text-align:right; padding:12px 16px 11px; border-radius:var(--r-lg);
-    background:var(--glass); border:1px solid var(--line-soft); backdrop-filter:blur(12px) saturate(1.3); -webkit-backdrop-filter:blur(12px) saturate(1.3);
+  #bottom-right { position:absolute; right:16px; bottom:16px; transform:scale(var(--hud-scale,1)); transform-origin:bottom right; text-align:right; padding:14px 16px 12px; border-radius:var(--r-lg);
+    background:var(--glass-hi); border:1px solid var(--line-soft); backdrop-filter:blur(12px) saturate(1.3); -webkit-backdrop-filter:blur(12px) saturate(1.3);
     box-shadow:var(--shadow); min-width:196px; }
   #bottom-right::before { content:''; position:absolute; right:0; top:14px; bottom:14px; width:3px; border-radius:3px;
     background:linear-gradient(180deg,var(--am),var(--rd)); box-shadow:0 0 10px rgba(255,190,80,.45); }
-  #weapon-name { font-family:var(--fh); font-size:14px; font-weight:700; color:#bcd7f5; letter-spacing:3.5px; }
-  #ammo { font-family:var(--fd); font-size:37px; font-weight:900; line-height:1.05; text-shadow:0 0 18px rgba(65,217,255,.3); }
-  #ammo span { font-size:17px; font-weight:600; color:var(--dim); }
+  #weapon-name { font-family:var(--fh); font-size:14px; font-weight:700; color:#bcd7f5; letter-spacing:1px; }
+  #ammo { font-family:var(--fd); font-size:var(--t-main); font-weight:900; line-height:1.05; text-shadow:0 0 18px rgba(65,217,255,.3); }
+  #ammo span { font-size:var(--t-emph); font-weight:600; color:var(--dim); }
   #ammo.low { color:#ffb02e; animation:ammoWarn 1s ease-in-out infinite; }
   #ammo.empty { color:#ff5d5d; animation:ammoWarn .5s ease-in-out infinite; }
   @keyframes ammoWarn { 50% { transform:scale(1.08); text-shadow:0 0 16px currentColor; } }
-  #money { display:inline-block; font-family:var(--fh); font-size:17px; color:#ffe08a; font-weight:700; margin-top:4px;
+  #money { display:inline-block; font-family:var(--fh); font-size:var(--t-emph); color:#ffe08a; font-weight:700; margin-top:4px;
     background:rgba(255,190,60,.12); border:1px solid rgba(255,205,90,.4); padding:1px 12px; border-radius:999px; }
+  /* GF-1c (topic #91): HUD pulse khi tiền thưởng kill về — xác nhận lớp 3 của kill confirm */
+  #money.money-pulse { animation:moneyPulse .45s ease-out; }
+  @keyframes moneyPulse { 0% { transform:scale(1); } 30% { transform:scale(1.22); color:#fff3bb; box-shadow:0 0 16px rgba(255,210,90,.8); } 100% { transform:scale(1); } }
 
   /* ---------- Ability cards ---------- */
   #abilities { position:absolute; bottom:16px; left:50%; transform:translateX(-50%) scale(var(--hud-scale,1)); transform-origin:bottom center; display:flex; gap:11px; }
   .ab { --cdp:100%; width:128px; padding:9px 11px 8px; border-radius:var(--r-md); position:relative; overflow:hidden;
-    background:var(--glass); border:1px solid var(--line-soft); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    background:var(--glass-hi); border:1px solid var(--line-soft); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
     box-shadow:0 12px 30px rgba(0,0,0,.45); transition:border-color .2s, box-shadow .2s; }
   .ab .cdring { position:absolute; inset:0; pointer-events:none;
     background:conic-gradient(from -90deg at 26px 26px, rgba(255,255,255,.30) var(--cdp), transparent var(--cdp)); }
@@ -171,28 +208,28 @@
     background:linear-gradient(180deg,#28486f,#16283f); border:1px solid rgba(140,220,255,.5); border-bottom-width:3px; border-radius:6px;
     font-family:var(--fd); font-weight:800; font-size:12px; color:#a9ffdf; }
   .ab .ic { font-size:16px; line-height:1; filter:drop-shadow(0 0 5px rgba(255,255,255,.45)); }
-  .ab .nm { font-family:var(--fh); font-size:12.5px; font-weight:700; letter-spacing:.3px; line-height:1.12; }
-  .ab .cd { font-size:11px; color:var(--dim); margin-top:5px; min-height:14px; font-weight:600; }
-  .ab .cdbig { position:absolute; right:8px; top:5px; z-index:2; font-family:var(--fd); font-size:20px; font-weight:900;
+  .ab .nm { font-family:var(--fh); font-size:var(--t-label); font-weight:700; letter-spacing:.3px; line-height:1.12; }
+  .ab .cd { font-size:var(--t-label); color:var(--dim); margin-top:5px; min-height:14px; font-weight:600; }
+  .ab .cdbig { position:absolute; right:8px; top:5px; z-index:2; font-family:var(--fd); font-size:var(--t-sub); font-weight:900;
     color:#fff; text-shadow:0 2px 8px #000, 0 0 14px rgba(65,217,255,.5); }
-  .ab.ready { border-color:rgba(255,111,213,.75); box-shadow:0 0 18px rgba(200,80,255,.5), 0 12px 30px rgba(0,0,0,.45);
+  .ab.ready { border-color:rgba(56,182,255,.85); box-shadow:0 0 18px rgba(56,182,255,.5), 0 12px 30px rgba(0,0,0,.45);
     animation:abPulse 1.6s ease-in-out infinite; }
   .ab.ult-ready { border-color:rgba(255,255,255,.95); box-shadow:0 0 24px rgba(255,255,255,.55), 0 12px 30px rgba(0,0,0,.45);
     animation:abPulseWhite 1.2s ease-in-out infinite; }
-  @keyframes abPulse { 50% { box-shadow:0 0 30px rgba(200,80,255,.75), 0 12px 30px rgba(0,0,0,.45); } }
+  @keyframes abPulse { 50% { box-shadow:0 0 30px rgba(56,182,255,.75), 0 12px 30px rgba(0,0,0,.45); } }
   @keyframes abPulseWhite { 50% { box-shadow:0 0 36px rgba(255,255,255,.85), 0 12px 30px rgba(0,0,0,.45); } }
   .ab .cdmask { position:absolute; left:0; bottom:0; width:100%; z-index:0; background:rgba(2,5,10,.62);
     border-top:1px solid rgba(160,220,255,.35); pointer-events:none; }
 
   /* ---------- Announce / status / plant ---------- */
   #announce { position:absolute; top:18%; left:50%; transform:translateX(-50%); text-align:center; width:92%; }
-  #announce-main { font-family:var(--fd); font-size:46px; font-weight:900; letter-spacing:5px; line-height:1.1;
+  #announce-main { font-family:var(--fd); font-size:var(--t-display); font-weight:900; letter-spacing:1px; line-height:1.1;
     background:linear-gradient(180deg,#ffffff,#aee6ff 55%,#4fc3ff); -webkit-background-clip:text; background-clip:text; color:transparent;
     filter:drop-shadow(0 0 24px rgba(65,217,255,.55)) drop-shadow(0 3px 10px rgba(0,0,0,.6)); }
-  #announce-sub { font-family:var(--fh); font-size:18px; font-weight:600; letter-spacing:1px; color:#d9ecff; margin-top:8px; text-shadow:0 2px 10px #000; }
-  #announce.show #announce-main { animation:annPop .5s cubic-bezier(.16,1.3,.3,1) both; }
-  #announce.show #announce-sub { animation:annSub .5s .06s ease both; }
-  @keyframes annPop { 0% { transform:scale(1.45); opacity:0; letter-spacing:16px } 100% { transform:scale(1); opacity:1 } }
+  #announce-sub { font-family:var(--fh); font-size:var(--t-emph); font-weight:600; letter-spacing:1px; color:#d9ecff; margin-top:8px; text-shadow:0 2px 10px #000; }
+  #announce.show #announce-main { animation:annPop var(--m-screen) cubic-bezier(.16,1.3,.3,1) both; }
+  #announce.show #announce-sub { animation:annSub var(--m-screen) .04s ease both; }
+  @keyframes annPop { 0% { transform:scale(1.45); opacity:0 } 100% { transform:scale(1); opacity:1 } }
   @keyframes annSub { from { transform:translateY(10px); opacity:0 } to { transform:none; opacity:1 } }
   #plantbar-wrap { position:absolute; top:58%; left:50%; transform:translateX(-50%); width:340px; text-align:center;
     padding:11px 16px 13px; border-radius:var(--r-md); background:var(--glass); border:1px solid rgba(255,176,46,.45);
@@ -204,7 +241,7 @@
     animation:plantStripes .6s linear infinite; box-shadow:0 0 14px rgba(255,176,46,.7); }
   @keyframes plantStripes { to { background-position:40px 0; } }
   #status-fx { position:absolute; top:70px; left:50%; transform:translateX(-50%); font-family:var(--fh); color:#ffe08a;
-    font-size:14.5px; font-weight:700; letter-spacing:.6px; text-shadow:0 1px 6px #000; white-space:nowrap; }
+    font-size:var(--t-ui); font-weight:700; letter-spacing:.6px; text-shadow:0 1px 6px #000; white-space:nowrap; }
   #status-fx:not(:empty) { background:var(--glass2); border:1px solid var(--line-soft); border-radius:999px; padding:4px 16px;
     backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
 
@@ -222,33 +259,34 @@
             mask-image:radial-gradient(ellipse at 50% 38%, #000 30%, transparent 78%); }
   @keyframes gridPan { to { background-position:44px 88px, 88px 44px; } }
   #menu > * { position:relative; z-index:1; }
-  .menu-kicker { font-family:var(--fh); font-weight:700; letter-spacing:6px; font-size:12.5px; color:var(--cy);
+  .menu-kicker { font-family:var(--fh); font-weight:700; letter-spacing:2px; font-size:var(--t-label); color:var(--cy);
     border:1px solid rgba(65,217,255,.4); border-radius:999px; padding:4px 16px; background:rgba(65,217,255,.07);
     text-transform:uppercase; }
-  .overlay h1 { font-family:var(--fd); font-size:58px; letter-spacing:7px; font-weight:900; color:#f2faff;
-    text-shadow:0 0 14px rgba(65,217,255,.55), 0 0 46px rgba(65,217,255,.4), 0 0 90px rgba(140,80,255,.35); margin-top:12px; text-align:center; }
-  .overlay h1 em { font-style:normal; color:#ff5d8f; text-shadow:0 0 14px rgba(255,93,143,.7), 0 0 46px rgba(255,93,143,.5); }
-  .overlay p.sub { color:#a9c3e2; margin:12px 0 24px; font-size:15.5px; text-align:center; max-width:780px; line-height:1.55; }
+  .overlay h1 { font-family:var(--fh); font-size:clamp(32px, 6vw, 48px); letter-spacing:1px; font-weight:900; color:#f2faff;
+    text-shadow:0 0 14px rgba(65,217,255,.55), 0 0 46px rgba(65,217,255,.4); margin-top:12px; text-align:center; }
+  .overlay h1 em { font-style:normal; color:var(--cy); text-shadow:0 0 14px rgba(56,182,255,.7), 0 0 46px rgba(56,182,255,.5); }
+  .overlay p.sub { color:#a9c3e2; margin:12px 0 24px; font-size:var(--t-emph); text-align:center; max-width:780px; line-height:1.55; }
   .overlay p.sub b { color:#eaf4ff; }
 
   /* ---------- Operator cards ---------- */
-  #op-grid { display:grid; grid-template-columns:repeat(4, minmax(218px, 252px)); gap:15px; justify-content:center; }
+  #op-grid { display:grid; grid-template-columns:repeat(4, minmax(218px, 252px)); gap:15px; justify-content:center;
+    margin-top:4px; padding-top:20px; border-top:1px solid var(--line-soft); }
   .op-card { --c:#38b6ff; position:relative; border-radius:var(--r-lg); padding:15px 15px 13px; cursor:pointer; overflow:hidden;
+    display:flex; flex-direction:column;
     background:linear-gradient(165deg, rgba(20,34,60,.94), rgba(8,13,26,.96) 62%);
     border:1px solid rgba(120,190,255,.22); transition:transform .18s ease, border-color .18s, box-shadow .18s; }
   .op-card::before { content:''; position:absolute; inset:0 0 auto 0; height:4px; background:var(--c); box-shadow:0 0 16px var(--c); }
   .op-card::after { content:''; position:absolute; right:-34px; top:-34px; width:110px; height:110px; border-radius:50%;
-    background:radial-gradient(circle, var(--c) 0%, transparent 70%); opacity:.20; pointer-events:none; }
+    background:radial-gradient(circle, var(--c) 0%, transparent 70%); opacity:.14; pointer-events:none; }
   .op-card:hover, .op-card:focus-visible { border-color:var(--c); transform:translateY(-5px);
     box-shadow:0 18px 42px rgba(0,0,0,.6), 0 0 26px color-mix(in srgb, var(--c) 45%, transparent); }
   .op-head { display:flex; gap:12px; align-items:center; margin-bottom:11px; }
   .op-avatar { flex:none; width:56px; height:56px; border-radius:14px; position:relative; display:flex; align-items:center; justify-content:center;
     font-family:var(--fd); font-size:23px; font-weight:900; color:#06121f;
     background:linear-gradient(140deg, color-mix(in srgb, var(--c) 92%, #fff 8%), color-mix(in srgb, var(--c) 55%, #0a1424));
-    box-shadow:inset 0 -10px 18px rgba(0,0,0,.35), inset 0 8px 14px rgba(255,255,255,.35), 0 8px 20px rgba(0,0,0,.45);
-    transform:perspective(300px) rotateY(-9deg) rotateX(4deg); }
+    box-shadow:inset 0 -10px 18px rgba(0,0,0,.35), inset 0 8px 14px rgba(255,255,255,.35), 0 8px 20px rgba(0,0,0,.45); }
   .op-avatar::after { content:''; position:absolute; inset:4px; border-radius:10px; border:1.5px solid rgba(255,255,255,.45); }
-  .op-card h3 { font-family:var(--fd); font-size:20px; font-weight:800; letter-spacing:2.5px; line-height:1.05; }
+  .op-card h3 { font-family:var(--fh); font-size:var(--t-sub); font-weight:800; letter-spacing:1px; line-height:1.05; }
   .op-card .role { font-size:11.5px; font-weight:600; color:var(--dim); line-height:1.35; margin-top:3px; }
   .op-skills { display:flex; flex-direction:column; gap:6px; }
   .sk { display:flex; gap:8px; align-items:flex-start; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.05);
@@ -269,18 +307,20 @@
   .stat .track { height:5px; border-radius:3px; background:rgba(255,255,255,.10); overflow:hidden; }
   .stat .fill { height:100%; border-radius:3px; background:linear-gradient(90deg, color-mix(in srgb, var(--c) 55%, #123), var(--c));
     box-shadow:0 0 8px color-mix(in srgb, var(--c) 60%, transparent); }
-  .op-pick { margin-top:11px; text-align:center; font-family:var(--fh); font-weight:700; letter-spacing:3px; font-size:11.5px;
+  .op-pick { margin-top:auto; text-align:center; font-family:var(--fh); font-weight:700; letter-spacing:2px; font-size:var(--t-label);
     color:var(--faint); border-top:1px dashed rgba(255,255,255,.13); padding-top:9px; transition:color .15s; }
   .op-card:hover .op-pick { color:var(--c); }
 
   .btn { pointer-events:auto; cursor:pointer; margin-top:22px; position:relative; overflow:hidden;
     background:linear-gradient(90deg,#0f66cf,#2fb9ec); border:1px solid rgba(160,230,255,.6); color:#fff;
-    font-family:var(--fh); font-size:18px; font-weight:700; letter-spacing:3px; padding:14px 46px; border-radius:12px;
-    box-shadow:0 12px 34px rgba(20,110,220,.45); transition:transform .15s, filter .15s, box-shadow .15s; }
+    font-family:var(--fh); font-size:var(--t-emph); font-weight:700; letter-spacing:2px; padding:14px 46px; border-radius:12px;
+    box-shadow:0 12px 34px rgba(20,110,220,.45); transition:transform var(--m-fast), filter var(--m-fast), box-shadow var(--m-fast); }
   .btn:hover { filter:brightness(1.14); transform:translateY(-2px); box-shadow:0 18px 44px rgba(20,110,220,.55); }
-  .btn:active { transform:translateY(0); }
+  .btn:active { transform:scale(.98); }
+  /* A0: trạng thái disabled chuẩn cho mọi nút (JS khoá mua/không đủ tiền dựa vào :disabled). */
+  button:disabled { opacity:.45; cursor:not-allowed; }
   .btn::after { content:''; position:absolute; top:0; left:-70%; width:45%; height:100%; transform:skewX(-22deg);
-    background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); transition:left .5s ease; }
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); transition:left .25s ease; }
   .btn:hover::after { left:125%; }
   .controls-note { margin-top:24px; font-size:12.5px; color:#7e97b8; line-height:1.75; text-align:center; max-width:880px; }
   .controls-note b { color:#d5e9ff; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
@@ -349,10 +389,12 @@
   #buy-menu { position:fixed; z-index:15; top:50%; left:50%; transform:translate(-50%,-50%); width:1120px; max-width:94vw; max-height:92vh; overflow-y:auto;
     background:linear-gradient(170deg, rgba(10,20,42,.97), rgba(4,8,18,.97)); border:1px solid rgba(65,217,255,.55); border-radius:18px;
     padding:20px 20px 12px; pointer-events:auto; box-shadow:0 30px 80px rgba(0,0,0,.7), 0 0 40px rgba(65,217,255,.15);
-    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); animation:buyIn .18s ease both; }
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); animation:buyIn var(--m-std) ease both; }
   @keyframes buyIn { from { opacity:0; transform:translate(-50%,-48%) scale(.97); } to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
   #buy-menu h2 { font-family:var(--fd); font-size:21px; letter-spacing:4px; margin-bottom:3px; }
-  #buy-menu .bm-money { font-family:var(--fh); color:var(--am); font-weight:700; font-size:15px; margin-bottom:14px; letter-spacing:.5px; }
+  #buy-menu .bm-money { font-family:var(--fh); color:var(--am); font-weight:700; font-size:16px; letter-spacing:.5px;
+    position:sticky; top:-20px; z-index:3; margin:0 -6px 14px; padding:8px 6px;
+    background:linear-gradient(180deg, rgba(7,13,26,.98), rgba(7,13,26,.94)); border-bottom:1px solid var(--line-soft); }
   #buy-menu .bm-money .bkey { display:inline-block; background:#1d3557; border:1px solid rgba(140,220,255,.5); border-bottom-width:2.5px;
     border-radius:5px; padding:0 7px; color:#a9ffdf; font-size:12px; margin:0 2px; }
   .buy-item { display:flex; gap:12px; align-items:center; background:rgba(255,255,255,.05);
@@ -391,7 +433,7 @@
     background:rgba(2,5,10,.35); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
   #pause-hint div { background:var(--glass); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
     padding:17px 32px; border-radius:14px; font-family:var(--fh); font-size:19px; font-weight:700; letter-spacing:1px;
-    border:1px solid var(--line); box-shadow:var(--shadow); animation:buyIn .18s ease both; }
+    border:1px solid var(--line); box-shadow:var(--shadow); animation:buyIn var(--m-std) ease both; }
   /* v3.8 robustness (§1–2): overlay lỗi boot/WebGL — hiện khi CDN Three.js fail hoặc WebGL không khả dụng */
   #boot-error { position:fixed; inset:0; z-index:60; display:none; align-items:center; justify-content:center;
     background:rgba(2,5,10,.88); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
@@ -412,26 +454,17 @@
     background:radial-gradient(ellipse at center, transparent 52%, rgba(150,80,255,.4) 100%); }
 
   /* ================= RESPONSIVE ================= */
-  @media (max-width:1180px) {
-    #op-grid { grid-template-columns:repeat(2, minmax(230px, 280px)); }
-    .overlay h1 { font-size:46px; }
-  }
   @media (max-width:920px) {
-    #abilities { transform:translateX(-50%) scale(calc(.86 * var(--hud-scale,1))); transform-origin:bottom center; }
     #bottom-left { width:218px; padding:10px 12px 9px; }
-    #hp-num { font-size:24px !important; }
     #minimap-frame { transform:scale(calc(.82 * var(--hud-scale,1))); transform-origin:top left; }
     #killfeed { width:238px; }
-    #announce-main { font-size:34px; letter-spacing:3px; }
-    #timer { font-size:18px; min-width:60px; }
+    #announce-main { font-size:var(--t-main); letter-spacing:1px; }
+    #timer { font-size:var(--t-sub); min-width:64px; }
+    #bottom-right .ab { width:104px; }
   }
   @media (max-width:600px) {
-    #op-grid { grid-template-columns:minmax(230px, 320px); }
-    .overlay h1 { font-size:36px; letter-spacing:4px; }
     #bottom-right { display:block; transform:scale(calc(.72 * var(--hud-scale,1))); transform-origin:bottom right; padding:9px 11px 8px; }
-    #ammo { font-size:29px; }
-    #money { font-size:14px; }
-    #abilities { transform:translateX(-50%) scale(calc(.74 * var(--hud-scale,1))); }
+    #bottom-right .ab { width:96px; }
     #end-score { font-size:52px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -440,18 +473,21 @@
 
   /* ================= v3.5: BUY GRID CS-STYLE / PAUSE / DEPLOY / XH ================= */
   #buy-menu .bm-grid { display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; margin-top:10px; }
-  #buy-menu .bm-col { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:9px 8px 2px; transition:border-color .15s, box-shadow .15s; }
+  #buy-menu .bm-col { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:10px 10px 4px;
+    display:flex; flex-direction:column; transition:border-color .15s, box-shadow .15s; }
   #buy-menu .bm-col.nav-on { border-color:var(--cy); box-shadow:0 0 0 1px var(--cy), 0 0 18px rgba(65,217,255,.25); }
-  #buy-menu .bm-col .bm-group { margin:0 0 8px; text-align:center; }
+  #buy-menu .bm-col .bm-group { margin:0 0 8px; text-align:center; padding-bottom:7px; border-bottom:1px solid var(--line-soft); }
   #buy-menu .buy-item { flex-direction:column; align-items:stretch; gap:6px; padding:10px 9px; margin-bottom:8px; position:relative; }
+  #buy-menu .buy-item .bi-main { flex:1; display:flex; flex-direction:column; }
+  #buy-menu .buy-item:focus-within { border-color:var(--line-strong); background:rgba(65,217,255,.06); }
   #buy-menu .buy-item .bi-ic { width:100%; height:38px; }
-  #buy-menu .buy-item .bi-name { font-size:13.5px; }
-  #buy-menu .buy-item .bi-desc { font-size:11.5px; line-height:1.35; min-height:30px; }
-  #buy-menu .buy-item button { width:100%; }
+  #buy-menu .buy-item .bi-name { font-size:14px; }
+  #buy-menu .buy-item .bi-desc { font-size:11.5px; line-height:1.35; min-height:31px; }
+  #buy-menu .buy-item button { width:100%; min-height:38px; font-size:16px; letter-spacing:.5px; }
   .buy-tile-static { display:flex; flex-direction:column; gap:6px; padding:10px 9px; margin-bottom:8px; border-radius:12px;
     background:rgba(255,255,255,.03); border:1px dashed rgba(255,255,255,.14); opacity:.8; position:relative; }
   .buy-tile-static .bi-ic { width:100%; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.05); }
-  .buy-tile-static .bi-name { font-family:var(--fh); font-weight:700; font-size:13.5px; color:#dfeeff; }
+  .buy-tile-static .bi-name { font-family:var(--fh); font-weight:700; font-size:14px;} color:#dfeeff; }
   .buy-tile-static .bi-desc { font-size:11.5px; color:var(--dim); }
   .buy-strip-static { margin-top:10px; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,.03);
     border:1px dashed rgba(255,255,255,.14); font-family:var(--fh); font-size:12.5px; color:var(--dim); letter-spacing:.5px; }
@@ -509,7 +545,7 @@
   #settings-panel .set-title { font-family:var(--fh); font-weight:700; letter-spacing:3px; font-size:13px; color:var(--cy); margin-bottom:10px; }
   #btn-lang { padding:8px 16px; font-size:13px; letter-spacing:1px; }
   #settings-panel .set-row { display:grid; grid-template-columns:250px 1fr; gap:4px 16px; align-items:center; margin-bottom:10px; }
-  #settings-panel label { font-family:var(--fh); font-weight:600; font-size:14.5px; color:#dfeeff; }
+  #settings-panel label { font-family:var(--fh); font-weight:600; font-size:14px; color:#dfeeff; }
   #settings-panel label b { color:var(--cy); }
   #settings-panel input[type=range] { width:100%; accent-color:#00e5ff; cursor:pointer; }
   #settings-panel .set-note { grid-column:2; font-size:12.5px; color:#8fb6d9; }
@@ -517,15 +553,20 @@
   @media (max-width:600px){ #settings-panel .set-row{ grid-template-columns:1fr; } #settings-panel .set-note{ grid-column:1; } }
 
   /* ================= v3.6-ui (dev-v49): MENU VÀO GAME + SETTINGS 1 PANEL + FIRST-RUN ================= */
-  .menu-actions { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; align-items:stretch; margin:2px 0 4px; }
+  .menu-actions { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; align-items:stretch; margin:6px 0 4px; }
   .menu-actions .btn { margin-top:0; }
-  .btn-play { font-size:21px; letter-spacing:4px; padding:16px 58px; border-radius:14px;
+  /* VÀO GAME = điểm nhấn thị giác số 1 của menu: lớn nhất, sáng nhất, nhịp thở hào quang chậm. */
+  .btn-play { font-size:var(--t-sub); letter-spacing:2px; padding:18px 66px; border-radius:14px;
     background:linear-gradient(90deg,#0d9e6e,#2fe0a8 55%,#41d9ff); border:1px solid rgba(190,255,225,.65); color:#04160d;
     box-shadow:0 14px 40px rgba(20,220,160,.35), 0 0 26px rgba(65,217,255,.25); }
+  .menu-actions .btn-play { animation:playPulse 2.4s ease-in-out infinite; }
+  @keyframes playPulse { 0%,100% { box-shadow:0 14px 40px rgba(20,220,160,.35), 0 0 22px rgba(65,217,255,.22); }
+    50% { box-shadow:0 16px 46px rgba(20,220,160,.5), 0 0 40px rgba(65,217,255,.42); } }
   .btn-play:hover { box-shadow:0 20px 50px rgba(20,220,160,.45), 0 0 34px rgba(65,217,255,.35); }
   .btn-ghost { background:rgba(10,24,44,.66); border:1px solid rgba(120,190,255,.4); color:#d5e9ff;
-    font-size:15px; letter-spacing:2.5px; padding:14px 30px; box-shadow:0 8px 24px rgba(0,0,0,.35); }
+    font-size:var(--t-emph); letter-spacing:2px; padding:14px 30px; box-shadow:0 8px 24px rgba(0,0,0,.35); }
   .btn-ghost:hover { border-color:var(--cy); color:#fff; box-shadow:0 12px 30px rgba(0,0,0,.45), 0 0 18px rgba(65,217,255,.25); }
+  .btn-ghost:active { transform:scale(.98); }
   .menu-pick-note { min-height:22px; margin:2px 0 14px; font-family:var(--fh); font-weight:600; font-size:14px;
     letter-spacing:1.2px; color:#a9ffdf; text-align:center; }
   .menu-pick-note:empty { margin-bottom:2px; }
@@ -549,7 +590,65 @@
   #settings-panel .set-foot { display:flex; justify-content:flex-end; margin-top:14px; padding-top:13px;
     border-top:1px solid rgba(110,200,255,.18); }
   #settings-panel .set-foot .btn { margin-top:0; font-size:16px; padding:12px 34px; }
-  @media (max-width:600px){ .btn-play{ padding:14px 34px; font-size:18px; } .btn-ghost{ padding:12px 20px; font-size:13.5px; } }
+  @media (max-width:600px){ .btn-play{ padding:14px 34px; font-size:var(--t-emph); } .btn-ghost{ padding:12px 20px; font-size:var(--t-ui); } }
+  /* W36 #D11: lobby online — overlay cuộn được, nút về menu nằm trên panel lobby. */
+  #lobby-root { overflow-y:auto; padding:28px 16px 40px; gap:14px; }
+  #lobby-root .pg-lobby { width:min(720px, 100%); }
+
+  /* ================= v53-ui2 ĐỢT 1 — A1 MENU 2 VÙNG + A2 CỤM CHIẾN ĐẤU PHẢI-DƯỚI =================
+     Chỉ bố cục lại quanh ĐÚNG các DOM id cũ (#op-grid, #btn-play, #abilities, #status-fx…);
+     logic JS gốc không đổi. Khối đặt cuối <style> để thắng rule nền cùng độ ưu tiên. */
+  /* --- A1: thanh nav mảnh trên cùng — logo trái, nút phụ dạng text-button ở phải --- */
+  .menu-nav { width:min(1240px,100%); display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
+  .menu-logo { font-family:var(--fh); font-weight:700; font-size:var(--t-emph); letter-spacing:2px; color:var(--ink); white-space:nowrap; }
+  .menu-logo em { font-style:normal; color:var(--cy); }
+  .menu-nav-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+  .menu-nav .btn { margin-top:0; }
+  .menu-nav .btn-ghost { padding:10px 18px; font-size:var(--t-ui); box-shadow:none; background:transparent; }
+  /* --- A1: thân menu 2 vùng — trái: vào trận; phải: thẻ operator đang chọn --- */
+  .menu-main { width:min(1240px,100%); display:flex; gap:28px; align-items:stretch; }
+  .menu-left { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; align-items:flex-start; text-align:left; }
+  #menu h1 { text-align:left; margin-top:14px; }
+  #menu .sub { text-align:left; margin:12px 0 8px; max-width:620px; }
+  #menu .menu-actions { justify-content:flex-start; margin:18px 0 6px; }
+  #menu .menu-pick-note { text-align:left; margin-bottom:0; }
+  /* --- A1: thẻ chi tiết operator (nội dung do script cuối body đọc từ .op-card.selected) --- */
+  #op-detail { --c:#38b6ff; flex:0 0 400px; position:relative; overflow:hidden; border-radius:var(--r-lg);
+    padding:18px; display:flex; flex-direction:column; gap:12px; text-align:left;
+    background:linear-gradient(165deg, rgba(20,34,60,.92), rgba(8,13,26,.95) 62%);
+    border:1px solid var(--line-soft); box-shadow:var(--shadow); }
+  #op-detail::before { content:''; position:absolute; inset:0 0 auto 0; height:4px; background:var(--c); box-shadow:0 0 16px var(--c); }
+  .od-head { display:flex; gap:14px; align-items:center; }
+  #od-avatar { width:72px; height:72px; font-size:30px; border-radius:16px; }
+  .od-name { font-family:var(--fh); font-size:var(--t-sub); font-weight:700; letter-spacing:1px; line-height:1.1; }
+  .od-role { font-size:var(--t-ui); font-weight:600; color:var(--dim); line-height:1.35; margin-top:3px; }
+  #op-detail .passive { font-size:var(--t-label); line-height:1.45; color:#ffd98a;
+    background:rgba(255,190,60,.07); border:1px solid rgba(255,205,90,.22); border-radius:9px; padding:7px 10px; }
+  #op-detail .op-stats { margin-top:2px; }
+  #op-detail .stat { grid-template-columns:76px 1fr 24px; } /* cột nhãn rộng hơn thẻ gốc: "FIREPOWER" không bị thanh stat lấn */
+  /* --- A1: lưới 8 operator -> dải thumbnail ngang đáy menu (ảnh + tên + vai trò);
+         kỹ năng/passive/chỉ số đầy đủ nằm ở thẻ chi tiết bên phải --- */
+  #menu #op-grid { display:flex; flex-wrap:wrap; gap:10px; width:min(1240px,100%); justify-content:flex-start;
+    margin-top:22px; padding-top:18px; }
+  #menu .op-card { width:178px; padding:12px; }
+  #menu .op-card .op-head { flex-direction:column; align-items:flex-start; gap:8px; margin-bottom:0; }
+  #menu .op-card .op-avatar { width:44px; height:44px; font-size:var(--t-emph); border-radius:11px; }
+  #menu .op-card h3 { font-size:var(--t-emph); }
+  #menu .op-card .role { font-size:var(--t-label); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  #menu .op-card .op-skills, #menu .op-card .passive, #menu .op-card .op-stats, #menu .op-card .op-pick { display:none; }
+  #menu .op-card:hover, #menu .op-card:focus-visible { transform:translateY(-3px); }
+  #menu .op-card.selected { transform:translateY(-3px); }
+  @media (max-width:1020px) {
+    .menu-main { flex-direction:column; }
+    #op-detail { flex:none; width:100%; }
+  }
+  /* --- A2: abilities gộp vào cụm phải-dưới (dưới ammo); status-fx thành dải cố định
+         trên cùng của cụm — trạng thái không đè lên UI kỹ năng nữa --- */
+  #bottom-right #abilities { position:static; transform:none; margin-top:12px; padding-top:12px;
+    border-top:1px solid var(--line-soft); justify-content:flex-end; text-align:left; gap:8px; }
+  #bottom-right #status-fx { position:static; transform:none; width:fit-content; max-width:100%;
+    margin:0 0 8px auto; white-space:normal; text-align:right; }
+  #bottom-right #status-fx:empty { margin:0; }
 </style>
 </head>
 <body>
@@ -573,24 +672,24 @@
     <div class="tb-side them"><div class="tb-tag" data-i18n="hud.teamThem">ĐỊCH</div><div id="score-them">0</div><div class="alive-dots" id="alive-them"></div></div>
     <div id="bomb-icon" class="hidden" data-i18n="hud.bomb">● BOMB</div>
   </div>
-  <div id="status-fx"></div>
   <div id="killfeed"></div>
   <div id="announce"><div id="announce-main"></div><div id="announce-sub"></div></div>
   <div id="round-stats" class="hidden"></div>
   <div id="plantbar-wrap" class="hidden"><div id="plant-label" data-i18n="hud.planting">ĐANG ĐẶT BOMB…</div><div id="plantbar"><div id="plant-fill"></div></div></div>
   <div id="bottom-left">
     <div class="bar-label"><span data-i18n="hud.hp">HP</span><span id="hp-num">100</span></div>
-    <div class="bar"><div id="hp-fill" style="width:100%"></div></div>
+    <div class="bar bar-hp"><div id="hp-fill" style="width:100%"></div></div>
     <div class="bar-label"><span data-i18n="hud.armor">GIÁP</span><span id="armor-num">0</span></div>
-    <div class="bar"><div id="armor-fill" style="width:0%"></div></div>
+    <div class="bar bar-armor"><div id="armor-fill" style="width:0%"></div></div>
     <div class="bar-label"><span data-i18n="hud.energy">NĂNG LƯỢNG KỸ NĂNG</span><span id="energy-num">0</span></div>
-    <div class="bar"><div id="energy-fill" style="width:0%"></div></div>
+    <div class="bar bar-energy"><div id="energy-fill" style="width:0%"></div></div>
   </div>
-  <div id="abilities"></div>
   <div id="bottom-right">
+    <div id="status-fx"></div>
     <div id="weapon-name">PISTOL</div>
     <div id="ammo">12 <span>/ ∞</span></div>
     <div id="money">$2000</div>
+    <div id="abilities"></div>
   </div>
   <div id="deploy-bar" class="hidden"><div id="deploy-name"></div><div id="deploy-track"><div id="deploy-fill"></div></div></div>
 </div>
@@ -671,16 +770,34 @@
 
 <!-- ================= MAIN MENU ================= -->
 <div id="menu" class="overlay">
-  <div class="menu-kicker" data-i18n="menu.kicker">Tactical FPS · Chọn Operator để vào trận</div>
-  <h1>NEON <em>DIVIDE</em></h1>
-  <p class="sub" data-i18n-html="menu.sub">FPS chiến thuật 4v5 trên map gốc <b>Neon Divide</b> — đặt bomb tại site A/B, hạ hết địch, hoặc giữ bomb nổ.
-  Mỗi Operator có bộ kỹ năng riêng. Đội nào thắng 6 round trước là thắng trận.</p>
-  <div class="menu-actions">
-    <button class="btn btn-play" id="btn-play" data-i18n="menu.play">▶ VÀO GAME</button>
-    <button class="btn btn-ghost" id="btn-menu-howto" data-i18n="menu.howto">❓ CÁCH CHƠI</button>
-    <button class="btn btn-ghost" id="btn-menu-settings" data-i18n="menu.settings">⚙ CÀI ĐẶT</button>
+  <div class="menu-nav">
+    <div class="menu-logo">NEON <em>DIVIDE</em></div>
+    <div class="menu-nav-actions">
+      <button class="btn btn-ghost" id="btn-menu-howto" data-i18n="menu.howto">❓ CÁCH CHƠI</button>
+      <button class="btn btn-ghost" id="btn-menu-settings" data-i18n="menu.settings">⚙ CÀI ĐẶT</button>
+    </div>
   </div>
-  <div class="menu-pick-note" id="menu-pick-note"></div>
+  <div class="menu-main">
+    <div class="menu-left">
+      <div class="menu-kicker" data-i18n="menu.kicker">Tactical FPS · Chọn Operator để vào trận</div>
+      <h1>NEON <em>DIVIDE</em></h1>
+      <p class="sub" data-i18n-html="menu.sub">FPS chiến thuật 4v5 — đặt bomb tại A/B, thắng 6 round trước là thắng trận.</p>
+      <div class="menu-actions">
+        <button class="btn btn-play" id="btn-play" data-i18n="menu.play">▶ VÀO GAME</button>
+        <button class="btn btn-ghost" id="btn-online" data-i18n="menu.online">🌐 CHƠI ONLINE</button>
+      </div>
+      <div class="menu-pick-note" id="menu-pick-note"></div>
+    </div>
+    <div id="op-detail" aria-live="polite">
+      <div class="od-head">
+        <div class="op-avatar" id="od-avatar">?</div>
+        <div><div class="od-name" id="od-name">—</div><div class="od-role" id="od-role"></div></div>
+      </div>
+      <div class="op-skills" id="od-skills"></div>
+      <div class="passive" id="od-passive"></div>
+      <div class="op-stats" id="od-stats"></div>
+    </div>
+  </div>
   <div id="op-grid"></div>
   <div id="settings-overlay" class="hidden">
   <div id="settings-panel">
@@ -764,6 +881,11 @@
   <div id="howto-panel" class="hidden">
     <div class="controls-note" id="controls-note"></div>
   </div>
+</div>
+
+<!-- ================= ONLINE LOBBY (W36 #D11) ================= -->
+<div id="lobby-root" class="overlay hidden">
+  <button class="btn btn-ghost" id="btn-lobby-back" data-i18n="menu.onlineBack">← VỀ MENU CHÍNH</button>
 </div>
 
 <!-- ================= END SCREEN ================= -->
@@ -1088,7 +1210,7 @@ const vi = {
 
   // ---- Menu chính ----
   'menu.kicker': 'Tactical FPS · Chọn Operator để vào trận',
-  'menu.sub': 'FPS chiến thuật 4v5 trên map gốc Neon Divide — đặt bomb tại site A/B, hạ hết địch, hoặc giữ bomb nổ. Mỗi Operator có bộ kỹ năng riêng. Đội nào thắng 6 round trước là thắng trận.',
+  'menu.sub': 'FPS chiến thuật 4v5 — đặt bomb tại A/B, thắng 6 round trước là thắng trận.',
   'menu.settingsTitle': '⚙ CÀI ĐẶT NGẮM BẮN',
   'menu.sens': 'Độ nhạy chuột',
   'menu.sensNote': '≈ {cm} cm/360° ở 800 DPI (dải pro tactical ≈ 34–58 cm)',
@@ -1099,6 +1221,8 @@ const vi = {
   'menu.passiveLabel': 'Nội tại:',
   'menu.select': '▶ CHỌN {name}',
   'menu.play': '▶ VÀO GAME',
+  'menu.online': '🌐 CHƠI ONLINE',
+  'menu.onlineBack': '← VỀ MENU CHÍNH',
   'menu.howto': '❓ CÁCH CHƠI',
   'menu.settings': '⚙ CÀI ĐẶT',
   'menu.selectedOp': 'Operator đã chọn: {name} — bấm VÀO GAME để bắt đầu',
@@ -1477,7 +1601,7 @@ const en = {
 
   // ---- Main menu ----
   'menu.kicker': 'Tactical FPS · Pick an Operator to deploy',
-  'menu.sub': 'Tactical 4v5 FPS on the original Neon Divide map — plant the bomb at site A/B, eliminate all enemies, or let the bomb detonate. Every Operator has a unique ability kit. First team to win 6 rounds takes the match.',
+  'menu.sub': 'Tactical 4v5 FPS — plant at A/B, first to 6 rounds wins the match.',
   'menu.settingsTitle': '⚙ AIM SETTINGS',
   'menu.sens': 'Mouse sensitivity',
   'menu.sensNote': '≈ {cm} cm/360° at 800 DPI (pro tactical range ≈ 34–58 cm)',
@@ -1488,6 +1612,8 @@ const en = {
   'menu.passiveLabel': 'Passive:',
   'menu.select': '▶ SELECT {name}',
   'menu.play': '▶ PLAY',
+  'menu.online': '🌐 PLAY ONLINE',
+  'menu.onlineBack': '← BACK TO MENU',
   'menu.howto': '❓ HOW TO PLAY',
   'menu.settings': '⚙ SETTINGS',
   'menu.selectedOp': 'Selected operator: {name} — press PLAY to start',
@@ -2537,7 +2663,7 @@ const AudioSys = {
       this.applyVol(); }
     if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
   env(gainNode, t0, a, peak, d) { const g = gainNode.gain; g.setValueAtTime(0.0001, t0); g.exponentialRampToValueAtTime(peak, t0 + a); g.exponentialRampToValueAtTime(0.0001, t0 + a + d); },
-  noiseBuf() { const len = this.ctx.sampleRate * 1; const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; return buf; },
+  noiseBuf() { if (this._nb) return this._nb; const len = this.ctx.sampleRate * 1; const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; this._nb = buf; return buf; }, // GF-2: cache 1 buffer noise dùng chung — trước đây MỌI phát bắn/tiếng đều cấp phát mới 1 buffer 1 s (nguồn jitter p95 đã đo ở nhánh audio2); BufferSource dùng chung 1 AudioBuffer là an toàn
   shot(kind) { if (!this.ctx) return;
     if (window.GunSoundPack) { try { const pk = { scout: 'sniper', deagle: 'pistol' }[kind] || kind;
       if (GunSoundPack.playGunShot(this.ctx, pk, { output: this.out() })) return; } catch (e) {} } // pack lỗi/thiếu preset/throw -> rơi xuống tiếng cũ bên dưới (review-v35 1.3: không để mất phát bắn)
@@ -2554,7 +2680,37 @@ const AudioSys = {
     const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1200; const g = c.createGain(); this.env(g, t, 0.004, 0.10, 0.09);
     src.connect(f); f.connect(g); g.connect(this.out()); src.start(t); src.stop(t + 0.13); },
   reload() { if (!this.ctx) return; const c = this.ctx; [0, 0.18, 0.42].forEach((off, i) => { const t = c.currentTime + off; const o = c.createOscillator(); o.type = 'square'; o.frequency.value = i === 2 ? 900 : 500; const g = c.createGain(); this.env(g, t, 0.005, 0.12, 0.05); o.connect(g); g.connect(this.out()); o.start(t); o.stop(t + 0.08); }); },
-  hit(head) { if (!this.ctx) return; const c = this.ctx, t = c.currentTime; const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = head ? 1500 : 1000; const g = c.createGain(); this.env(g, t, 0.003, 0.18, 0.06); o.connect(g); g.connect(this.out()); o.start(t); o.stop(t + 0.09); },
+  hit(head, blocked) { if (!this.ctx) return; const c = this.ctx, t = c.currentTime;
+    if (blocked) { // GF-2: đạn bị chặn (công trình/dome) — tông đục 900 Hz, ngắn và trầm, phân biệt hẳn với trúng thịt
+      const o = c.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(900, t); o.frequency.exponentialRampToValueAtTime(600, t + 0.05);
+      const g = c.createGain(); this.env(g, t, 0.002, 0.10, 0.05); o.connect(g); g.connect(this.out()); o.start(t); o.stop(t + 0.08); return; }
+    // GF-2 (topic #91): bỏ sine beep 1000 Hz (họ "UI beep") → transient "click/pssh" họ vật lý như hitmarker CoD/Overwatch (tiếng mở lon).
+    // Lớp 1 — click: noise burst 40 ms qua bandpass 3 kHz (buffer noise CACHE, không cấp phát mỗi phát).
+    const src = c.createBufferSource(); src.buffer = this.noiseBuf();
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3000; bp.Q.value = 0.9;
+    const g = c.createGain(); this.env(g, t, 0.002, 0.22, 0.038); src.connect(bp); bp.connect(g); g.connect(this.out()); src.start(t); src.stop(t + 0.05);
+    // Lớp 2 — "pssh" khí nén: noise highpass decay 25 ms, phát lệch nhịp mẫu bằng playbackRate để không trùng khớp lớp 1.
+    const src2 = c.createBufferSource(); src2.buffer = this.noiseBuf(); src2.playbackRate.value = 1.31;
+    const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 5200;
+    const g2 = c.createGain(); this.env(g2, t, 0.001, 0.10, 0.024); src2.connect(hp); hp.connect(g2); g2.connect(this.out()); src2.start(t); src2.stop(t + 0.03);
+    if (head) { // Headshot: THÂN TRẦM quét 400→120 Hz trong 70 ms — cộng đồng phạt nặng kiểu "chỉ tăng pitch" (Valorant phải revert headshot sound vì lỗi này)
+      const o = c.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(400, t); o.frequency.exponentialRampToValueAtTime(120, t + 0.07);
+      const g3 = c.createGain(); this.env(g3, t, 0.002, 0.20, 0.068); o.connect(g3); g3.connect(this.out()); o.start(t); o.stop(t + 0.09); } },
+  killConfirm(head, streak) { if (!this.ctx) return; const c = this.ctx, t = c.currentTime;
+    // GF-1b (topic #91): âm xác nhận kill riêng — trước đây killBot() không phát BẤT KỲ âm nào (khoảng trống feedback lớn nhất của bản ship).
+    // Mô hình chọn âm theo (chuỗi kill, headshot) của CS Kill Confirm + thang leo pitch của Valorant; transient mở đầu để cắt xuyên tiếng súng.
+    const mult = Math.pow(2, Math.min(streak || 0, 5) / 12); // mỗi kill tiếp trong round +1 bán âm, trần +5
+    const src = c.createBufferSource(); src.buffer = this.noiseBuf(); // transient click 3 ms đầu, đỉnh cao hơn hit tick ~+4 dB
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.8;
+    const g0 = c.createGain(); this.env(g0, t, 0.001, 0.35, 0.02); src.connect(bp); bp.connect(g0); g0.connect(this.out()); src.start(t); src.stop(t + 0.03);
+    [[659.25, 0], [880, 0.06]].forEach(pair => { const f = pair[0] * mult, off = pair[1]; // 2 nốt trầm-trung E5→A5, ~60 ms/nốt
+      const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = c.createGain(); this.env(g, t + off, 0.004, 0.30, 0.075); o.connect(g); g.connect(this.out()); o.start(t + off); o.stop(t + off + 0.16); });
+    if (head) { // headshot-kill thêm lớp "thock" trầm kiểu gậy bóng chày kim loại: sine quét 300→90 Hz + noise bandpass 800 Hz
+      const o = c.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.11);
+      const g = c.createGain(); this.env(g, t, 0.002, 0.32, 0.11); o.connect(g); g.connect(this.out()); o.start(t); o.stop(t + 0.14);
+      const n = c.createBufferSource(); n.buffer = this.noiseBuf();
+      const f2 = c.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 800; f2.Q.value = 1.1;
+      const g2 = c.createGain(); this.env(g2, t, 0.002, 0.20, 0.06); n.connect(f2); f2.connect(g2); g2.connect(this.out()); n.start(t); n.stop(t + 0.08); } },
   beep(freq, dur) { if (!this.ctx) return; const c = this.ctx, t = c.currentTime; const o = c.createOscillator(); o.type = 'square'; o.frequency.value = freq || 880; const g = c.createGain(); this.env(g, t, 0.005, 0.14, dur || 0.12); o.connect(g); g.connect(this.out('ui')); o.start(t); o.stop(t + (dur || 0.12) + 0.05); },
   plantDone() { this.beep(660, 0.12); setTimeout(() => this.beep(990, 0.2), 140); },
   explosion() { if (!this.ctx) return; const c = this.ctx, t = c.currentTime; const src = c.createBufferSource(); src.buffer = this.noiseBuf(); src.loop = true;
@@ -2721,7 +2877,7 @@ const player = {
   weapon: 'pistol', primary: null, sidearm: 'pistol', scoped: false,
   ammo: { rifle: 30, pistol: 12, smg: 32, shotgun: 7, scout: 6, deagle: 7, lmg: 100, knife: 0 }, reserve: Object.assign({}, RESERVE0),
   swapsUsed: 0, swappedThisRound: false,
-  reloadingUntil: 0, lastShot: 0, lastShotByWeapon: {}, dead: false, deployUntil: 0, reloadToken: 0, reloadKey: null, reloadNeed: 0, lastDamageAt: -99, diedLastRound: false, planting: false, lastWeapon: 'pistol', meleeSwingAt: -9, meleeSwingHeavy: false, lastSlashAt: -9, stepAcc: 0, stepAlt: false,
+  reloadingUntil: 0, reloadStartAt: 0, reloadDurTotal: 0, lastShot: 0, lastShotByWeapon: {}, dead: false, deployUntil: 0, reloadToken: 0, reloadKey: null, reloadNeed: 0, lastDamageAt: -99, diedLastRound: false, planting: false, lastWeapon: 'pistol', meleeSwingAt: -9, meleeSwingHeavy: false, lastSlashAt: -9, stepAcc: 0, stepAlt: false,
   opKey: 'FLARE', qCd: 0, eCd: 0,
   invisibleUntil: 0, domeUntil: 0,
   // v3 mechanics state: vận tốc ngang, recoil, tagging, tiếp đất, ngồi xổm
@@ -2762,10 +2918,9 @@ function setScoped(on) {
   if (player.scoped === want) return;
   player.scoped = want;
   AudioSys.scopeSnd(want);
-  camera.fov = want ? Math.max(24, Math.round(SETTINGS.fov * 0.42)) : SETTINGS.fov;
-  camera.updateProjectionMatrix();
-  const so = document.getElementById('scope-overlay'); if (so) so.classList.toggle('hidden', !want);
-  if (viewGun) viewGun.visible = !want;
+  // v53 gunfx: FOV + overlay + viewGun KHÔNG cắt cứng nữa — GUNFX.updateScopeAnim nội suy ~120 ms
+  // (zoom FOV ease-out + overlay fade/scale + súng ẩn khi scope gần mở hết). player.scoped vẫn
+  // đổi TỨC THÌ để độ chính xác/noScopeDeg theo đúng trạng thái logic như trước.
 }
 function weaponDeploy(key) { const w = WEAPONS[key]; return (w && w.deploy) || WEAPON_DEPLOY[key] || 0.7; }
 function switchWeapon(key) {
@@ -3299,6 +3454,10 @@ function buildMap() {
   });
   crateMesh.castShadow = true; crateMesh.receiveShadow = true; crateMesh.frustumCulled = false;
   scene.add(crateMesh); blockers.push(crateMesh);
+  // v53-mapreal: phu kien be mat (chan tuong / khe panel / thong gio / neon mep mid) —
+  // PHAI goi o day: sau khoi crates (ngoai vung quet cua map-validator) va truoc
+  // flushBatches() de gop chung bucket vat lieu -> 0 draw call them.
+  buildMapDressing();
   // ---- Gom cac khoi tinh thanh merged mesh theo vat lieu ----
   flushBatches();
   // ---- Neon trim strips (giu nguyen) ----
@@ -3327,6 +3486,8 @@ function buildMap() {
   const connLight = new THREE.PointLight(0xff5fd2, 10, 12); connLight.position.set(23, 3.5, 16); scene.add(connLight);
   // ---- Props instanced/merged ----
   buildProps();
+  // v53-mapreal: lop do that bo sung (skyline xa, decal san, vet tuong, manh vun)
+  buildMapRealism();
 }
 function spawnMarker(pos, color, txt) {
   const ring = new THREE.Mesh(new THREE.RingGeometry(2.4, 3.1, 28),
@@ -3376,6 +3537,17 @@ function makeDecalTexture(kind) {
     x.strokeStyle = 'rgba(120,134,150,0.8)'; x.lineWidth = 5; x.strokeRect(14, 14, 100, 100);
     x.strokeStyle = 'rgba(90,102,116,0.6)'; x.lineWidth = 3;
     x.beginPath(); x.arc(64, 64, 26, 0, Math.PI * 2); x.stroke();
+  } else if (kind === 'streak') {
+    // v53-mapreal: vet nuoc ri / ban chay doc tren mat tuong (dung cho decal tuong dung)
+    for (let i = 0; i < 9; i++) {
+      const sx = 6 + Math.random() * 112, sw = 3 + Math.random() * 9, sl = 40 + Math.random() * 88;
+      const g = x.createLinearGradient(0, 0, 0, sl);
+      g.addColorStop(0, 'rgba(6,8,12,0.50)'); g.addColorStop(1, 'rgba(6,8,12,0)');
+      x.fillStyle = g; x.fillRect(sx, 0, sw, sl);
+    }
+    const g2 = x.createLinearGradient(0, 64, 0, 128);
+    g2.addColorStop(0, 'rgba(6,8,12,0)'); g2.addColorStop(1, 'rgba(6,8,12,0.45)');
+    x.fillStyle = g2; x.fillRect(0, 64, 128, 64);
   }
   return new THREE.CanvasTexture(c);
 }
@@ -3416,12 +3588,18 @@ function buildProps() {
   const lampHeads = new THREE.InstancedMesh(lampHeadGeo, new THREE.MeshBasicMaterial({ color: 0xffffff }), lampPts.length);
   const glowPos = [], glowCol = [];
   const cA = new THREE.Color(0xff9f2e), cB = new THREE.Color(0xc44dff), cC = new THREE.Color(0x41d9ff);
+  const poolGeos = []; // v53-mapreal: vung sang gia lap duoi chan den (merged, 1 draw call)
   lampPts.forEach((p, i) => {
     instMatrix(lampBodies, i, p[0], 0, p[1], 1, 1, 1, 0);
     instMatrix(lampHeads, i, p[0], 0, p[1], 1, 1, 1, 0);
     const col = (p[1] < -12 && p[0] > 0) ? cA : (p[1] > 12 && p[0] > 0) ? cB : cC;
     lampHeads.setColorAt(i, col);
     glowPos.push(p[0], 4.6, p[1]); glowCol.push(col.r, col.g, col.b);
+    const pg = new THREE.CircleGeometry(2.7, 18); pg.rotateX(-Math.PI / 2); pg.translate(p[0], 0.018, p[1]);
+    const pc = new Float32Array(pg.attributes.position.count * 3);
+    for (let k = 0; k < pg.attributes.position.count; k++) { pc[k * 3] = col.r; pc[k * 3 + 1] = col.g; pc[k * 3 + 2] = col.b; }
+    pg.setAttribute('color', new THREE.BufferAttribute(pc, 3));
+    poolGeos.push(pg);
   });
   lampBodies.frustumCulled = false; lampHeads.frustumCulled = false;
   lampBodies.castShadow = true;
@@ -3434,6 +3612,13 @@ function buildProps() {
     blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true
   }));
   glow.frustumCulled = false; scene.add(glow);
+  // v53-mapreal: ao sang tren mat dat duoi moi cot den — neo anh sang vao mat san,
+  // het cam giac den "treo" giua khong trung (additive rat mo, mau theo vung nhu glow).
+  const pools = new THREE.Mesh(BufferGeometryUtils.mergeGeometries(poolGeos, false), new THREE.MeshBasicMaterial({
+    map: makeGlowTexture(), transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending,
+    depthWrite: false, vertexColors: true
+  }));
+  pools.frustumCulled = false; pools.renderOrder = 1; scene.add(pools);
   // ---- Bien bao canvas ----
   const signs = [
     ['A', '#ff9f2e', 32, -44.42, 3.4, 0, 3, 1.5], ['B', '#c44dff', 32, 44.42, 3.4, Math.PI, 3, 1.5],
@@ -3442,10 +3627,29 @@ function buildProps() {
     ['▼', '#ffd24d', -13, -20, 2.3, 0, 1.6, 0.8], ['▼', '#ffd24d', 23, -20, 2.3, 0, 1.6, 0.8],
     ['▼', '#ffd24d', -13, 20, 2.3, Math.PI, 1.6, 0.8], ['▼', '#ffd24d', 23, 20, 2.3, Math.PI, 1.6, 0.8]
   ];
-  for (const sg of signs) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(sg[6], sg[7]),
-      new THREE.MeshBasicMaterial({ map: makeSignTexture(sg[0], sg[1]), transparent: true, side: THREE.DoubleSide }));
-    m.position.set(sg[2], sg[4], sg[3]); m.rotation.y = sg[5]; scene.add(m);
+  // v53-mapreal: ve ca 10 bien vao 1 atlas canvas 1024x512 (o 256x128, dung lai
+  // dung cong thuc ve cua makeSignTexture) roi gop thanh 1 merged mesh -> 1 draw
+  // call thay vi 10. Vi tri / kich thuoc / goc xoay tung bien giu nguyen.
+  {
+    const ac = document.createElement('canvas'); ac.width = 1024; ac.height = 512;
+    const ax = ac.getContext('2d');
+    signs.forEach((sg, i) => {
+      const ox = (i % 4) * 256, oy = Math.floor(i / 4) * 128;
+      ax.fillStyle = 'rgba(6,12,22,0.92)'; ax.fillRect(ox, oy, 256, 128);
+      ax.strokeStyle = sg[1]; ax.lineWidth = 6; ax.strokeRect(ox + 4, oy + 4, 248, 120);
+      ax.fillStyle = sg[1]; ax.font = '900 52px Arial'; ax.textAlign = 'center'; ax.textBaseline = 'middle';
+      ax.fillText(sg[0], ox + 128, oy + 68);
+    });
+    const signGeos = signs.map((sg, i) => {
+      const g = new THREE.PlaneGeometry(sg[6], sg[7]);
+      const u0 = (i % 4) * 0.25, v1 = 1 - Math.floor(i / 4) * 0.25, uv = g.attributes.uv;
+      for (let k = 0; k < uv.count; k++) uv.setXY(k, u0 + uv.getX(k) * 0.25, v1 - 0.25 + uv.getY(k) * 0.25);
+      g.rotateY(sg[5]); g.translate(sg[2], sg[4], sg[3]);
+      return g;
+    });
+    const signMesh = new THREE.Mesh(BufferGeometryUtils.mergeGeometries(signGeos, false),
+      new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(ac), transparent: true, side: THREE.DoubleSide }));
+    signMesh.frustumCulled = false; scene.add(signMesh);
   }
   // ---- Cap catenary (merged) ----
   const cableRuns = [
@@ -3525,6 +3729,199 @@ function buildProps() {
   const pallets = new THREE.InstancedMesh(palletGeo, ND_MATS.pallet, palletPts.length);
   palletPts.forEach((p, i) => instMatrix(pallets, i, p[0], p[2], p[1], 1, 1, 1, 0));
   pallets.castShadow = true; pallets.frustumCulled = false; scene.add(pallets);
+}
+
+// ---------------- v53-mapreal: LOP DO THAT BO SUNG ----------------
+// Muc tieu: pha cam giac "mo phong sach se" ma khong doi gameplay — moi thu
+// them deu noCollide, ap sat khoi san co, ngoai vung choi hoac tren cao.
+// Draw call duoc kiem soat: dressing di qua batch bucket san co (0 call them),
+// phan con lai deu merged/instanced (skyline 1, decal san 1, vet tuong 1,
+// manh vun 1, ao sang den 1) va bien bao gop atlas tiet kiem 9 call.
+function buildMapDressing() {
+  // ---- Chan chan tuong (skirting) darkmetal cao 0,55 m: tao "trong luong" o
+  // diem tiep dat cua tuong — thieu no la ly do lon nhat tuong nhin nhu hop gia lap.
+  const skirt = [
+    [-31.25, -10.86, 33.5, 0.08], [5, -10.86, 33, 0.08], [36.25, -10.86, 23.5, 0.08],
+    [-31.25, -13.14, 33.5, 0.08], [5, -13.14, 33, 0.08], [36.25, -13.14, 23.5, 0.08],
+    [-31.25, 10.86, 33.5, 0.08], [5, 10.86, 33, 0.08], [36.25, 10.86, 23.5, 0.08],
+    [-31.25, 13.14, 33.5, 0.08], [5, 13.14, 33, 0.08], [36.25, 13.14, 23.5, 0.08],
+    [0, -4.96, 8, 0.08], [0, -7.04, 8, 0.08], [0, 4.96, 8, 0.08], [0, 7.04, 8, 0.08],
+    [-14.14, -30, 0.08, 10], [-11.86, -30, 0.08, 10], [-14.14, 30, 0.08, 10], [-11.86, 30, 0.08, 10],
+    [21.86, -32, 0.08, 8], [24.14, -32, 0.08, 8], [21.86, 32, 0.08, 8], [24.14, 32, 0.08, 8],
+    [0, -44.46, 110, 0.08], [0, 44.46, 110, 0.08], [-55.46, 0, 0.08, 88], [55.46, 0, 0.08, 88]
+  ];
+  for (const s of skirt) addBox(s[0], s[1], s[2], s[3], 0.55, 0x333a42, { batch: 'darkmetal', noCollide: true });
+  // ---- Khe panel dung tren mat separator: nhip panel 8 m thay vi mat phang
+  // lien mach. Danh sach x da tranh dung cac khe choke (x=-13 va khu vuc cong 23).
+  const seamXs = [-44, -38, -31, -24, -18, -8, -2, 5, 12, 18, 30, 36, 42, 47, 52];
+  for (const zc of [-12, 12]) for (const sx of seamXs) for (const f of [-1, 1])
+    addBox(sx, zc + f * 1.115, 0.16, 0.05, 4.6, 0x2b3f5c, { batch: 'metalpanelDark', noCollide: true });
+  // ---- Thanh ray ngang (rub rail) tren mat separator o cao 2,2 m ----
+  for (const zc of [-12, 12]) for (const f of [-1, 1]) for (const s of [[-31.25, 33.5], [5, 33], [36.25, 23.5]])
+    addBox(s[0], zc + f * 1.115, s[1], 0.05, 0.18, 0x2b3f5c, { batch: 'metalpanelDark', noCollide: true, y0: 2.2 });
+  // ---- Cua thong gio (3 nan ngang) tren tuong bao + mat separator ----
+  const vents = [[-20, -44.44], [16, -44.44], [-6, 44.44], [28, 44.44], [-44, -10.86], [44, 10.86]];
+  for (const v of vents) for (let i = 0; i < 3; i++)
+    addBox(v[0], v[1], 1.1, 0.07, 0.09, 0x333a42, { batch: 'darkmetal', noCollide: true, y0: 2.55 + i * 0.17 });
+  // ---- Hop dien + ong dan dung tren mat separator ----
+  const jbox = [[-40, -10.84], [18, -10.84], [26, 10.84], [-16, 10.84]];
+  for (const j of jbox) {
+    addBox(j[0], j[1], 0.55, 0.1, 0.75, 0x333a42, { batch: 'darkmetal', noCollide: true, y0: 1.5 });
+    addBox(j[0], j[1], 0.07, 0.07, 1.5, 0x333a42, { batch: 'darkmetal', noCollide: true });
+  }
+  // ---- Vien neon mep tren 2 khoi mid (co kiem soat: chi 2 dai ngan, dung mau cyan chung) ----
+  addBox(0, -6, 8, 0.18, 0.1, 0x41d9ff, { batch: 'neon', y0: 3.38, noCollide: true });
+  addBox(0, 6, 8, 0.18, 0.1, 0x41d9ff, { batch: 'neon', y0: 3.38, noCollide: true });
+}
+function makeGroundAtlasTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const x = c.getContext('2d');
+  // O 0 (tren-trai): vet nut asphalt — polyline tua nhanh
+  x.save(); x.beginPath(); x.rect(0, 0, 256, 256); x.clip();
+  x.strokeStyle = 'rgba(8,10,14,0.85)'; x.lineCap = 'round';
+  x.lineWidth = 5; x.beginPath(); x.moveTo(20, 128); x.lineTo(70, 110); x.lineTo(118, 132); x.lineTo(168, 104); x.lineTo(232, 126); x.stroke();
+  x.lineWidth = 2.5; x.beginPath(); x.moveTo(118, 132); x.lineTo(150, 176); x.lineTo(196, 190); x.stroke();
+  x.beginPath(); x.moveTo(70, 110); x.lineTo(96, 66); x.stroke();
+  x.restore();
+  // O 1 (tren-phai): mang va asphalt — nen toi, vien seam sang, dom loang
+  x.save(); x.translate(256, 0); x.beginPath(); x.rect(0, 0, 256, 256); x.clip();
+  x.fillStyle = 'rgba(10,12,16,0.62)'; x.fillRect(28, 36, 200, 184);
+  x.strokeStyle = 'rgba(150,158,168,0.35)'; x.lineWidth = 3; x.strokeRect(28, 36, 200, 184);
+  x.fillStyle = 'rgba(255,255,255,0.05)';
+  for (let i = 0; i < 26; i++) x.fillRect(36 + Math.random() * 184, 44 + Math.random() * 168, 5, 3);
+  x.restore();
+  // O 2 (duoi-trai): vet truot banh xe — 2 cung song song, mo dan o 2 dau
+  x.save(); x.translate(0, 256); x.beginPath(); x.rect(0, 0, 256, 256); x.clip();
+  for (const off of [0, 26]) {
+    const g = x.createLinearGradient(0, 0, 256, 0);
+    g.addColorStop(0, 'rgba(6,7,10,0)'); g.addColorStop(0.25, 'rgba(6,7,10,0.75)');
+    g.addColorStop(0.75, 'rgba(6,7,10,0.75)'); g.addColorStop(1, 'rgba(6,7,10,0)');
+    x.strokeStyle = g; x.lineWidth = 11; x.beginPath();
+    x.moveTo(8, 200 - off); x.quadraticCurveTo(128, 84 - off, 248, 168 - off); x.stroke();
+  }
+  x.restore();
+  // O 3 (duoi-phai): mui ten son chi huong (mon/chip nhu gach chi duong san co)
+  x.save(); x.translate(256, 256); x.beginPath(); x.rect(0, 0, 256, 256); x.clip();
+  x.fillStyle = 'rgba(226,232,238,0.80)';
+  x.beginPath();
+  x.moveTo(128, 18); x.lineTo(196, 108); x.lineTo(152, 108); x.lineTo(152, 238);
+  x.lineTo(104, 238); x.lineTo(104, 108); x.lineTo(60, 108); x.closePath(); x.fill();
+  x.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < 30; i++) x.fillRect(60 + Math.random() * 136, 20 + Math.random() * 216, 8, 5);
+  x.restore();
+  return new THREE.CanvasTexture(c);
+}
+function makeSkylineTexture() {
+  const c = document.createElement('canvas'); c.width = 2048; c.height = 256;
+  const x = c.getContext('2d');
+  const litCols = ['#ffd9a0', '#9fd8ff', '#fff3c4', '#ffb27a'];
+  let seed = 1234567; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let s = 0; s < 8; s++) {
+    const ox = s * 256; let bx = ox + 4;
+    while (bx < ox + 244) {
+      const bw = 22 + rnd() * 44, bh = 60 + rnd() * 150;
+      x.fillStyle = '#101b2a'; x.fillRect(bx, 256 - bh, bw, bh);
+      for (let wy = 256 - bh + 8; wy < 244; wy += 11) for (let wx = bx + 4; wx < bx + bw - 5; wx += 9) {
+        if (rnd() < 0.24) { x.fillStyle = litCols[(rnd() * litCols.length) | 0]; x.globalAlpha = 0.35 + rnd() * 0.6; x.fillRect(wx, wy, 4, 6); }
+      }
+      x.globalAlpha = 1;
+      if (bh > 175) { x.fillStyle = '#ff4444'; x.fillRect(bx + bw / 2 - 2, 256 - bh - 5, 4, 4); } // den bao hieu hang khong
+      bx += bw + 3 + rnd() * 10;
+    }
+    if (s === 1 || s === 5) { // can cau xay dung: cot + can ngang + day cap treo moc
+      x.fillStyle = '#0c1522';
+      x.fillRect(ox + 176, 26, 7, 230); x.fillRect(ox + 96, 26, 172, 6);
+      x.fillRect(ox + 150, 32, 3, 74); x.fillRect(ox + 143, 106, 17, 10);
+    }
+  }
+  return new THREE.CanvasTexture(c);
+}
+function buildMapRealism() {
+  // ---- Skyline xa: 8 mat phang bat giac r=120 m, 1 texture canvas, 1 draw call.
+  // Nen trong suot -> mau nen scene lam troi; fog tat o material nay vi khoang
+  // cach 120 m da nam ngoai tam fog (60-145) — suong duoc "nướng" san bang mau toi.
+  {
+    const geos = [];
+    for (let i = 0; i < 8; i++) {
+      const g = new THREE.PlaneGeometry(100, 44);
+      const uv = g.attributes.uv;
+      for (let k = 0; k < uv.count; k++) uv.setXY(k, i / 8 + uv.getX(k) / 8, uv.getY(k));
+      const th = i * Math.PI / 4;
+      g.rotateY(th + Math.PI);
+      g.translate(Math.sin(th) * 120, 20, Math.cos(th) * 120);
+      geos.push(g);
+    }
+    const sky = new THREE.Mesh(BufferGeometryUtils.mergeGeometries(geos, false),
+      new THREE.MeshBasicMaterial({ map: makeSkylineTexture(), transparent: true, fog: false, depthWrite: false }));
+    sky.frustumCulled = false; sky.renderOrder = -1; scene.add(sky);
+  }
+  // ---- Decal san bo sung (atlas 2x2: nut / va / skid / mui ten) — merged 1 call ----
+  {
+    const spots = [
+      // [x, z, size, o atlas (0 nut, 1 va, 2 skid, 3 mui ten), goc xoay Y]
+      [-20, -19, 3.2, 0, 0.4], [14, 8, 2.6, 0, 1.2], [-38, -8, 3.4, 0, 0.5], [40, 32, 2.8, 0, 2.1],
+      [6, -33, 2.4, 0, 0.9], [-2, 18, 3.0, 0, 2.8], [48, -30, 2.6, 0, 1.7], [-48, 26, 3.0, 0, 0.3],
+      [-8, -24.5, 4.2, 1, 0], [18, 24.5, 4.6, 1, 0.4], [-26, 2, 3.8, 1, 1.57], [36, -6, 4.0, 1, 0],
+      [2, 38, 4.4, 1, 0.2], [-44, -32, 3.6, 1, 1.1], [24, -38, 4.0, 1, 2.9], [10, 16.5, 3.4, 1, 0.8],
+      [-18.5, -8.8, 4.6, 2, 0.5], [-8, -15.2, 4.6, 2, 2.4], [-18.5, 8.8, 4.6, 2, -0.5], [-8, 15.2, 4.6, 2, 0.9],
+      [17.5, -8.8, 4.6, 2, 2.8], [28.5, 8.8, 4.6, 2, -2.2],
+      [-30, -24, 3.0, 3, -Math.PI / 2], [-2, 24, 3.0, 3, -Math.PI / 2], [44, -24, 3.0, 3, Math.PI / 2], [16, 24, 3.0, 3, -Math.PI / 2]
+    ];
+    const geos = spots.map(sp => {
+      const g = new THREE.PlaneGeometry(sp[2], sp[2]);
+      const u0 = (sp[3] % 2) * 0.5, v1 = 1 - Math.floor(sp[3] / 2) * 0.5, uv = g.attributes.uv;
+      for (let k = 0; k < uv.count; k++) uv.setXY(k, u0 + uv.getX(k) * 0.5, v1 - 0.5 + uv.getY(k) * 0.5);
+      g.rotateX(-Math.PI / 2); g.rotateY(sp[4]); g.translate(sp[0], 0.017, sp[1]);
+      return g;
+    });
+    const m = new THREE.Mesh(BufferGeometryUtils.mergeGeometries(geos, false), new THREE.MeshBasicMaterial({
+      map: makeGroundAtlasTexture(), transparent: true, depthWrite: false,
+      polygonOffset: true, polygonOffsetFactor: -2, color: 0xbbbbbb
+    }));
+    m.frustumCulled = false; m.renderOrder = 2; scene.add(m);
+  }
+  // ---- Vet ban chay doc tren mat tuong (merged 1 call, texture 'streak') ----
+  {
+    const spots = [
+      // [x, y, z, rotY, rong, cao]
+      [-38, 1.3, -10.86, 0, 3.2, 2.6], [-18, 1.3, -10.86, 0, 2.6, 2.6], [2, 1.3, -10.86, 0, 3.4, 2.6],
+      [20, 1.3, -10.86, 0, 2.6, 2.6], [40, 1.3, -10.86, 0, 3.0, 2.6],
+      [-24, 1.3, -13.14, Math.PI, 2.8, 2.6], [30, 1.3, -13.14, Math.PI, 3.0, 2.6],
+      [-30, 1.3, 10.86, Math.PI, 2.8, 2.6], [-6, 1.3, 10.86, Math.PI, 3.2, 2.6], [14, 1.3, 10.86, Math.PI, 2.6, 2.6], [34, 1.3, 10.86, Math.PI, 3.0, 2.6],
+      [8, 1.3, 13.14, 0, 3.0, 2.6], [-38, 1.3, 13.14, 0, 2.6, 2.6],
+      [-24, 1.5, -44.46, 0, 3.4, 3.0], [8, 1.5, -44.46, 0, 2.8, 3.0], [30, 1.5, -44.46, 0, 3.2, 3.0],
+      [-12, 1.5, 44.46, Math.PI, 3.0, 3.0], [22, 1.5, 44.46, Math.PI, 3.4, 3.0],
+      [-55.46, 1.5, -18, Math.PI / 2, 3.2, 3.0], [-55.46, 1.5, 14, Math.PI / 2, 2.8, 3.0],
+      [55.46, 1.5, -6, -Math.PI / 2, 3.0, 3.0]
+    ];
+    const geos = spots.map(sp => {
+      const g = new THREE.PlaneGeometry(sp[4], sp[5]);
+      g.rotateY(sp[3]); g.translate(sp[0], sp[1], sp[2]);
+      return g;
+    });
+    const m = new THREE.Mesh(BufferGeometryUtils.mergeGeometries(geos, false), new THREE.MeshBasicMaterial({
+      map: makeDecalTexture('streak'), transparent: true, depthWrite: false,
+      polygonOffset: true, polygonOffsetFactor: -1
+    }));
+    m.frustumCulled = false; m.renderOrder = 2; scene.add(m);
+  }
+  // ---- Manh vun rai rac sat chan tuong / canh crate (instanced 1 call, seed co dinh) ----
+  {
+    let seed = 424243; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const pts = [];
+    for (let i = 0; i < 40; i++) {
+      const side = i % 4; let px, pz;
+      if (side === 0) { px = -52 + rnd() * 104; pz = -43.4 + rnd() * 0.9; }
+      else if (side === 1) { px = -52 + rnd() * 104; pz = 42.5 + rnd() * 0.9; }
+      else if (side === 2) { px = -54.4 + rnd() * 0.9; pz = -40 + rnd() * 80; }
+      else { px = 53.5 + rnd() * 0.9; pz = -40 + rnd() * 80; }
+      pts.push([px, pz, 0.6 + rnd() * 1.1, rnd() * Math.PI]);
+    }
+    pts.push([-36.4, -22.2, 1.3, 0.4], [-36.9, -25.8, 0.9, 1.9], [30.2, -22.4, 1.2, 2.6], [30.6, 25.9, 1.0, 0.8], [-0.6, -19.2, 1.1, 1.2], [12.4, 22.6, 0.8, 2.2]);
+    const im = new THREE.InstancedMesh(new THREE.BoxGeometry(0.17, 0.035, 0.12), ND_MATS.darkmetal, pts.length);
+    pts.forEach((p, i) => instMatrix(im, i, p[0], 0.02, p[1], p[2], 1, p[2], p[3]));
+    im.frustumCulled = false; im.receiveShadow = true; scene.add(im);
+  }
 }
 
 function makeLetterTexture(ch, color) {
@@ -3620,69 +4017,109 @@ function botMesh(team, opColor) {
   return g;
 }
 
-// ---------------- BOT 3D MODELS (v3.2) ----------------
-/* Mô hình nhân vật 3D thật (glTF có xương + animation) thay figure khối cho bot.
-   Nguồn model chính: ../assets/models/soldier.glb (humanoid "Vanguard" trong kho
-   three.js examples, r160) — clip sẵn có: Idle / Walk / Run / TPose.
-   Chuỗi dự phòng khi nạp: file local → cùng model qua CDN jsdelivr (gh mrdoob/three.js@r160)
-   → figure khối botMesh() ở trên (không bao giờ để bot vô hình).
+// ---------------- BOT 3D MODELS (v3.2 → v3.5.4: MODEL RIÊNG THEO OPERATOR) ----------------
+/* Mỗi operator một model 3D RIÊNG (silhouette khác hẳn nhau, nhìn từ xa nhận ra ngay),
+   toàn bộ là asset CC0 đã kiểm license (xem REPORT.md của dev-v53-models):
+     FLARE   → KayKit Barbarian (vạm vỡ, rìu/vai trần)        PRISM → KayKit Mage (mũ nhọn + áo choàng)
+     BASTION → KayKit Knight (giáp nặng)                     WHISPER → KayKit Rogue Hooded (mũ trùm)
+     TETHER  → Quaternius Superhero Male (+ clip UAL Lite)   NULL  → Robot Expressive (robot)
+     AEGIS   → Quaternius Superhero Female (+ clip UAL Lite) DRIFT → KayKit Rogue (gọn, song dao)
+   Chuỗi nạp cho từng operator: file local (assets/models/operators/) → CDN của đúng gói đó
+   → Soldier local → Soldier CDN → figure khối botMesh() (không bao giờ để bot vô hình).
    NGUYÊN TẮC KHÔNG ĐỔI GAMEPLAY: hitbox vẫn là 2 cầu logic trong rayHitBot()
    (đầu r=0,30 tại y=1,72 · thân r=0,55 tại y=1,02) — model chỉ là lớp hiển thị,
-   được tự động co giãn về chiều cao BOT_MODEL_HEIGHT để khớp các tâm cầu đó. */
+   được co giãn về chiều cao BOT_MODEL_HEIGHT (× hệ số tỉ lệ riêng của operator để
+   BASTION to cao, WHISPER/DRIFT gọn thấp) khớp các tâm cầu đó. */
 const BOT_MODEL_HEIGHT = 1.80; // m — đầu model ~1,80 khớp cầu đầu 1,72±0,30 và thân 1,02±0,55
-const BOT_MODEL_SOURCES = [
+const SOLDIER_SOURCES = [
   '../assets/models/soldier.glb',
   'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/Soldier.glb'
 ];
-const BOT_MODEL = { status: 'loading', scene: null, animations: [] }; // status: loading | ready | failed
+const KAYKIT_CDN = 'https://cdn.jsdelivr.net/gh/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0@main/addons/kaykit_character_pack_adventures/Characters/gltf/';
+// Ánh xạ trạng thái → tên clip theo TỪNG HỌ model (mỗi gói đặt tên clip khác nhau).
+const CLIP_ALIASES = {
+  soldier: { idle: ['idle'], walk: ['walk', 'walking'], run: ['run', 'running', 'walk', 'walking'], death: ['death', 'die', 'dying'], shoot: ['shoot', 'fire', 'attack', 'punch'] },
+  kaykit:  { idle: ['idle'], walk: ['walking_a', 'walking_b', 'walking'], run: ['running_a', 'running_b', 'running'], death: ['death_a', 'death_b', 'death'], shoot: ['2h_ranged_shooting', '2h_ranged_shoot', '1h_ranged_shooting', '1h_ranged_shoot'] },
+  robot:   { idle: ['idle'], walk: ['walking'], run: ['running', 'walking'], death: ['death'], shoot: ['punch'] },
+  ual:     { idle: ['idle_loop'], walk: ['walk_loop'], run: ['jog_fwd_loop', 'sprint_loop', 'run'], death: ['death01', 'death'], shoot: ['pistol_shoot', 'pistol_idle_loop'] }
+};
+// h/w: hệ số chiều cao / bề ngang so với chuẩn 1,80 m (chỉ hiển thị — hitbox không đổi).
+// tint: độ nhuộm màu phe lên vật liệu gốc (model có texture dùng 0,25–0,35 để giữ chi tiết).
+const OPERATOR_MODELS = {
+  FLARE:   { sources: ['../assets/models/operators/flare-barbarian.glb', KAYKIT_CDN + 'Barbarian.glb'], family: 'kaykit', h: 1.03, w: 1.10, tint: 0.30 },
+  PRISM:   { sources: ['../assets/models/operators/prism-mage.glb', KAYKIT_CDN + 'Mage.glb'], family: 'kaykit', h: 1.00, w: 0.95, tint: 0.30 },
+  BASTION: { sources: ['../assets/models/operators/bastion-knight.glb', KAYKIT_CDN + 'Knight.glb'], family: 'kaykit', h: 1.05, w: 1.14, tint: 0.30 },
+  WHISPER: { sources: ['../assets/models/operators/whisper-rogue-hooded.glb', KAYKIT_CDN + 'Rogue_Hooded.glb'], family: 'kaykit', h: 0.97, w: 0.92, tint: 0.30 },
+  TETHER:  { sources: ['../assets/models/operators/tether-superhero-male.glb'], animSources: ['../assets/models/operators/ual-lite.glb'], family: 'ual', h: 1.02, w: 1.04, tint: 0.35 },
+  NULL:    { sources: ['../assets/models/operators/null-robot-expressive.glb', 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/RobotExpressive/RobotExpressive.glb'], family: 'robot', h: 1.00, w: 1.00, tint: 0.25 },
+  AEGIS:   { sources: ['../assets/models/operators/aegis-superhero-female.glb'], animSources: ['../assets/models/operators/ual-lite.glb'], family: 'ual', h: 1.00, w: 0.96, tint: 0.35 },
+  DRIFT:   { sources: ['../assets/models/operators/drift-rogue.glb', KAYKIT_CDN + 'Rogue.glb'], family: 'kaykit', h: 0.98, w: 0.90, tint: 0.30 }
+};
+const OP_MODELS = {}; // key → { status: loading|ready|failed, scene, animations, family }
+function opModelState(key) { return OP_MODELS[key] || (OP_MODELS[key] = { status: 'loading', scene: null, animations: [], family: null }); }
 
-function loadBotModel(srcIdx) {
-  if (srcIdx >= BOT_MODEL_SOURCES.length) {
-    BOT_MODEL.status = 'failed';
-    console.warn('[NeonDivide] Không nạp được model 3D cho bot — dùng figure khối dự phòng.');
-    return;
-  }
-  new GLTFLoader().load(BOT_MODEL_SOURCES[srcIdx], gltf => {
-    BOT_MODEL.scene = gltf.scene;
-    BOT_MODEL.animations = gltf.animations || [];
-    BOT_MODEL.status = 'ready';
-    console.info('[NeonDivide] Đã nạp model bot:', BOT_MODEL_SOURCES[srcIdx],
-      '| clips:', BOT_MODEL.animations.map(a => a.name).join(', '));
-    upgradeAllBotFigures();
-  }, undefined, err => {
-    console.warn('[NeonDivide] Lỗi nạp model', BOT_MODEL_SOURCES[srcIdx], err && err.message);
-    loadBotModel(srcIdx + 1);
-  });
+// Nạp model cho 1 operator theo chuỗi dự phòng; họ 'ual' (Quaternius UBC) không nhúng sẵn
+// clip trong file thân — phải nạp thêm thư viện animation UAL (cùng rig) rồi mới coi là ready.
+function loadOperatorModel(key) {
+  const def = OPERATOR_MODELS[key]; if (!def) return;
+  const st = opModelState(key);
+  const chains = [{ sources: def.sources, family: def.family }, { sources: SOLDIER_SOURCES, family: 'soldier' }];
+  let ci = 0;
+  const tryChain = () => {
+    if (ci >= chains.length) { st.status = 'failed'; console.warn('[NeonDivide] Không nạp được model cho operator', key, '— dùng figure khối dự phòng.'); return; }
+    const chain = chains[ci]; let si = 0;
+    const trySrc = () => {
+      if (si >= chain.sources.length) { ci++; tryChain(); return; }
+      const url = chain.sources[si];
+      new GLTFLoader().load(url, gltf => {
+        const finish = anims => {
+          st.scene = gltf.scene; st.animations = anims || []; st.family = chain.family; st.status = 'ready';
+          console.info('[NeonDivide] Đã nạp model', key + ':', url, '| họ:', chain.family, '| clips:', st.animations.length);
+          upgradeAllBotFigures();
+        };
+        if (chain.family === 'ual' && def.animSources && def.animSources.length) {
+          let ai = 0;
+          const tryAnim = () => {
+            if (ai >= def.animSources.length) { console.warn('[NeonDivide] Không nạp được animation UAL cho', key, '— bỏ nguồn model này.'); si++; trySrc(); return; }
+            new GLTFLoader().load(def.animSources[ai], ag => finish(ag.animations || []), undefined, () => { ai++; tryAnim(); });
+          };
+          tryAnim();
+        } else finish(gltf.animations || []);
+      }, undefined, err => { console.warn('[NeonDivide] Lỗi nạp model', key, url, err && err.message); si++; trySrc(); });
+    };
+    trySrc();
+  };
+  tryChain();
 }
 
-// Ánh xạ trạng thái bot → tên clip. Model thiếu clip (Soldier không có Death/Shoot)
+// Ánh xạ trạng thái bot → clip theo họ model. Model thiếu clip (vd. Soldier không có Death/Shoot)
 // thì trả null: death dùng ngã vật lý sẵn có trong killBot(), shoot giữ locomotion + giật hiển thị.
-function botClipFor(gltfAnimNames, kind) {
-  const pick = names => { for (const n of names) { const a = BOT_MODEL.animations.find(x => x.name.toLowerCase() === n); if (a) return a; } return null; };
-  if (kind === 'idle')  return pick(['idle']);
-  if (kind === 'walk')  return pick(['walk', 'walking']);
-  if (kind === 'run')   return pick(['run', 'running', 'walk', 'walking']);
-  if (kind === 'death') return pick(['death', 'die', 'dying']);
-  if (kind === 'shoot') return pick(['shoot', 'fire', 'attack', 'punch']);
+function botClipFor(animList, family, kind) {
+  const aliases = (CLIP_ALIASES[family] || CLIP_ALIASES.soldier)[kind] || [];
+  for (const n of aliases) { const a = animList.find(x => x.name.toLowerCase() === n); if (a) return a; }
   return null;
 }
 
-function attachBotModel(group, team, opColor) {
-  const clone = skeletonClone(BOT_MODEL.scene); // clone xương; geometry được CHIA SẺ giữa các bot
-  // Tự khớp tỉ lệ: đo bbox thế giới ở bind pose rồi scale về BOT_MODEL_HEIGHT, chân chạm đất y=0, tâm trục qua gốc
+function attachBotModel(group, team, opColor, opKey) {
+  const st = opModelState(opKey);
+  const def = OPERATOR_MODELS[opKey] || {};
+  const clone = skeletonClone(st.scene); // clone xương; geometry được CHIA SẺ giữa các bot cùng operator
+  // Tự khớp tỉ lệ: đo bbox thế giới ở bind pose rồi scale về BOT_MODEL_HEIGHT × hệ số riêng, chân chạm đất y=0, tâm trục qua gốc
   clone.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(clone);
   const size = box.getSize(new THREE.Vector3());
   if (size.y > 0.001) {
-    const s = BOT_MODEL_HEIGHT / size.y;
-    clone.scale.multiplyScalar(s);
-    clone.position.x -= (box.min.x + box.max.x) / 2 * s;
-    clone.position.z -= (box.min.z + box.max.z) / 2 * s;
-    clone.position.y -= box.min.y * s;
+    const sy = BOT_MODEL_HEIGHT * (def.h || 1) / size.y;
+    const sxz = sy * (def.w || 1);
+    clone.scale.set(clone.scale.x * sxz, clone.scale.y * sy, clone.scale.z * sxz);
+    clone.position.x -= (box.min.x + box.max.x) / 2 * sxz;
+    clone.position.z -= (box.min.z + box.max.z) / 2 * sxz;
+    clone.position.y -= box.min.y * sy;
   }
   // Tint theo phe/operator: nhân bản material cho từng bot (không tint chung template)
   const teamCol = new THREE.Color(team === 'enemy' ? 0xd8404a : 0x2e9fd8);
   const accentCol = new THREE.Color(opColor || (team === 'enemy' ? 0x9aa7b8 : 0x9aa7b8));
+  const tintAmt = def.tint !== undefined ? def.tint : 0.45;
   clone.traverse(o => {
     if (!o.isMesh) return;
     o.frustumCulled = false; // skinned mesh: bounding sphere tĩnh không theo xương — tắt culling để model không "nháy" mất hình
@@ -3691,30 +4128,50 @@ function attachBotModel(group, team, opColor) {
       if (!m || !m.color) return m;
       const c = m.clone();
       if ((c.name || '').toLowerCase().includes('visor')) { c.color.copy(accentCol); if ('emissive' in c) { c.emissive.copy(accentCol); c.emissiveIntensity = 0.7; } }
-      else c.color.lerp(teamCol, 0.45); // giữ chất liệu gốc, nhuộm 45% về màu phe
+      else c.color.lerp(teamCol, tintAmt); // giữ chất liệu gốc, nhuộm về màu phe
       return c;
     });
     o.material = Array.isArray(o.material) ? cloned : cloned[0];
   });
   group.add(clone);
+  // Dải đèn accent màu operator ở ngực — dấu hiệu nhận diện tướng từ xa, hợp tông sci-fi Neon Divide
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.055, 0.03),
+    new THREE.MeshStandardMaterial({ color: accentCol, emissive: accentCol, emissiveIntensity: 1.4, roughness: 0.4 }));
+  strip.position.set(0, 1.34, 0.26); strip.name = 'opAccentStrip';
+  group.add(strip);
   // AnimationMixer riêng cho từng bot (bộ xương đã clone nên mixer độc lập được)
-  const names = BOT_MODEL.animations.map(a => a.name.toLowerCase());
   const mixer = new THREE.AnimationMixer(clone);
   const actions = {};
   for (const kind of ['idle', 'walk', 'run', 'death', 'shoot']) {
-    const clip = botClipFor(names, kind);
+    const clip = botClipFor(st.animations, st.family, kind);
     if (clip) actions[kind] = mixer.clipAction(clip);
   }
   if (actions.death) { actions.death.setLoop(THREE.LoopOnce, 1); actions.death.clampWhenFinished = true; }
-  group.userData.anim = { mixer, actions, current: '', model: clone };
+  // Chuỗi xương aim-pitch (cộng SAU mixer.update, topic video-teardown-hoat-anh-nhan-vat mục A3):
+  // pitch ngắm phân bổ Spine 15% · Spine1 25% · Spine2 30% · Neck 12% · Head 18% — KHÔNG dồn vào 1 xương.
+  // Tên xương chuẩn hoá (bỏ ký tự lạ, chữ thường) rồi khớp hậu tố: Soldier là mixamorig:Spine* …
+  const AIM_CHAIN = [['spine', 0.15], ['spine1', 0.25], ['spine2', 0.30], ['neck', 0.12], ['head', 0.18]];
+  const boneByKey = {};
+  clone.traverse(o => { if (!o.isBone) return; const n = o.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    for (const [key] of AIM_CHAIN) if (n.endsWith(key)) { if (!boneByKey[key]) boneByKey[key] = o; break; } });
+  let wSum = 0; const aimBones = [];
+  for (const [key, w] of AIM_CHAIN) if (boneByKey[key]) { aimBones.push({ bone: boneByKey[key], w }); wSum += w; }
+  if (wSum > 0) for (const ab of aimBones) ab.w /= wSum; // xương thiếu → chuẩn hoá lại để tổng vẫn 100%
+  if (!aimBones.length) { // rig lạ không có chuỗi chuẩn: lùi về 1 xương spine bất kỳ gánh 100%
+    let sb = null;
+    clone.traverse(o => { if (!sb && o.isBone && o.name.toLowerCase().includes('spine')) sb = o; });
+    if (sb) aimBones.push({ bone: sb, w: 1 });
+  }
+  group.userData.anim = { mixer, actions, current: '', model: clone, aimBones, gait: 'idle', blendSpeed: 0, shootW: 0, lean: 0 };
   if (actions.idle) { actions.idle.play(); group.userData.anim.current = 'idle'; }
 }
 
-function makeBotFigure(team, opColor) {
+function makeBotFigure(team, opColor, opKey) {
   const g = new THREE.Group();
-  g.userData.team = team; g.userData.opColor = opColor;
-  if (BOT_MODEL.status === 'ready') attachBotModel(g, team, opColor);
-  else { // đang nạp hoặc nạp lỗi → figure khối tạm; upgradeAllBotFigures() sẽ thay khi model sẵn sàng
+  g.userData.team = team; g.userData.opColor = opColor; g.userData.opKey = opKey || null;
+  const st = opKey ? opModelState(opKey) : null;
+  if (st && st.status === 'ready') attachBotModel(g, team, opColor, opKey);
+  else { // model của operator này đang nạp hoặc nạp lỗi → figure khối tạm; upgradeAllBotFigures() sẽ thay khi sẵn sàng
     const fb = botMesh(team, opColor); fb.name = 'fallbackFigure';
     g.add(fb); g.userData.pendingModel = true;
   }
@@ -3722,11 +4179,13 @@ function makeBotFigure(team, opColor) {
 }
 
 function upgradeFigure(group) {
-  if (!group || !group.userData.pendingModel || BOT_MODEL.status !== 'ready') return;
+  if (!group || !group.userData.pendingModel) return;
+  const st = group.userData.opKey ? opModelState(group.userData.opKey) : null;
+  if (!st || st.status !== 'ready') return;
   const fb = group.getObjectByName('fallbackFigure');
   if (fb) { group.remove(fb); disposeObject(fb); } // figure khối cũ đã thay bằng model thật → dispose kẻo rò (v3.8 §10)
   group.userData.pendingModel = false;
-  attachBotModel(group, group.userData.team, group.userData.opColor);
+  attachBotModel(group, group.userData.team, group.userData.opColor, group.userData.opKey);
 }
 function upgradeAllBotFigures() {
   for (const b of bots) upgradeFigure(b.mesh);
@@ -3738,10 +4197,58 @@ function botAnimCrossfade(anim, kind) {
   if (!next || anim.current === kind) return;
   const prev = anim.actions[anim.current];
   if (prev && prev !== next) prev.fadeOut(0.18);
-  next.reset(); next.setLoop(kind === 'death' ? THREE.LoopOnce : THREE.LoopRepeat, Infinity);
+  if (kind === 'death') { next.reset(); next.setLoop(THREE.LoopOnce, 1); } // reset() CHỈ còn cho death/respawn
+  else { // đổi gait: khớp pha bước chân với clip trước (syncWith) thay reset() về frame 0 — topic A1
+    if (prev) next.syncWith(prev);
+    next.setLoop(THREE.LoopRepeat, Infinity);
+  }
   next.clampWhenFinished = kind === 'death';
   next.fadeIn(kind === 'death' ? 0.05 : 0.18); next.play();
   anim.current = kind;
+}
+
+// v3.5.4 (dev-v53-anim) — đặt trọng số blend trực tiếp cho locomotion liên tục; 0 = tắt hẳn action đỡ tốn CPU
+function botSetW(a, w) {
+  if (!a) return;
+  if (w > 0.003) { a.enabled = true; if (!a.isRunning()) a.play(); a.setEffectiveWeight(w); }
+  else if (a.enabled) { a.setEffectiveWeight(0); a.enabled = false; }
+}
+
+const _pM = new THREE.Quaternion(), _pPw = new THREE.Quaternion(), _pQ = new THREE.Quaternion(), _pAxis = new THREE.Vector3();
+// Khớp pha bước chân theo TỈ LỆ thời lượng clip (pha chuẩn hoá time/duration): hai clip gait lệch pha
+// là nguồn trượt chân thứ hai khi blend (topic A1/A2). syncWith() của three.js chỉ chép time thô —
+// hai clip khác thời lượng sẽ lệch pha, nên đường blend liên tục dùng hàm này.
+function botSyncPhase(dst, src) {
+  if (!dst || !src || dst === src) return;
+  const cS = src.getClip(), cD = dst.getClip();
+  if (!cS || !cD || !(cS.duration > 0) || !(cD.duration > 0)) return;
+  dst.time = ((src.time % cS.duration) / cS.duration) * cD.duration;
+}
+
+// Cộng pitch thân trên SAU mixer.update (aim pitch + flinch), PHÂN BỔ 5 XƯƠNG theo topic A3.
+// Trục pitch = trục phải của nhân vật trong không gian thế giới, chuyển về local của từng xương
+// qua quaternion thế giới của xương cha. KHÔNG cộng rotation.x trực tiếp: trục local của xương
+// mixamo bị xoắn/loãng (đã kiểm chứng số học trên soldier.glb: rotation.x +0,3 chỉ cho ~0,1 rad và
+// NGƯỢC dấu; phương pháp quaternion dưới đây cho đầu ngả đúng hướng mặt đúng độ lớn, cả khi yaw 90° —
+// khi phân bổ 5 xương: đoạn Neck→Head nghiêng đúng tổng trọng số tổ tiên × góc, đo thật 22,14°/22,1°).
+// Trần pitch: topic ghi [-70°, +60°] theo quy ước pitch DƯƠNG = ngắm LÊN; aimPitch của game DƯƠNG =
+// ngắm XUỐNG (atan2(eyeY − targetY, dist)) nên áp cùng khoảng vật lý qua dấu: xuống ≤ 70°, lên ≤ 60°.
+const AIM_PITCH_DOWN = 70 * Math.PI / 180, AIM_PITCH_UP = 60 * Math.PI / 180;
+function applyBotPosture(anim, mesh, aimPitch, flinch, flinchAmp) {
+  const chain = anim.aimBones; if (!chain || !chain.length) return;
+  let fl = 0;
+  if (flinch > 0) fl = Math.sin(Math.min(1, flinch) * Math.PI) * 0.30 * (flinchAmp || 1); // giật lùi khi trúng đạn
+  const pitch = THREE.MathUtils.clamp(aimPitch || 0, -AIM_PITCH_UP, AIM_PITCH_DOWN);
+  const theta = pitch * 0.9 - fl; // hệ số súng 0,9 (topic A3); dương = cúi về trước theo hướng mặt (ngắm xuống)
+  if (Math.abs(theta) < 0.001) return;
+  const yaw = mesh.rotation.y;
+  _pAxis.set(Math.cos(yaw), 0, -Math.sin(yaw));
+  for (const ab of chain) { // thứ tự cha→con; getWorldQuaternion làm tươi chuỗi tổ tiên sau mỗi xương đã sửa
+    const bone = ab.bone; if (!bone.parent) continue;
+    bone.parent.getWorldQuaternion(_pPw);
+    _pM.copy(_pPw).invert().multiply(_pQ.setFromAxisAngle(_pAxis, theta * ab.w)).multiply(_pPw);
+    bone.quaternion.premultiply(_pM);
+  }
 }
 
 // Cập nhật animation mỗi frame từ trạng thái bot thật (vận tốc qua entSpeed, bắn qua lastShotAt, chết qua alive)
@@ -3751,31 +4258,89 @@ function updateBotAnimations(dt) {
   // Nhưng mixer suy trạng thái từ vòng lặp TRỰC TIẾP (bot sống/chết, tốc độ hiện tại) → hình phát lại sẽ
   // cử động sai trạng thái đã ghi. Lựa chọn: tạm dừng hẳn mixer khi killcam/replay đang phát.
   if (typeof KC !== 'undefined' && (KC.active || RP.active)) return;
-  if (BOT_MODEL.status !== 'ready' || dt <= 0) return;
+  if (dt <= 0) return;
   const t = nowS();
-  const step = (mesh, alive, speed, lastShotAt) => {
+  const step = (ent, alive, speed, lastShotAt) => {
+    const mesh = ent && ent.mesh;
     const anim = mesh && mesh.userData.anim;
     if (!anim) return;
-    if (!alive) { // chết: có clip Death thì phát 1 lần; không có thì tắt dần locomotion (ngã do killBot lo)
-      if (anim.actions.death) botAnimCrossfade(anim, 'death');
-      else if (anim.current !== 'dead') { for (const k in anim.actions) anim.actions[k].fadeOut(0.1); anim.current = 'dead'; }
+    const A = anim.actions;
+    if (!alive) { // chết: có clip Death thì phát 1 lần; không có thì tắt dần locomotion + ngã mượt theo fallT
+      if (A.death) { if (anim.current !== 'death') { for (const k of ['idle', 'walk', 'run', 'shoot']) if (A[k]) A[k].fadeOut(0.1); botAnimCrossfade(anim, 'death'); } }
+      else {
+        if (anim.current !== 'dead') { for (const k in A) A[k].fadeOut(0.1); anim.current = 'dead'; }
+        if (ent.fallT !== undefined && ent.fallT < 1) { // ngã mượt 0,45 s ease-out (killBot khởi động khi không có clip Death)
+          ent.fallT = Math.min(1, ent.fallT + dt / 0.45);
+          const e = 1 - Math.pow(1 - ent.fallT, 3);
+          mesh.rotation.z = (ent.fallDir || 1) * Math.PI / 2 * e;
+          mesh.position.y = 0.25 * e;
+        }
+      }
+      if (anim.model) anim.model.rotation.z *= Math.exp(-6 * dt); // hết lean khi ngã
       anim.mixer.update(dt); return;
     }
-    let kind = speed > 3.2 ? 'run' : speed > 0.3 ? 'walk' : 'idle';
-    if (anim.actions.shoot && t - (lastShotAt || -99) < 0.28) kind = 'shoot'; // chỉ khi model có clip bắn
-    botAnimCrossfade(anim, kind);
-    const act = anim.actions[anim.current];
-    if (act) { // chống trượt chân: tốc độ phát clip tỉ lệ vận tốc thật (walk gốc ~1,6 m/s · run gốc ~4,6 m/s)
-      if (anim.current === 'walk') act.timeScale = THREE.MathUtils.clamp(speed / 1.6, 0.6, 1.6);
-      else if (anim.current === 'run') act.timeScale = THREE.MathUtils.clamp(speed / 4.6, 0.6, 1.5);
-      else act.timeScale = 1;
+    if (anim.current === 'dead' || anim.current === 'death') { // hồi sinh: xoá sạch trạng thái fade/blend cũ
+      for (const k of ['idle', 'walk', 'run', 'shoot', 'death']) if (A[k]) { A[k].stop(); A[k].reset(); A[k].setEffectiveWeight(0); A[k].enabled = false; }
+      anim.current = ''; anim.blendSpeed = 0; anim.shootW = 0; anim.gait = 'idle';
+    }
+    // Tốc độ đầu vào được làm mượt damp λ=10/s (hằng thời gian ~0,1 s) trước mọi quyết định gait (topic A1)
+    anim.blendSpeed += (speed - anim.blendSpeed) * (1 - Math.exp(-10 * dt));
+    const s = anim.blendSpeed;
+    // Trạng thái gait rời rạc có HYSTERESIS (topic A1): vào run ≥3,5 · ra run ≤2,9 · vào idle <0,25 · ra idle >0,45.
+    // Tốc độ dao động quanh một ngưỡng đơn (LMG 3,30 · tagging ×0,55 · crouch) không còn làm chớp gait;
+    // gait là nguồn chọn clip cho đường dự phòng bên dưới và neo trạng thái cho đường blend.
+    if (!anim.gait) anim.gait = 'idle';
+    if (anim.gait === 'run') { if (s <= 2.9) anim.gait = s < 0.25 ? 'idle' : 'walk'; }
+    else if (anim.gait === 'idle') { if (s > 0.45) anim.gait = s >= 3.5 ? 'run' : 'walk'; }
+    else if (s >= 3.5) anim.gait = 'run'; else if (s < 0.25) anim.gait = 'idle';
+    if (A.idle && A.walk && A.run) {
+      // (1) BLEND LIÊN TỤC theo tốc độ đã làm mượt: trọng số 3 clip là hàm liên tục của tốc độ
+      // (thay chọn clip rời rạc theo ngưỡng + crossfade 0,18 s như trước — nguồn chính của cảm giác cắt cứng).
+      const tWalk = THREE.MathUtils.clamp((s - 0.25) / 0.75, 0, 1); // Idle→Walk: đầy walk ở 1,0 m/s
+      const wRun = THREE.MathUtils.clamp((s - 2.4) / 1.2, 0, 1);    // Walk→Run trên dải 2,4–3,6 m/s (topic A2)
+      const shootTarget = (A.shoot && t - (lastShotAt || -99) < 0.28) ? 0.85 : 0; // overlay bắn, chỉ model có clip
+      anim.shootW += (shootTarget - anim.shootW) * (1 - Math.exp(-18 * dt));
+      const ls = 1 - anim.shootW;
+      // KHỚP PHA walk↔run khi cả hai cùng có trọng số: khoá clip nhẹ hơn theo pha của clip nặng hơn
+      // mỗi frame, trước mixer.update — bước chân không bao giờ "teleport" giữa blend (topic A1/A2).
+      if (wRun > 0.003 && wRun < 0.997) { if (wRun >= 0.5) botSyncPhase(A.walk, A.run); else botSyncPhase(A.run, A.walk); }
+      botSetW(A.idle, (1 - tWalk) * ls); botSetW(A.walk, tWalk * (1 - wRun) * ls); botSetW(A.run, wRun * ls); botSetW(A.shoot, anim.shootW);
+      A.walk.timeScale = THREE.MathUtils.clamp(s / 1.6, 0.5, 1.75); // chống trượt chân lớp 1: nhịp clip bám tốc độ thật (topic A1)
+      A.run.timeScale = THREE.MathUtils.clamp(s / 4.6, 0.55, 1.35);
+      A.idle.timeScale = 1;
+      anim.current = 'blend';
+    } else {
+      // model thiếu clip locomotion → đường crossfade rời rạc, dùng CHUNG trạng thái gait hysteresis ở trên
+      let kind = anim.gait;
+      if (A.shoot && t - (lastShotAt || -99) < 0.28) kind = 'shoot';
+      botAnimCrossfade(anim, kind);
+      const act = A[anim.current];
+      if (act) {
+        if (anim.current === 'walk') act.timeScale = THREE.MathUtils.clamp(s / 1.6, 0.5, 1.75);
+        else if (anim.current === 'run') act.timeScale = THREE.MathUtils.clamp(s / 4.6, 0.55, 1.35);
+        else act.timeScale = 1;
+      }
     }
     anim.mixer.update(dt);
+    // (2)+(5): aim pitch + flinch cộng lên xương thân trên SAU mixer; flinch tàn trong 0,22 s
+    applyBotPosture(anim, mesh, ent.aimPitch, ent.flinch, ent.flinchAmp);
+    if (ent.flinch > 0) ent.flinch = Math.max(0, ent.flinch - dt / 0.22);
+    // (3): nghiêng người theo vận tốc ngang đã làm mượt trong hệ local của mesh (topic A4):
+    // hệ số 1,6°/(m/s), TRẦN CỨNG ±9° (bài học "Michael Jackson lean" của CS2 — không tham số nào vượt 10°),
+    // hằng thời gian làm mượt 0,12 s. DẤU TRỪ: rotation.z dương nghiêng đỉnh đầu về −X local (đo thật trên
+    // soldier.glb: z=+0,157 rad → head.x −0,245 m) nên phải đảo dấu để thân nghiêng VỀ PHÍA đang strafe.
+    if (anim.model && ent.vel) {
+      const yaw = mesh.rotation.y;
+      const lat = ent.vel.x * Math.cos(yaw) - ent.vel.z * Math.sin(yaw); // + = đang trượt về phía +X local
+      const leanT = THREE.MathUtils.clamp(-lat * 0.0279, -0.157, 0.157); // 0,0279 rad ≈ 1,6° · 0,157 rad = 9°
+      anim.lean += (leanT - anim.lean) * (1 - Math.exp(-dt / 0.12));
+      anim.model.rotation.z = anim.lean;
+    }
   };
-  for (const b of bots) step(b.mesh, b.alive, entSpeed(b), b.lastShotAt);
-  if (decoy) step(decoy.mesh, nowS() < decoy.until && decoy.hp > 0, decoy.vel ? decoy.vel.length() : 0, -99);
+  for (const b of bots) step(b, b.alive, entSpeed(b), b.lastShotAt);
+  if (decoy) step(decoy, nowS() < decoy.until && decoy.hp > 0, decoy.vel ? decoy.vel.length() : 0, -99);
 }
-loadBotModel(0);
+for (const opKey of Object.keys(OPERATOR_MODELS)) loadOperatorModel(opKey);
 
 const LANES = {
   top: [new THREE.Vector3(-30, 0, -6), new THREE.Vector3(-13, 0, -12), new THREE.Vector3(-16, 0, -24), new THREE.Vector3(-6, 0, -27.5), new THREE.Vector3(6, 0, -27.5), new THREE.Vector3(14, 0, -24), new THREE.Vector3(27, 0, -24)],
@@ -3808,12 +4373,12 @@ function spawnBots() {
   bots.length = 0;
   if (decoy) { scene.remove(decoy.mesh); disposeBotFigure(decoy.mesh); decoy = null; }
   const allyDefs = [
-    { name: 'Đồng đội · NULL', color: 0xff3d7e },
-    { name: 'Đồng đội · AEGIS', color: 0x3effa0 },
-    { name: 'Đồng đội · DRIFT', color: 0x728cff }
+    { name: 'Đồng đội · NULL', color: 0xff3d7e, op: 'NULL' },
+    { name: 'Đồng đội · AEGIS', color: 0x3effa0, op: 'AEGIS' },
+    { name: 'Đồng đội · DRIFT', color: 0x728cff, op: 'DRIFT' }
   ];
   ['top', 'mid', 'bot'].forEach((lane, i) => {
-    const mesh = makeBotFigure('ally', allyDefs[i].color);
+    const mesh = makeBotFigure('ally', allyDefs[i].color, allyDefs[i].op);
     const pos = new THREE.Vector3(T_SPAWN.x + 1.5, 0, (i - 1) * 3.2);
     mesh.position.copy(pos); scene.add(mesh);
     bots.push({ team: 'ally', name: allyDefs[i].name, mesh, pos, hp: 100, alive: true,
@@ -3822,14 +4387,14 @@ function spawnBots() {
       vel: new THREE.Vector3(), velY: 0, tagUntil: 0, landedAt: -99, seenKey: null, reactAt: 0, aimYaw: null, aimErrA: 0, aimErrR: 0, _aimErr: 0 });
   });
   const defs = [
-    { name: 'Địch · FLARE', color: 0xff6b2e, lanePts: GUARDS.A, pos: new THREE.Vector3(42, 0, -24) },
-    { name: 'Địch · PRISM', color: 0x7de8ff, lanePts: GUARDS.A, pos: new THREE.Vector3(27, 0, -30) },
-    { name: 'Địch · BASTION', color: 0xffc44d, lanePts: GUARDS.B, pos: new THREE.Vector3(40, 0, 28) },
-    { name: 'Địch · WHISPER', color: 0xbd7dff, lanePts: GUARDS.B, pos: new THREE.Vector3(25, 0, 32) },
-    { name: 'Địch · TETHER', color: 0x9dff2e, lanePts: GUARDS.MID, pos: new THREE.Vector3(30, 0, 4) }
+    { name: 'Địch · FLARE', op: 'FLARE', color: 0xff6b2e, lanePts: GUARDS.A, pos: new THREE.Vector3(42, 0, -24) },
+    { name: 'Địch · PRISM', op: 'PRISM', color: 0x7de8ff, lanePts: GUARDS.A, pos: new THREE.Vector3(27, 0, -30) },
+    { name: 'Địch · BASTION', op: 'BASTION', color: 0xffc44d, lanePts: GUARDS.B, pos: new THREE.Vector3(40, 0, 28) },
+    { name: 'Địch · WHISPER', op: 'WHISPER', color: 0xbd7dff, lanePts: GUARDS.B, pos: new THREE.Vector3(25, 0, 32) },
+    { name: 'Địch · TETHER', op: 'TETHER', color: 0x9dff2e, lanePts: GUARDS.MID, pos: new THREE.Vector3(30, 0, 4) }
   ];
   defs.forEach((d, i) => {
-    const mesh = makeBotFigure('enemy', d.color);
+    const mesh = makeBotFigure('enemy', d.color, d.op);
     mesh.position.copy(d.pos); scene.add(mesh);
     bots.push({ team: 'enemy', name: d.name, mesh, pos: d.pos.clone(), hp: 100, alive: true,
       lanePts: d.lanePts, wp: i % d.lanePts.length, speed: 4.1, nextShot: 0, burst: 0, slowUntil: 0, stunUntil: 0, trapUntil: 0, holdPos: null, lastShotAt: -99,
@@ -3837,6 +4402,98 @@ function spawnBots() {
       vel: new THREE.Vector3(), velY: 0, tagUntil: 0, landedAt: -99, seenKey: null, reactAt: 0, aimYaw: null, aimErrA: 0, aimErrR: 0, _aimErr: 0 });
   });
 }
+
+// ---------------- GUN FX v53 (game-feel góc nhìn thứ nhất) ----------------
+// Sharon (playtest v3.5.3): "không có hiệu ứng súng giật, bật scope, thay đạn" — module này sở hữu
+// toàn bộ cảm giác súng phía client, KHÔNG đụng logic bắn/độ chính xác:
+//  (1) GIẬT: lò xo viewmodel (kick lùi + ngửa + roll ngẫu nhiên) mỗi phát; camera kick NHỎ đồng bộ
+//      theo follower camera-feel — attack ∞ (cộng tức thì khi bắn), release 40/s (hồi mũ về 0).
+//      player.pitch/yaw thật (pattern/kick của mechanics/01) KHÔNG đổi — camKick chỉ là lớp thị giác.
+//  (2) SCOPE SR-50: scopeP 0→1 trong ~120 ms, FOV nội suy ease-out, overlay fade + scale hạ xuống,
+//      viewGun chỉ ẩn khi scopeP ≥ 0,92 (trước đây setScoped cắt cứng FOV + overlay + súng cùng frame).
+//  (3) THAY ĐẠN: offset viewmodel 3 giai đoạn theo tiến độ reload THẬT (player.reloadStartAt/DurTotal
+//      chụp từ startReload, đã gồm hệ số Pháo Đài ×0,8): hạ súng+nghiêng → thay mag (SG-12: 2 nhịp
+//      bơm đạn thay cho bolt) → kéo bolt + trả về. Vẫn hiện trong lúc HUD báo "ĐANG NẠP ĐẠN".
+//  (4) FLASH: plane sẵn có thêm scale ngẫu nhiên + PointLight gắn ở đầu nòng (sáng 45 ms rồi tắt
+//      theo hàm mũ) — buildViewGun tạo lại light mỗi lần đổi súng và trỏ GUNFX.flashLight sang.
+const GUNFX = {
+  kick: 0, kickVel: 0, roll: 0, rollVel: 0, // lò xo giật viewmodel (x, v)
+  camKick: 0,                               // rad — cộng vào camera.rotation.x MỖI frame trong updatePlayer
+  scopeP: 0,                                // 0 = hip · 1 = scoped hẳn (tuyến tính theo thời gian, ease khi áp)
+  flashLight: null, flashUntil: -9,
+  off: { x: 0, y: 0, z: 0, rx: 0, rz: 0 },  // offset viewmodel tổng hợp (updateGunFX ghi, updatePlayer áp)
+  _so: null,                                // cache #scope-overlay
+};
+const GUNFX_KICK_BY_CLS = { RIFLE: 6.4, SMG: 4.9, LMG: 7.9, PISTOL: 4.7, SHOTGUN: 14.7, SNIPER: 15.7 };
+const GUNFX_CAMDEG_BY_CLS = { RIFLE: 0.16, SMG: 0.12, LMG: 0.20, PISTOL: 0.10, SHOTGUN: 0.36, SNIPER: 0.39 };
+function _gunfxSmooth(a, b, x) { const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
+// Gọi từ tryShoot SAU khi phát bắn đã chốt (1 lần / 1 lần bóp cò — SG-12 chỉ gọi 1 lần cho cả chùm pellet).
+GUNFX.onShot = function (w) {
+  const imp = w.recoilType === 'kick' ? 2.0 + (w.kickPitchDeg || 0) * 4.9 : (GUNFX_KICK_BY_CLS[w.cls] || 6.0);
+  GUNFX.kickVel += imp;
+  GUNFX.rollVel += (Math.random() * 2 - 1) * imp * 0.4;
+  const camDeg = w.recoilType === 'kick' ? (w.kickPitchDeg || 0) * 0.14 : (GUNFX_CAMDEG_BY_CLS[w.cls] || 0.14) * (w.patternScale || 1);
+  GUNFX.camKick += camDeg * DEG2RAD;
+  if (muzzle) { muzzle.material.opacity = 0.95; muzzle.rotation.z = Math.random() * 3; const s = 0.85 + Math.random() * 0.5; muzzle.scale.set(s, s, 1); }
+  if (GUNFX.flashLight) { GUNFX.flashLight.intensity = 2.6; GUNFX.flashUntil = nowS() + 0.045; }
+};
+// Scope: tiến scopeP tuyến tính (120 ms chiều), áp ease-out cubic cho FOV/overlay — mở và đóng dùng chung.
+GUNFX.updateScopeAnim = function (dt) {
+  // Chết / rời phase đấu → tự đóng scope (trước đây trông cậy từng nơi gọi setScoped(false);
+  // sót 1 nơi là overlay + FOV zoom kẹt — vd. bug killcam FOV zoom khi chết lúc đang ngắm).
+  if (player.scoped && (player.dead || !['live', 'planted'].includes(G.phase))) setScoped(false);
+  const target = player.scoped ? 1 : 0;
+  if (GUNFX.scopeP !== target) {
+    const step = dt / 0.12;
+    GUNFX.scopeP = THREE.MathUtils.clamp(GUNFX.scopeP + Math.sign(target - GUNFX.scopeP) * step, 0, 1);
+  }
+  const p = GUNFX.scopeP, e = 1 - Math.pow(1 - p, 3); // easeOutCubic
+  const hipFov = SETTINGS.fov, scopeFov = Math.max(24, Math.round(SETTINGS.fov * 0.42));
+  const fov = hipFov + (scopeFov - hipFov) * e;
+  if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
+  if (!GUNFX._so) GUNFX._so = document.getElementById('scope-overlay');
+  const so = GUNFX._so;
+  if (so) {
+    if (p > 0) { so.classList.remove('hidden'); so.style.opacity = e.toFixed(3); so.style.transform = 'scale(' + (1.18 - 0.18 * e).toFixed(3) + ')'; }
+    else if (!so.classList.contains('hidden')) { so.classList.add('hidden'); so.style.opacity = ''; so.style.transform = ''; }
+  }
+  // KC/RP tự quản visible khi phát lại (ẩn súng suốt killcam/replay) — scope anim chỉ quản khi đang sống trong trận.
+  if (viewGun && WEAPONS[player.weapon].canScope && !player.dead && !KC.active && !RP.active) viewGun.visible = p < 0.92;
+};
+// Offset thay đạn theo tiến độ p ∈ [0,1] của lần nạp đang chạy (reloadKey là súng ĐÃ CHỤP lúc bắt đầu).
+GUNFX.reloadOffsets = function (o) {
+  if (!player.reloadKey || !(player.reloadDurTotal > 0)) return;
+  const p = THREE.MathUtils.clamp((nowS() - player.reloadStartAt) / player.reloadDurTotal, 0, 1);
+  const lower = _gunfxSmooth(0, 0.25, p) * (1 - _gunfxSmooth(0.78, 1, p)); // giai đoạn 1+2: súng hạ xuống
+  o.y -= 0.17 * lower; o.z += 0.06 * lower; o.rx -= 0.38 * lower; o.rz += 0.30 * lower;
+  if (WEAPONS[player.reloadKey].cls === 'SHOTGUN') { // SG-12: 2 nhịp bơm đạn thay cho kéo bolt
+    for (const [a, b] of [[0.35, 0.55], [0.60, 0.80]]) if (p > a && p < b) o.z -= 0.06 * Math.sin(Math.PI * (p - a) / (b - a));
+  } else {
+    const mp = THREE.MathUtils.clamp((p - 0.30) / 0.40, 0, 1); // giai đoạn 2: nhịp thay mag (nhấn xuống thêm)
+    if (p > 0.30 && p < 0.70) { o.y -= 0.045 * Math.sin(Math.PI * mp); o.rz += 0.05 * Math.sin(2 * Math.PI * mp); }
+    if (p > 0.78 && p < 0.92) { const bolt = Math.sin(Math.PI * (p - 0.78) / 0.14); o.z -= 0.05 * bolt; o.rx += 0.05 * bolt; } // giai đoạn 3: kéo bolt
+  }
+};
+// Cập nhật mỗi frame từ updatePlayer (kể cả trước nhánh dead — scope phải tự đóng khi chết).
+GUNFX.updateGunFX = function (dt) {
+  // Lò xo giật: spring-damper k=300 c=26 (ζ≈0,75 — nảy nhẹ rồi đứng yên), tích phân bán ẩn bước ≤1/120 s cho ổn định ở fps thấp.
+  let rest = dt;
+  while (rest > 0) {
+    const h = Math.min(rest, 1 / 120); rest -= h;
+    GUNFX.kickVel += (-300 * GUNFX.kick - 26 * GUNFX.kickVel) * h; GUNFX.kick += GUNFX.kickVel * h;
+    GUNFX.rollVel += (-300 * GUNFX.roll - 26 * GUNFX.rollVel) * h; GUNFX.roll += GUNFX.rollVel * h;
+  }
+  if (Math.abs(GUNFX.kick) < 1e-4 && Math.abs(GUNFX.kickVel) < 1e-3) { GUNFX.kick = 0; GUNFX.kickVel = 0; }
+  if (Math.abs(GUNFX.roll) < 1e-4 && Math.abs(GUNFX.rollVel) < 1e-3) { GUNFX.roll = 0; GUNFX.rollVel = 0; }
+  if (GUNFX.camKick !== 0) { GUNFX.camKick *= Math.exp(-40 * dt); if (Math.abs(GUNFX.camKick) < 1e-5) GUNFX.camKick = 0; } // follower release 40/s
+  if (GUNFX.flashLight && GUNFX.flashLight.intensity > 0 && nowS() >= GUNFX.flashUntil) {
+    GUNFX.flashLight.intensity *= Math.exp(-dt / 0.03); if (GUNFX.flashLight.intensity < 0.02) GUNFX.flashLight.intensity = 0;
+  }
+  GUNFX.updateScopeAnim(dt);
+  const o = GUNFX.off;
+  o.x = 0; o.y = 0; o.z = GUNFX.kick * 0.45; o.rx = GUNFX.kick * 0.42; o.rz = GUNFX.roll * 0.10;
+  GUNFX.reloadOffsets(o);
+};
 
 // ---------------- VIEW MODEL (gun in hand) ----------------
 let viewGun = null, muzzle = null, viewGunGlowMat = null;
@@ -3852,7 +4509,7 @@ function buildViewGun() {
   const glow = new THREE.MeshStandardMaterial({ color: op().color, emissive: op().color, emissiveIntensity: 1.6 });
   viewGunGlowMat = glow;
   const box = (sx, sy, sz, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat || dark); m.position.set(x || 0, y || 0, z || 0); viewGun.add(m); return m; };
-  muzzle = null;
+  muzzle = null; GUNFX.flashLight = null; // v53: light của viewmodel cũ đã bị dispose cùng nhóm — build mới tạo lại
   if (WEAPONS[player.weapon].cls === 'MELEE') { // KN-9: cán + lưỡi thép mỏng + rãnh glow theo operator
     box(0.035, 0.17, 0.05, dark, 0, -0.10, 0.02);
     const blade = box(0.014, 0.34, 0.075, steel, 0, 0.10, -0.10); blade.rotation.x = 0.5;
@@ -3878,6 +4535,8 @@ function buildViewGun() {
   muzzle = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22),
     new THREE.MeshBasicMaterial({ color: 0xffcf6b, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
   muzzle.position.set(0, 0.03, -(P.b[2] / 2 + P.bar[2] - 0.02)); viewGun.add(muzzle);
+  // v53 gunfx: đèn flash đầu nòng — cường độ do GUNFX.onShot/updateGunFX điều khiển (0 khi không bắn)
+  const _fl = new THREE.PointLight(0xffb45e, 0, 7, 2); _fl.position.copy(muzzle.position); viewGun.add(_fl); GUNFX.flashLight = _fl;
   viewGun.position.set(0.27, -0.24, -0.55);
   viewGun.rotation.set(0, 0, 0);
   camera.add(viewGun);
@@ -3955,7 +4614,7 @@ function damageBot(bot, amount, attackerName, isHead, noTag) {
   if (bot.shieldHp > 0 && nowS() < (bot.shieldUntil || 0)) {
     const ab = Math.min(bot.shieldHp, amount); bot.shieldHp -= ab; amount -= ab;
     if (bot.shieldHp <= 0) detachShieldMesh(bot);
-    if (amount <= 0) { bot.flashUntil = nowS() + 0.09; return; }
+    if (amount <= 0) { bot.flashUntil = nowS() + 0.09; bot.flinch = Math.max(bot.flinch || 0, 0.45); bot.flinchAmp = 0.6; return; } // đạn ăn khiên: flinch nhẹ
   }
   if (!noTag) bot.tagUntil = nowS() + 0.35; // BUG-10: chỉ tag khi sát thương THỰC vào HP (sau khiên) — DoT (noTag) và đạn ăn khiên không tag
   // Xiềng Xích của TETHER: 30% damage chia sang kẻ bị xích cùng (tổng chia tối đa 40 HP)
@@ -3970,20 +4629,28 @@ function damageBot(bot, amount, attackerName, isHead, noTag) {
   EVLOG.hit(attackerName === 'Bạn' ? 'player' : attackerName, { target: bot.name, part: isHead ? 'head' : 'body', dmg: amount, hpAfter: bot.hp - amount, pos: bot.pos });
   bot.hp -= amount;
   bot.flashUntil = nowS() + 0.09;
+  bot.flinch = 1; bot.flinchAmp = isHead ? 1.5 : 1; // giật người khi trúng đạn (applyBotPosture cộng lên xương thân trên)
   if (chainOther) {
     EVLOG.hit(attackerName === 'Bạn' ? 'player' : attackerName, { target: chainOther.name, part: 'body', dmg: chainShare, hpAfter: chainOther.hp - chainShare, pos: chainOther.pos });
     chainOther.hp -= chainShare; chainOther.lastDamageAt = nowS(); chainOther.flashUntil = nowS() + 0.09;
+    chainOther.flinch = Math.max(chainOther.flinch || 0, 0.7); chainOther.flinchAmp = 0.8;
     if (chainOther.hp <= 0) killBot(chainOther, attackerName, false, true); // B10: kill dây chuyền chỉ thưởng 50%
   }
   if (bot.hp <= 0) killBot(bot, attackerName, isHead); // kill trực tiếp: thưởng đầy đủ (kill dây chuyền đã xử lý riêng ở trên)
 }
+let _roundKills = 0; // GF-1 (topic #91): số kill của NGƯỜI CHƠI trong round hiện tại — nuôi thang leo pitch của AudioSys.killConfirm; reset ở startRound
 function killBot(bot, attackerName, isHead, isChainKill) {
   EVLOG.kill(attackerName === 'Bạn' ? 'player' : attackerName, { victim: bot.name, headshot: isHead, pos: bot.pos });
   bot.alive = false; bot.hp = 0; bot.deadAt = nowS();
   if (bot.shieldMesh) detachShieldMesh(bot);
   // simple ragdoll: fall over — trừ khi model 3D có clip Death (clip tự lo việc ngã, tránh ngã kép)
   const deathAnim = bot.mesh.userData.anim;
-  if (!(deathAnim && deathAnim.actions && deathAnim.actions.death)) {
+  if (deathAnim && deathAnim.actions && deathAnim.actions.death) { /* clip Death tự lo việc ngã */ }
+  else if (deathAnim && deathAnim.model) {
+    // model 3D không có clip Death (Soldier): khởi động ngã MƯỢT 0,45 s trong updateBotAnimations
+    // thay vì đặt rotation.z tức thì (cắt cứng) như figure khối dự phòng bên dưới
+    bot.fallDir = Math.random() > 0.5 ? 1 : -1; bot.fallT = 0;
+  } else {
     bot.mesh.rotation.z = Math.PI / 2 * (Math.random() > 0.5 ? 1 : -1);
     bot.mesh.position.y = 0.25;
   }
@@ -4000,11 +4667,18 @@ function killBot(bot, attackerName, isHead, isChainKill) {
       player.invisibleUntil = Math.max(player.invisibleUntil, nowS() + 2);
     }
   }
+  if (attackerName === 'Bạn' && bot.team === 'enemy') { // GF-1 (topic #91): KILL CONFIRM 3 lớp — trước đây killBot() không phát bất kỳ âm/hiệu ứng xác nhận nào.
+    AudioSys.killConfirm(isHead, _roundKills); // lớp 1: âm kill riêng (leo pitch theo chuỗi kill trong round; headshot thêm lớp thock trầm)
+    _roundKills++;
+    flashHitmarker(isHead, false, true); // lớp 2: hitmarker biến thể .kill (đỏ, 1,4×, 130 ms)
+    const mEl = $('money'); if (mEl) { mEl.classList.remove('money-pulse'); void mEl.offsetWidth; mEl.classList.add('money-pulse'); } // lớp 3: HUD pulse ở ô tiền thưởng (dòng killfeed tự pulse qua class .kf-kill trong addKillfeed)
+  }
   checkRoundEndCombat();
 }
 function onPlayerDeath() {
   player.dead = true; player.diedLastRound = true; // B6: chết round này → mất primary + giáp ở round sau
   cancelReload(); // chết = hủy callback nạp đạn đang chờ (reloadToken)
+  setScoped(false); // v53 gunfx + fixspec killcam-scope-fov: chết lúc đang ngắm = thoát scope NGAY (logic); FOV/overlay hồi mượt ~120 ms qua GUNFX.updateScopeAnim — killcam không còn phát ở FOV zoom
   REC.ev('kill', t('replay.eventKill', { killer: displayName(KC.lastAttacker ? KC.lastAttacker.name : 'Địch'), victim: t('hud.you') }), -1);
   KC.start();
   const killer = KC.lastAttacker || bots.find(b => b.team === 'enemy' && b.alive); // R9: kẻ hạ thật (botShoot đã lưu KC.lastAttacker), không lấy địch còn sống bất kỳ
@@ -4025,6 +4699,10 @@ function checkRoundEndCombat() {
 }
 
 // ---------------- BOT AI ----------------
+// v53 (dev-v53-botfix): cổng cứng hướng mặt cho bot — xem botShoot() để biết cơ chế đầy đủ.
+const BOT_AIM_GATE = 0.12;      // rad (~6,9°): _aimErr lớn hơn giá trị này → bot KHÔNG được nhả đạn
+const BOT_SHOT_JITTER_M = 0.37; // σ jitter tuyến tính (m/trục) tại mặt phẳng mục tiêu — hiệu chuẩn giữ đường cong trúng đích cũ
+const BOT_MOVE_SPREAD_SCALE = 0.9; // giảm hạng tử spread-di-chuyển cho bot xuống 0,9×: hạng tử góc của người chơi phạt hình học ở cự ly xa nặng hơn hệ số phẳng ×max(0,25; 1,15 − bRatio) của bản cũ — hiệu chuẩn bằng selfplay-dps-sim.js (1.200 lượt/ô): 0,9 cho tổng DPS +10,3% và ô sụt nhất −12,7% (B/30 m), mọi ô đều trong ngưỡng sụt ~15%; để 1,0 thì 30 m sụt −17…−19%, để 1,15 sụt tới −26%
 function botTargetFor(b) {
   // returns {type:'player'|'bot'|'decoy', pos, bot?, firePos} — nearest visible opponent
   const myEye = eyeOf(b.pos);
@@ -4049,6 +4727,18 @@ function botTargetFor(b) {
   return best ? { target: best, dist: bestD } : null;
 }
 
+// Xoay hướng mặt MƯỢT khi di chuyển/gỡ bom (thay mesh.lookAt cắt cứng từng frame):
+// nội suy góc đường ngắn nhất có giảm chấn + trần tốc độ ~600°/s. faceYaw là trạng thái riêng,
+// được nhánh chiến đấu đồng bộ hai chiều với aimYaw để chuyển trạng thái không giật.
+function faceToward(b, targetYaw, dt) {
+  if (b.faceYaw === null || b.faceYaw === undefined) b.faceYaw = b.mesh.rotation.y;
+  let d = targetYaw - b.faceYaw;
+  while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+  const stepA = THREE.MathUtils.clamp(d * (1 - Math.exp(-10 * dt)), -10.5 * dt, 10.5 * dt);
+  b.faceYaw += stepA;
+  b.mesh.rotation.y = b.faceYaw; // chỉ ghi trục Y — trục Z là kênh ngã chết, không đụng
+}
+
 function updateBot(b, dt) {
   if (!b.alive) return;
   if (G.phase === 'end') return; // combat frozen while round result shows
@@ -4070,7 +4760,7 @@ function updateBot(b, dt) {
       let defuser = null, bestD = Infinity;
       for (const o of bots) { if (o.team === 'enemy' && o.alive) { const dd = o.pos.distanceTo(G.bombPos); if (dd <= 2.4 && dd < bestD) { bestD = dd; defuser = o; } } }
       if (defuser === b && !(found && found.dist < 9)) { // B11: defuser có mục tiêu gần (<9m) thì bỏ gỡ để bắn trả
-        b.mesh.lookAt(player.pos.x, 0, player.pos.z);
+        faceToward(b, Math.atan2(player.pos.x - b.pos.x, player.pos.z - b.pos.z), dt);
         G.defuseProgress += dt;
         if (G.defuseProgress >= 5) { EVLOG.bombDefuse(b.name, { site: G.bombSite ? G.bombSite.name : null, pos: G.bombPos }); endRound(false, 'reason.defused'); }
         return;
@@ -4102,7 +4792,12 @@ function updateBot(b, dt) {
     const maxTurn = 9.42 * dt; // 540°/s
     b.aimYaw += THREE.MathUtils.clamp(dyA, -maxTurn, maxTurn);
     b.mesh.rotation.set(0, b.aimYaw, 0);
+    b.faceYaw = b.aimYaw; // đồng bộ để khi mất mục tiêu, nhánh di chuyển tiếp quản không giật
     b._aimErr = Math.abs(bearing - b.aimYaw);
+    if (b._aimErr > Math.PI) { const wA = b._aimErr % (2 * Math.PI); b._aimErr = wA > Math.PI ? 2 * Math.PI - wA : wA; } // v53 seam-fix (verify-v53-botfix mục 5): aimYaw tích luỹ qua seam ±π tới bearing + 2πk làm |hiệu| kẹt ≈2π → cổng cứng khiến bot câm vĩnh viễn. Gấp trị tuyệt đối về [0, π] — tương đương wrap hiệu có dấu của audit, chỉ kích hoạt khi qua seam, ngoài seam hành vi y hệt.
+    // aim pitch cho hoạt ảnh thân trên: từ điểm bắn của bot (y=1,45) tới điểm ngắm của mục tiêu, làm mượt ~12/s
+    const pitchT = Math.atan2(1.45 - (found.target.firePos ? found.target.firePos.y : 1.1), Math.max(1, found.dist));
+    b.aimPitch = (b.aimPitch === undefined || b.aimPitch === null) ? pitchT : b.aimPitch + (pitchT - b.aimPitch) * (1 - Math.exp(-12 * dt));
     const strafeDir = Math.sin(t * 1.3 + b.pos.x) > 0 ? 1 : -1;
     if (found.dist > 9) moveBotToward(b, tp, dt, 0.55);
     else { // strafe ngang qua physMove — vận tốc thật của bot quyết định spread của chính nó
@@ -4110,8 +4805,8 @@ function updateBot(b, dt) {
       physMove(b, side, b.speed * 0.5 * (t < (b.tagUntil || 0) ? 0.55 : 1), dt, 0.55);
       b.mesh.position.copy(b.pos);
     }
-    if (t >= b.nextShot && t >= b.reactAt) {
-      if (b.burst === 0) { const sig = 1.4 * DEG2RAD; b.aimErrA = gauss() * sig; b.aimErrR = gauss() * sig; }
+    if (t >= b.nextShot && t >= b.reactAt && (b._aimErr || 0) <= BOT_AIM_GATE) { // v53: CỔNG CỨNG — mặt lệch > 0,12 rad thì chưa bắn, bot phải quay mặt tới mục tiêu trước (hết cảnh quay mông vẫn bắn)
+      if (b.burst === 0) { const sig = 0.8 * DEG2RAD; b.aimErrA = gauss() * sig; b.aimErrR = gauss() * sig; } // v53: σ loạt 1,4°→0,8° — lỗi ngắm giờ là hình học thật quyết định trúng/trượt (trước chỉ dời điểm vẽ tracer), hiệu chuẩn lại để giữ đường cong trúng đích cũ, xem botShoot()
       botShoot(b, found);
       b.burst++;
       if (b.burst >= 3) { b.nextShot = t + 0.75 + Math.random() * 0.55; b.burst = 0; }
@@ -4120,6 +4815,7 @@ function updateBot(b, dt) {
     return;
   }
   b.seenKey = null; b.seenAt = 0; b.seenDist = Infinity; // mất mục tiêu: reset cả hysteresis (BUG-05)
+  if (b.aimPitch) b.aimPitch *= Math.exp(-6 * dt); // mất mục tiêu: thân trên về ngang dần
 
   // --- travel waypoints ---
   let dest = null;
@@ -4143,38 +4839,70 @@ function moveBotToward(b, dest, dt, speedScale) {
   physMove(b, dir, effMax, dt, 0.55);
   if (entSpeed(b) > 0.2) b.lastMoveAt = nowS();
   b.mesh.position.copy(b.pos);
-  if (entSpeed(b) > 0.4) b.mesh.lookAt(b.pos.x + b.vel.x, 0, b.pos.z + b.vel.z);
-  // walk bob tỉ lệ theo vận tốc thật
-  b.mesh.position.y = Math.abs(Math.sin(nowS() * 8 + b.pos.x)) * 0.05 * Math.min(1, entSpeed(b) / 2);
+  if (entSpeed(b) > 0.4) faceToward(b, Math.atan2(b.vel.x, b.vel.z), dt);
+  // walk bob bằng code CHỈ cho figure khối dự phòng — model 3D đã bob trong clip, chồng thêm gây nảy giả + trượt chân
+  if (!(b.mesh.userData.anim && b.mesh.userData.anim.model))
+    b.mesh.position.y = Math.abs(Math.sin(nowS() * 8 + b.pos.x)) * 0.05 * Math.min(1, entSpeed(b) / 2);
 }
+// v53 — BOT SHOOT THEO HƯỚNG MẶT THẬT (sửa bug "quay mông vẫn bắn trúng" Sharon bắt gặp trên bản ship).
+// Cơ chế CŨ: điểm rơi đạn luôn neo vào vị trí mục tiêu (chỉ cộng lệch Gauss trang trí), trúng/trượt
+// quyết bằng xúc xắc hitChance — hitChance chỉ nhân 0,35 khi _aimErr > 0,05 rad, KHÔNG bao giờ về 0,
+// nên bot quay lưng hẳn (lệch ~180°) vẫn bắn và vẫn trúng; tracer vẽ thẳng tới nạn nhân dù mesh quay đi hướng khác.
+// Cơ chế MỚI:
+//   (1) CỔNG CỨNG: _aimErr > BOT_AIM_GATE (0,12 rad) → không nhả đạn (cả ở điểm gọi trong updateBot lẫn tại đây).
+//       Bot phải quay mặt tới mục tiêu trước; aimYaw đuổi theo bearing tối đa 540°/s nên quay 180° mất ~0,33 s.
+//   (2) Đạn là TIA THEO HƯỚNG MẶT: hướng = aimYaw thật + lỗi ngắm loạt + spread; trúng/trượt quyết bằng
+//       giao tia với 2 cầu hitbox của mục tiêu (cùng quy ước rayHitBot: thân r=0,42@y=1,02 · đầu r=0,24@y=1,72),
+//       có xét tường chắn (wallDistance). Tracer vẽ tới ĐIỂM CHẠM THẬT (mục tiêu / tường / hết tầm).
+//   (3) Cân bằng: các hệ số nhân hitChance cũ (vận tốc bot, sprint, passive PRISM/DRIFT/NULL) được đổi sang
+//       spread/jitter tương đương về hình học (xem dưới) — đường cong P(trúng) theo khoảng cách giữ ≈ cũ.
 function botShoot(b, found) {
-  const fp = found.target; b.lastShotAt = nowS();
+  const fp = found.target;
+  if ((b._aimErr || 0) > BOT_AIM_GATE) return false; // (1) CỔNG CỨNG: mặt chưa tới mục tiêu thì không có phát bắn nào — không tracer, không tiếng súng, không sát thương
+  b.lastShotAt = nowS();
   EVLOG.shot(b.name, { weapon: 'bot', pos: b.pos, target: fp.type === 'player' ? 'player' : (fp.bot ? fp.bot.name : fp.type) });
   const from = new THREE.Vector3(b.pos.x, 1.45, b.pos.z);
   const dist = found.dist;
-  // v3: điểm rơi đạn lệch theo lỗi ngắm Gauss của loạt + spread theo vận tốc của chính bot (cùng công thức người chơi)
-  const bMove = moveSpreadTerm(b, b.speed, false) + airSpreadTerm(b) + landSpreadTerm(b);
-  const to = fp.firePos.clone();
-  const rightV = new THREE.Vector3(-(to.z - from.z), 0, to.x - from.x).normalize();
-  to.addScaledVector(rightV, Math.tan(b.aimErrA || 0) * dist + gauss() * bMove * dist);
-  to.y += Math.tan(b.aimErrR || 0) * dist + gauss() * bMove * dist;
-  to.x += (Math.random() - 0.5) * 0.4; to.z += (Math.random() - 0.5) * 0.4;
+  // (2) Hướng bắn = HƯỚNG MẶT THẬT (aimYaw) + lỗi ngắm Gauss của loạt + spread theo vận tốc của chính bot
+  // (cùng spread terms như người chơi) + jitter tuyến tính tại mặt phẳng mục tiêu (đổi sang góc theo dist).
+  const bMove = moveSpreadTerm(b, b.speed, false) * BOT_MOVE_SPREAD_SCALE + airSpreadTerm(b) + landSpreadTerm(b);
+  const faceYaw = (b.aimYaw === null || b.aimYaw === undefined) ? b.mesh.rotation.y : b.aimYaw;
+  // Modifier của mục tiêu: trước là hệ số nhân hitChance, nay là phương sai jitter cộng thêm (khớp ≈ tại 20 m):
+  // sprint ×0,7 → +0,31 m · PRISM đứng yên ×0,5 → +0,49 m · DRIFT ×0,85 → +0,19 m · NULL <10 m ×0,85 → +0,19 m.
+  let jit2 = BOT_SHOT_JITTER_M * BOT_SHOT_JITTER_M;
+  if (fp.type === 'player') {
+    if (playerSprinting()) jit2 += 0.31 * 0.31;
+    if (player.opKey === 'PRISM' && player.stillTime > 1.5) jit2 += 0.49 * 0.49; // Giác Quan Quang Học (bản rút gọn)
+    if (player.opKey === 'DRIFT' && !playerSprinting()) jit2 += 0.19 * 0.19;     // Bước Nhẹ
+    if (player.opKey === 'NULL' && dist < 10) jit2 += 0.19 * 0.19;               // Chống Nhiễu
+  }
+  const jitAng = Math.sqrt(jit2) / Math.max(dist, 1);
+  const spread = bMove + jitAng;
+  const yawShot = faceYaw + (b.aimErrA || 0) + gauss() * spread;
+  const horiz = Math.hypot(fp.pos.x - b.pos.x, fp.pos.z - b.pos.z) || 1;
+  const pitchShot = Math.atan2(fp.firePos.y - from.y, horiz) + (b.aimErrR || 0) + gauss() * spread; // ngắm vào điểm bắn của mục tiêu (cao 1,1)
+  const cp = Math.cos(pitchShot);
+  const dir = new THREE.Vector3(Math.sin(yawShot) * cp, Math.sin(pitchShot), Math.cos(yawShot) * cp).normalize();
+  // Giao tia–cầu hitbox (tia từ họng súng, dir là hướng mặt đã cộng spread).
+  const spheres = [{ x: fp.pos.x, y: 1.02, z: fp.pos.z, r: 0.42 }, { x: fp.pos.x, y: 1.72, z: fp.pos.z, r: 0.24 }];
+  let hitT = Infinity;
+  for (const s of spheres) {
+    const ox = s.x - from.x, oy = s.y - from.y, oz = s.z - from.z;
+    const tt = ox * dir.x + oy * dir.y + oz * dir.z;
+    if (tt < 0.3) continue;
+    const d2 = ox * ox + oy * oy + oz * oz - tt * tt;
+    if (d2 < s.r * s.r) { const th = tt - Math.sqrt(s.r * s.r - d2); if (th > 0.3 && th < hitT) hitT = th; }
+  }
+  const wallD = wallDistance(from, dir);
+  const blocked = hitT === Infinity || hitT > wallD + 0.42; // trượt hình học, hoặc tường chắn trước mục tiêu (dung sai = bán kính thân)
+  const to = from.clone().addScaledVector(dir, blocked ? Math.min(wallD, 120) : hitT);
   tracer(from, to, b.team === 'enemy' ? 0xff6b5c : 0x5cc8ff);
   if (b.team === 'enemy') AudioSys.botShot(Math.min(1, hDist(b.pos, player.pos) / 55));
-  let hitChance = THREE.MathUtils.clamp(0.52 - dist * 0.008, 0.12, 0.5);
-  if ((b._aimErr || 0) > 0.05) hitChance *= 0.35; // tâm chưa xoay kịp tới mục tiêu
-  const bRatio = entSpeed(b) / b.speed;
-  if (bRatio > MOVE_PHYS.accurateRatio) hitChance *= Math.max(0.25, 1.15 - bRatio); // accuracy-gate theo vận tốc (mechanics/02)
-  if (fp.type === 'player' && playerSprinting()) hitChance *= 0.7;
-  if (fp.type === 'player') {
-    if (player.opKey === 'PRISM' && player.stillTime > 1.5) hitChance *= 0.5; // Giác Quan Quang Học (bản rút gọn)
-    if (player.opKey === 'DRIFT' && !playerSprinting()) hitChance *= 0.85;   // Bước Nhẹ
-    if (player.opKey === 'NULL' && dist < 10) hitChance *= 0.85;              // Chống Nhiễu
-  }
-  if (Math.random() > hitChance) return; // miss
+  if (blocked) return true; // đã bắn nhưng đạn găm tường / bay trượt — không sát thương
   if (fp.type === 'player') { if (b.team === 'enemy') KC.lastAttacker = b; const _dmg = (b.team === 'enemy' ? 8 + Math.random() * 6 : 6) * Falloff.falloffMult(BOT_FALLOFF_KEY, dist); EVLOG.hit(b.name, { target: 'player', dmg: _dmg, hpAfter: player.hp - _dmg, pos: player.pos }); damagePlayer(_dmg, b.pos); }
   else if (fp.type === 'decoy') { decoy.hp -= 18; if (decoy.hp <= 0) destroyDecoy(); }
   else if (fp.bot) damageBot(fp.bot, (13 + Math.random() * 10) * Falloff.falloffMult(BOT_FALLOFF_KEY, dist), b.name, false);
+  return true;
 }
 
 // ---------------- PLAYER COMBAT ----------------
@@ -4234,7 +4962,7 @@ function tryShoot() {
     const baseDeg = w.canScope ? (player.scoped ? (crouch ? w.stanceBaseCrouchDeg : w.stanceBaseDeg) : (w.noScopeDeg ?? 4.5)) : (crouch ? w.stanceBaseCrouchDeg : w.stanceBaseDeg);
     coneRad = (baseDeg + player.p9Penalty) * DEG2RAD * postureMult;
   }
-  if (viewGun) { viewGun.position.z = -0.47; muzzle.material.opacity = 0.95; muzzle.rotation.z = Math.random() * 3; }
+  if (viewGun && typeof GUNFX !== 'undefined') GUNFX.onShot(w); // v53 gunfx: lò xo giật viewmodel + camera kick + flash đầu nòng (thay cú giật cứng position.z=-0,47 cũ); cổng typeof để harness trích-hàm (vm, không có GUNFX) không vỡ — trong game thật GUNFX luôn tồn tại
   const origin = camera.position.clone();
   const dir = cameraDir();
   // tổng spread (mechanics/05): nón giật + moveTerm + airTerm + landTerm, mẫu đều trong nón
@@ -4279,7 +5007,7 @@ function tryShoot() {
   if (sfx && (!hit || bh.distance < hit.dist - hit.r)) { // Đạn trúng công trình có HP gần hơn bot → công trình ăn đạn (so theo bề mặt sphere — BUG-12)
     const endS = origin.clone().add(dir.clone().multiplyScalar(bh.distance));
     tracer(origin.clone().add(new THREE.Vector3(0, -0.12, 0)), endS, 0xffe28a);
-    flashHitmarker(false, false); AudioSys.hit(false);
+    flashHitmarker(false, false); AudioSys.hit(false, true); // GF-2: trúng công trình có HP = tông đục "blocked", không dùng tiếng trúng thịt
     damageStructure(sfx, w.dmg);
     if (player.ammo[player.weapon] === 0) startReload();
     updateAmmoHUD();
@@ -4346,13 +5074,13 @@ function updateRecoil(dt) {
     if (player.p9Kick < 0.0001) player.p9Kick = 0;
   }
 }
-function cancelReload() { player.reloadToken++; player.reloadingUntil = 0; player.reloadKey = null; player.reloadNeed = 0; }
+function cancelReload() { player.reloadToken++; player.reloadingUntil = 0; player.reloadKey = null; player.reloadNeed = 0; player.reloadStartAt = 0; player.reloadDurTotal = 0; }
 function maybeCompleteReload() { // hoàn tất nạp theo đồng hồ game G.time (BUG-02: bỏ setTimeout giờ thực — tab khựng/đổi phase không làm lệch nạp đạn)
   if (!player.reloadKey || nowS() < player.reloadingUntil) return;
   const rk = player.reloadKey, rw = WEAPONS[rk];
   const take = Math.max(0, Math.min(player.reloadNeed, rw.mag - player.ammo[rk], player.reserve[rk])); // clamp theo mag của súng ĐÃ CHỤP (BUG-01)
   if (take > 0) { player.ammo[rk] += take; player.reserve[rk] -= take; }
-  player.reloadKey = null; player.reloadNeed = 0; player.reloadingUntil = 0;
+  player.reloadKey = null; player.reloadNeed = 0; player.reloadingUntil = 0; player.reloadStartAt = 0; player.reloadDurTotal = 0;
   updateAmmoHUD();
 }
 function startReload() {
@@ -4365,6 +5093,8 @@ function startReload() {
   player.reloadKey = key; player.reloadNeed = w.mag - player.ammo[key]; // chụp súng + số đạn thiếu lúc BẮT ĐẦU (BUG-01)
   EVLOG.reload('player', { weapon: player.weapon }); // chỉ log khi nạp thật sự bắt đầu (đã qua các guard ở trên)
   player.reloadingUntil = nowS() + dur;
+  player.reloadStartAt = nowS(); player.reloadDurTotal = dur; // v53 gunfx: mốc cho hoạt ảnh thay đạn 3 giai đoạn (dur ĐÃ gồm hệ số Pháo Đài)
+  if (player.scoped) setScoped(false); // v53: nạp đạn thì thoát scope để THẤY hoạt ảnh (chuẩn CS) — trước đây nạp trong scope vô hình
   player.reloadToken++;
   AudioSys.reload();
 }
@@ -4387,7 +5117,7 @@ function dirXZ() { return new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(
 function hDist(a, b) { return Math.hypot(a.x - b.x, a.z - b.z); }
 function fxCenter(fx) { return fx.center || fx.mesh.position; }
 // v3.8 robustness (§10): giải phóng GPU buffer của object dùng một lần (geometry/material tạo MỚI cho riêng object đó).
-// KHÔNG dùng cho geometry chia sẻ (model bot GLTF clone từ BOT_MODEL.scene) hay material dùng chung của map.
+// KHÔNG dùng cho geometry chia sẻ (model bot GLTF clone từ OP_MODELS[key].scene) hay material dùng chung của map.
 function disposeObject(root) {
   if (!root) return;
   root.traverse(o => {
@@ -4592,7 +5322,7 @@ function castE() {
   } else if (player.opKey === 'PRISM') { // Lăng Kính Đánh Lạc: hologram chạy thẳng, vỡ sau 1 hit
     if (decoy) destroyDecoy();
     const pos = new THREE.Vector3(player.pos.x + f.x * 3, 0, player.pos.z + f.z * 3);
-    const mesh = makeBotFigure('ally', 0x7de8ff); mesh.position.copy(pos); scene.add(mesh);
+    const mesh = makeBotFigure('ally', 0x7de8ff, 'PRISM'); mesh.position.copy(pos); scene.add(mesh);
     decoy = { pos, hp: 18, until: tNow + 6, mesh, vel: f.clone().multiplyScalar(3), slideUntil: tNow + 4 };
     announce('', t('msg.decoyOut'));
   } else if (player.opKey === 'BASTION') { // Bẫy Trọng Trường Nhẹ: bẫy sàn 4m, kích hoạt 1 lần
@@ -4757,7 +5487,7 @@ function kfSilClass(weaponKey) {
 function addKillfeed(killer, victim, killerUs, head, weaponKey) {
   const el = document.createElement('div');
   const selfRow = killer === 'Bạn' || victim === 'Bạn'; // A2: dòng liên quan người chơi giữ 6,0 s (đọc lâu hơn), còn lại 5,0 s
-  el.className = 'kf' + (killerUs ? ' us' : '') + (selfRow ? ' self' : '');
+  el.className = 'kf' + (killerUs ? ' us' : '') + (selfRow ? ' self' : '') + ((killer === 'Bạn' && killerUs) ? ' kf-kill' : ''); // GF-1c: dòng hạ địch của chính người chơi → pulse đỏ
   const kSpan = document.createElement('span'); kSpan.textContent = displayName(killer); el.appendChild(kSpan);
   const sil = kfSilClass(weaponKey);
   if (sil) { const s = document.createElement('span'); s.className = 'sil ' + sil + ' kf-sil'; el.appendChild(s); }
@@ -4795,6 +5525,7 @@ function startMatch() {
   G.pScore = 0; G.eScore = 0; G.round = 1;
   player.money = 2000; player.primary = null; player.sidearm = 'pistol'; player.weapon = 'pistol';
   player.energy = 30; player.diedLastRound = false;
+  player.armor = 0; // W65 #R32: giáp trận trước không được rò sang trận mới — startRound chỉ xóa giáp khi diedLastRound, mà startMatch đã đặt diedLastRound=false nên giáp mua trận trước còn nguyên
   setBuyOpen(false); // B12: không để buy menu kẹt từ trận trước
   player.swapsUsed = 0; player.swappedThisRound = false; swapArmKey = null; // ngân sách đổi operator tính theo trận
   EVLOG.beginMatch(); // match_start (round 1) — trước startRound() để seq đúng thứ tự thời gian
@@ -4805,6 +5536,7 @@ function startRound() {
   player.pos.copy(T_SPAWN); player.velY = 0; player.yaw = -Math.PI / 2; player.pitch = 0;
   const died = player.diedLastRound; // B6 (CS): chết round trước → mất primary + giáp; sống sót → giữ cả hai
   player.hp = 100; player.dead = false;
+  _roundKills = 0; // GF-1: chuỗi kill leo pitch tính lại từ đầu mỗi round
   if (died) {
     if (player.primary) { player.ammo[player.primary] = 0; player.reserve[player.primary] = 0; player.primary = null; }
     player.armor = 0;
@@ -5181,10 +5913,17 @@ function refreshHUD(dt) {
     }
   });
 }
-function flashHitmarker(head, blocked) {
-  const h = $('hitmarker'); h.style.opacity = 1;
-  h.classList.toggle('head', !!head); h.classList.toggle('blocked', !!blocked);
-  setTimeout(() => h.style.opacity = 0, 90);
+function flashHitmarker(head, blocked, kill) {
+  const h = $('hitmarker'); if (!h) return;
+  const nowMs = performance.now();
+  if (kill) { flashHitmarker._killUntil = nowMs + 140; } // GF-1a: cửa sổ giữ biến thể kill — phát tổng hợp của SG-12 chạy SAU killBot trong cùng frame không được xoá .kill
+  const isKill = !blocked && nowMs < (flashHitmarker._killUntil || 0);
+  h.style.opacity = 1;
+  h.classList.toggle('kill', isKill);
+  h.classList.toggle('head', !isKill && !!head);
+  h.classList.toggle('blocked', !!blocked);
+  const ft = (flashHitmarker._ft = (flashHitmarker._ft || 0) + 1); // token: timeout của phát trước không tắt marker của phát mới (bắn nhanh liên tiếp)
+  setTimeout(() => { if (flashHitmarker._ft === ft) h.style.opacity = 0; }, isKill ? 130 : 90);
 }
 function isMoving() { return keys['KeyW'] || keys['KeyA'] || keys['KeyS'] || keys['KeyD']; }
 
@@ -5300,6 +6039,7 @@ document.addEventListener('pointerlockerror', () => {
 const EYE = 1.66;
 function updatePlayer(dt) {
   maybeCompleteReload(); // hoàn tất nạp đạn khi tới mốc G.time (BUG-02)
+  GUNFX.updateGunFX(dt); // v53: chạy TRƯỚC nhánh dead — scope phải tự đóng + FOV hồi về khi người chơi chết lúc đang ngắm
   if (player.dead) { camera.position.set(player.pos.x, 1.1, player.pos.z); camera.rotation.set(-0.5, player.yaw, 0.35); return; }
   const w = WEAPONS[player.weapon];
   player.crouching = !!(keys['ControlLeft'] || keys['KeyC']);
@@ -5346,14 +6086,17 @@ function updatePlayer(dt) {
   const bob = player.pos.y === 0 && spd > 0.5 ? Math.sin(nowS() * (playerSprinting() ? 13 : 9)) * 0.035 * Math.min(1, spd / Math.max(1, maxSp)) : 0;
   camera.position.set(player.pos.x, player.pos.y + EYE + bob - (player.crouching ? 0.25 : 0), player.pos.z);
   camera.rotation.order = 'YXZ';
-  camera.rotation.y = player.yaw; camera.rotation.x = player.pitch; camera.rotation.z = 0;
+  camera.rotation.y = player.yaw; camera.rotation.x = player.pitch + GUNFX.camKick; camera.rotation.z = 0; // v53: + camKick thị giác (hồi về 0 ở 40/s — KHÔNG phải pitch thật)
   if (G.shake > 0) { camera.position.x += (Math.random() - 0.5) * G.shake * 0.35; camera.position.y += (Math.random() - 0.5) * G.shake * 0.35; G.shake = Math.max(0, G.shake - dt * 1.4); }
   updateRecoil(dt);
-  if (viewGun) { const _vz = player.weapon === 'knife' ? -0.45 : -0.55; viewGun.position.z += (_vz - viewGun.position.z) * Math.min(1, dt * 14); if (muzzle) muzzle.material.opacity *= Math.pow(0.0001, dt * 6);
-    if (player.weapon === 'knife') { // v3.5: dao vung theo sin 0,24s (chém) / 0,38s (đâm)
+  if (viewGun) { if (muzzle) muzzle.material.opacity *= Math.pow(0.0001, dt * 6);
+    if (player.weapon === 'knife') { const _vz = -0.45; viewGun.position.z += (_vz - viewGun.position.z) * Math.min(1, dt * 14); // dao: giữ nguyên hành vi v3.5
       const sw = nowS() - player.meleeSwingAt, swd = player.meleeSwingHeavy ? 0.38 : 0.24;
       if (sw >= 0 && sw < swd) { const p = Math.sin((sw / swd) * Math.PI); viewGun.position.z = -0.45 - p * (player.meleeSwingHeavy ? 0.30 : 0.16); viewGun.rotation.z = 0.25 - p * (player.meleeSwingHeavy ? 0.25 : 0.9); }
       else viewGun.rotation.z = 0.25;
+    } else { // v53 gunfx: transform súng = vị trí cơ sở của buildViewGun + offset giật/thay đạn (tuyệt đối mỗi frame — không tích lũy)
+      viewGun.position.set(0.27 + GUNFX.off.x, -0.24 + GUNFX.off.y, -0.55 + GUNFX.off.z);
+      viewGun.rotation.set(GUNFX.off.rx, 0, GUNFX.off.rz);
     } }
 }
 
@@ -5966,6 +6709,102 @@ applyHudScale();
 applyChx(); // v3.6 (dev-v38): inject CSS module + áp cấu hình lên #crosshair + vẽ xem trước
 window.__gameBooted = true; // v3.8 robustness (§1): watchdog CDN xác nhận game đã boot xong
 if (window.__hideBootError) window.__hideBootError(); // boot chậm >8s: watchdog đã hiện overlay lỗi giả — boot xong phải tự gỡ (fix #64 A1)
+// ================= ONLINE LOBBY — NetAdapter giai đoạn 0 + cầu nối lobby (W36 #D11) =================
+// Nối UI lobby (lobby-client.js — đường lobby thật W6-LOBBY-BRIDGE.md: join lobby
+// room -> game_starting -> joinById + token HMAC -> enter-game) vào game.
+// NetAdapter ở đây là GIAI ĐOẠN 0 theo CLIENT-ADAPTER.md §8: pass-through khi
+// offline + bàn giao phòng game + stream input 60 Hz lên server qua
+// lobby-client.startInputStream(). KHÔNG dùng joinOrCreate("game") hay
+// startMatch từ client (D-6: server tự start; D-1/D-4: team/operator/spawn do
+// server quyết theo assignments — game chỉ đọc, không tự suy).
+// CHƯA LÀM (đợt sau — cần tách sim A1): nhận snapshot server -> puppet/bot,
+// gating phase theo server, tắt sim local khi online. Hiện tại vào trận online
+// vẫn chạy sim local (bot) làm stand-in và server chỉ nhận input 60 Hz.
+const NetAdapter = {
+  mode: 'offline', // 'offline' | 'online'
+  gameRoom: null,
+  assignment: null,
+  assignments: null,
+  mapId: null,
+  _prevQ: false, _prevE: false, _prevX: false, _prevReload: false,
+  attachGameRoom(room, info) {
+    this.gameRoom = room; this.mode = 'online';
+    this.assignment = (info && info.assignment) || null;
+    this.assignments = (info && info.assignments) || null;
+    this.mapId = (info && info.mapId) || null;
+    return room;
+  },
+  detach() {
+    this.gameRoom = null; this.mode = 'offline';
+    this.assignment = null; this.assignments = null; this.mapId = null;
+    this._prevQ = this._prevE = this._prevX = this._prevReload = false;
+  },
+  // Khung input 60 Hz cho lobby-client.startInputStream (CLIENT-ADAPTER §3.2):
+  // chỉ intent (move/yaw/pitch/fire/reload/ability/weaponSlot), KHÔNG gửi vị
+  // trí/kết quả. moveX = strafe (D−A), moveZ = tiến/lùi (W−S), trục local.
+  sampleInputFrame() {
+    const fwd = (keys['KeyW'] ? 1 : 0) - (keys['KeyS'] ? 1 : 0);
+    const str = (keys['KeyD'] ? 1 : 0) - (keys['KeyA'] ? 1 : 0);
+    const q = !!keys['KeyQ'], e = !!keys['KeyE'], x = !!keys['KeyX'], r = !!keys['KeyR'];
+    const slot = WEAPONS[player.weapon] ? WEAPONS[player.weapon].slot : null;
+    const frame = {
+      moveX: str, moveZ: fwd,
+      sprint: !!keys['ShiftLeft'],
+      crouch: !!(keys['ControlLeft'] || keys['KeyC']),
+      jump: !!keys['Space'],
+      yaw: player.yaw, pitch: player.pitch,
+      fire: !!(mouseDown && locked),
+      reload: r && !this._prevReload,
+      abilityQ: q && !this._prevQ,
+      abilityE: e && !this._prevE,
+      abilityX: x && !this._prevX,
+      weaponSlot: slot === 'primary' ? 0 : slot === 'sidearm' ? 1 : slot === 'melee' ? 2 : -1,
+    };
+    this._prevQ = q; this._prevE = e; this._prevX = x; this._prevReload = r;
+    return frame;
+  },
+  // Intent rời rạc sang phòng game qua lobby client (plant/selectOperator/buy…).
+  sendIntent(type, payload) {
+    const L = window.ProjectGOnline && window.ProjectGOnline.lobby;
+    if (!L || !this.gameRoom) return false;
+    try { L.sendGameMessage(type, payload); return true; }
+    catch (err) { console.warn('[online] sendIntent lỗi:', err); return false; }
+  },
+  beginFrame() {}, // seam 1 (CLIENT-ADAPTER §2) — pass-through giai đoạn 0
+  endFrame() {},   // seam 2 — pass-through giai đoạn 0
+};
+// Cầu nối lobby <-> game: script lobby (cuối body) gọi attachLobby + mountLobbyUI,
+// rồi nối event enter-game/match-finished/game-left vào các hàm dưới đây.
+window.ProjectGOnline = {
+  NetAdapter,
+  lobby: null,
+  attachLobby(lobby) { this.lobby = lobby; },
+  showLobby() { $('menu').classList.add('hidden'); $('lobby-root').classList.remove('hidden'); },
+  hideLobby() { $('lobby-root').classList.add('hidden'); },
+  backToMenu() { this.hideLobby(); $('menu').classList.remove('hidden'); },
+  enterOnlineGame(info) {
+    const op = info && info.assignment && info.assignment.operatorId;
+    if (op && OPERATORS[op]) selectMenuOp(op); // operator do server gán (D-4)
+    NetAdapter.attachGameRoom(info.gameRoom, info);
+    this.hideLobby();
+    startGameWithSelectedOp(); // ẩn menu, hiện HUD, startMatch local (stand-in) + lock pointer
+    if (this.lobby) {
+      try { this.lobby.startInputStream(() => NetAdapter.sampleInputFrame()); }
+      catch (err) { console.warn('[online] không mở được input stream:', err); }
+    }
+  },
+  onMatchFinished() {
+    if (this.lobby) { try { this.lobby.stopInputStream(); } catch {} }
+    NetAdapter.detach();
+    this.showLobby(); // UI lobby đã ở màn post-game 15 s, rồi tự về lobby
+  },
+  leaveOnlineGame() {
+    if (this.lobby) { try { this.lobby.stopInputStream(); } catch {} }
+    NetAdapter.detach();
+    quitToMenu();
+    this.showLobby();
+  },
+};
 // i18n (dev-v38-i18n): nút chuyển ngôn ngữ VI/EN + re-render chuỗi động khi đổi nóng (không reload trang)
 $('btn-lang').addEventListener('click', () => setLang(getLang() === 'vi' ? 'en' : 'vi'));
 onLangChange(() => {
@@ -5981,6 +6820,76 @@ onLangChange(() => {
 applyI18n(); renderControlsNote(); refreshLangButton(); // áp ngôn ngữ khởi động (mặc định theo trình duyệt / lựa chọn đã lưu) cho chuỗi tĩnh + ghi chú điều khiển + nút chuyển ngữ
 if (!settingsInitialized) openMenuSettings(true); // SETUP LẦN ĐẦU (dev-v49-ui): DB chưa có record settings -> hiện panel đúng 1 lần này
 animate();
+</script>
+<script>
+/* v53-ui2 A1: thẻ chi tiết operator ở menu (vùng phải) — script cộng thêm THUẦN ĐỌC DOM:
+   trạng thái chọn do JS gốc (selectMenuOp) sở hữu qua class .selected trên .op-card;
+   script này chỉ soi gương lựa chọn đó vào #op-detail, không đổi logic chọn/vào trận. */
+(function () {
+  var grid = document.getElementById('op-grid');
+  var detail = document.getElementById('op-detail');
+  if (!grid || !detail) return;
+  function txt(el) { return el ? el.textContent : ''; }
+  function render() {
+    var card = grid.querySelector('.op-card.selected') || grid.querySelector('.op-card');
+    if (!card) return;
+    var c = card.style.getPropertyValue('--c') || '#38b6ff';
+    detail.style.setProperty('--c', c);
+    document.getElementById('od-avatar').textContent = txt(card.querySelector('.op-avatar')) || '?';
+    document.getElementById('od-name').textContent = txt(card.querySelector('h3'));
+    document.getElementById('od-role').textContent = txt(card.querySelector('.role'));
+    var sk = card.querySelector('.op-skills');
+    document.getElementById('od-skills').innerHTML = sk ? sk.innerHTML : '';
+    var ps = card.querySelector('.passive');
+    var psEl = document.getElementById('od-passive');
+    if (ps) { psEl.innerHTML = ps.innerHTML; psEl.style.display = ''; } else { psEl.style.display = 'none'; }
+    var st = card.querySelector('.op-stats');
+    document.getElementById('od-stats').innerHTML = st ? st.innerHTML : '';
+  }
+  new MutationObserver(render).observe(grid, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] });
+  grid.addEventListener('click', function () { setTimeout(render, 0); });
+  render();
+})();
+</script>
+<script type="module">
+// W36 #D11 — nối UI lobby vào game (đường lobby thật W6-LOBBY-BRIDGE.md).
+// lobby-client.js là bản sao TEXT (byte-identical) của dev-loop/multiplayer/lobby-client.js
+// (gốc đó là source of truth — sửa gốc rồi copy lại khi cần đồng bộ; KHÔNG sửa
+// trực tiếp bản sao này). Endpoint mặc định ws://localhost:2567 (xem lobby-client.js);
+// override bằng ?lobby=ws://host:port. SDK Colyseus vẫn lấy qua CDN theo D-9
+// (jsdelivr/unpkg) — vendoring local là việc còn dở, xem báo cáo đợt.
+// Không có joinOrCreate("game")/startMatch từ client ở đây (D-6/D-1).
+import { createLobbyClient, mountLobbyUI } from './lobby-client.js';
+// Game module có top-level await (initSettingsFromDb — IndexedDB) nên script
+// này có thể chạy TRƯỚC khi game gán window.ProjectGOnline: chờ cầu nối xuất
+// hiện thay vì kiểm tra một lần (lỗi đã gặp ở smoke W36: mount không chạy,
+// nút Chơi online chết, chỉ còn console.error).
+async function waitForBridge(timeoutMs = 60000) {
+  const t0 = Date.now();
+  while (!window.ProjectGOnline) {
+    if (Date.now() - t0 > timeoutMs) return null;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return window.ProjectGOnline;
+}
+const bridge = await waitForBridge();
+if (!bridge) {
+  console.error('[online] game chưa boot (thiếu window.ProjectGOnline sau 60 s) — lobby không nối được.');
+} else {
+  const params = new URLSearchParams(location.search);
+  const lobby = createLobbyClient({ endpoint: params.get('lobby') || undefined });
+  bridge.attachLobby(lobby);
+  mountLobbyUI(lobby, document.getElementById('lobby-root'));
+  document.getElementById('btn-online').addEventListener('click', () => { bridge.showLobby(); });
+  document.getElementById('btn-lobby-back').addEventListener('click', () => { bridge.backToMenu(); });
+  lobby.on('enter-game', (info) => {
+    try { bridge.enterOnlineGame(info); }
+    catch (err) { console.error('[online] enter-game lỗi:', err); }
+  });
+  lobby.on('match-finished', () => { bridge.onMatchFinished(); });
+  lobby.on('game-left', ({ reason }) => { if (reason !== 'match-end') bridge.leaveOnlineGame(); });
+  lobby.on('error', ({ message }) => { console.warn('[online]', message); });
+}
 </script>
 </body>
 </html>
