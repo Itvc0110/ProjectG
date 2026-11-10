@@ -1,0 +1,74 @@
+{
+    "entries": [
+        {
+            "files": [
+                {
+                    "bytes": 670681,
+                    "path": "three.module.min.js",
+                    "sha256": "3e690ac7d180b0aadf0891bea39eec643e29e2d3e75c99b18689518665f69ba6"
+                },
+                {
+                    "bytes": 108522,
+                    "path": "addons/loaders/GLTFLoader.js",
+                    "sha256": "d073b438e6a07e1359741dd5d6c76c953420cc0d4fd84eb1bdde94315540e6a3"
+                },
+                {
+                    "bytes": 11377,
+                    "path": "addons/loaders/RGBELoader.js",
+                    "sha256": "f0e87d0008d9484d31358b32befd1bf80e4301f77573cc9a7cf7d871cc3f64b4"
+                },
+                {
+                    "bytes": 31906,
+                    "path": "addons/utils/BufferGeometryUtils.js",
+                    "sha256": "9be041e96308775d00e2695cc607645b9a9b64fd7c0e759dd8f7c00a8d92becb"
+                },
+                {
+                    "bytes": 8007,
+                    "path": "addons/utils/SkeletonUtils.js",
+                    "sha256": "83748c5072a5ce96e9d68d8efda908a1f1a06c0b5fd2618edc3e54a361a8fd5b"
+                }
+            ],
+            "license": {
+                "licenseFile": "LICENSE",
+                "note": "Ban min giu header @license rut gon (Copyright 2010-2023 Three.js Authors, SPDX MIT) o dau file three.module.min.js. File LICENSE day du (van ban MIT chinh thuc cua mrdoob/three.js tag r160, blob sha d07e209686512b9ac93d7df5481a4a6f622093e7) da bo sung vao vendor/LICENSE ngay 2026-11-08 theo hanh dong A2 cua bai chinh sach.",
+                "spdx": "MIT"
+            },
+            "modifications": [],
+            "name": "three",
+            "reason": "v3.5.1 hotfix: jsdelivr khong toi duoc tu mang nguoi choi (loi 'Khong tai duoc thu vien 3D') - vendor de bo phu thuoc CDN cho engine 3D tren duong boot.",
+            "releaseTag": "r160",
+            "retrieved": "2026-11-08",
+            "source": {
+                "fileMap": {
+                    "addons/loaders/GLTFLoader.js": "examples/jsm/loaders/GLTFLoader.js",
+                    "addons/loaders/RGBELoader.js": "examples/jsm/loaders/RGBELoader.js",
+                    "addons/utils/BufferGeometryUtils.js": "examples/jsm/utils/BufferGeometryUtils.js",
+                    "addons/utils/SkeletonUtils.js": "examples/jsm/utils/SkeletonUtils.js",
+                    "three.module.min.js": "build/three.module.min.js"
+                },
+                "project": "https://github.com/mrdoob/three.js",
+                "retrievedFrom": "https://cdn.jsdelivr.net/npm/three@0.160.0/"
+            },
+            "version": "0.160.0"
+        }
+    ],
+    "knownExternalRuntimeDependencies": [
+        {
+            "detail": "Inter, Be Vietnam Pro, Orbitron, Rajdhani qua fonts.googleapis.com/css2 (+ preconnect fonts.gstatic.com). Khong SRI (css2 tra noi dung theo UA). Hong -> fallback font he thong, game van choi. Huong dai han: self-host woff2 subset, toi thieu Be Vietnam Pro + Inter (hanh dong A4).",
+            "name": "google-fonts",
+            "tier": 2
+        },
+        {
+            "detail": "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/Soldier.glb - fallback sau ../assets/models/soldier.glb local. Repo GitHub KHONG chua GLB (cong cu push chi nhan UTF-8) nen voi nguoi choi clone repo, CDN la duong duy nhat toi model xin; khong co hash kiem chung. NGOAI LE CO THOI HAN - huong thoat: Git LFS/release asset hoac model CC0 cung origin (hanh dong A3).",
+            "name": "soldier-glb-jsdelivr-fallback",
+            "tier": 1
+        },
+        {
+            "detail": "dl.polyhaven.org: texture 1k (4 set vat lieu) + HDRI industrial_sunset_02_2k.hdr, license CC0. Chuoi nap: local ../assets/ -> CDN -> mau phang. Hong -> game van choi, chi kem dep.",
+            "name": "polyhaven-assets",
+            "tier": 2
+        }
+    ],
+    "note": "Ban ghi toan ven cho moi phu thuoc duoc vendor vao repo. Moi muc: phien ban chinh xac (khong dai), nguon goc, ngay lay, sha256 + kich thuoc tung file, license. Cap nhat manifest va file trong CUNG mot commit. Chinh sach day du: knowledge/topics/vendor-pin-toan-ven-thu-vien.md",
+    "schema": "projectg-vendor-manifest/1"
+}
